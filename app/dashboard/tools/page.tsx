@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react'
 import { Container, Stack, Title, SimpleGrid, Center, Loader, Paper, Text, Group, ThemeIcon, UnstyledButton } from '@mantine/core'
-import { IoDocumentText, IoCalculator, IoWallet, IoDocuments, IoArrowForward } from 'react-icons/io5'
+import { IoDocumentText, IoCalculator, IoWallet, IoDocuments, IoArrowForward, IoVideocam } from 'react-icons/io5'
 import Link from 'next/link'
 
 function ToolsLoader() {
@@ -45,6 +45,14 @@ const tools = [
     icon: IoDocuments,
     href: '/dashboard/tools/reports',
     color: 'violet'
+  },
+  {
+    id: 'meetings',
+    name: 'Reuniones',
+    description: 'Agenda y gestiona reuniones con Calendly',
+    icon: IoVideocam,
+    href: '/dashboard/tools/meetings',
+    color: 'teal'
   }
 ]
 

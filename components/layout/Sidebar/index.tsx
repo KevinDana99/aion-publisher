@@ -73,7 +73,8 @@ const linksMockdata: Record<string, { label: string; href: string }[]> = {
     { label: 'Facturador', href: '/dashboard/tools/invoicer' },
     { label: 'Cotizador', href: '/dashboard/tools/quoter' },
     { label: 'Presupuestador', href: '/dashboard/tools/budgeter' },
-    { label: 'Informes', href: '/dashboard/tools/reports' }
+    { label: 'Informes', href: '/dashboard/tools/reports' },
+    { label: 'Reuniones', href: '/dashboard/tools/meetings' }
   ],
   Configuración: [
     { label: 'General', href: '/dashboard/settings' },

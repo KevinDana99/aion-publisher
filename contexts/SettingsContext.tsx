@@ -37,7 +37,8 @@ const defaultIntegrations: Integration[] = [
   { id: 'linkedin', name: 'LinkedIn', icon: 'IoLogoLinkedin', enabled: false },
   { id: 'youtube', name: 'YouTube', icon: 'IoLogoYoutube', enabled: false },
   { id: 'pinterest', name: 'Pinterest', icon: 'IoLogoPinterest', enabled: false },
-  { id: 'whatsapp', name: 'WhatsApp Business', icon: 'IoLogoWhatsapp', enabled: false }
+  { id: 'whatsapp', name: 'WhatsApp Business', icon: 'IoLogoWhatsapp', enabled: false },
+  { id: 'calendly', name: 'Calendly', icon: 'IoCalendar', enabled: false }
 ]
 
 const defaultWidgets: Widget[] = [

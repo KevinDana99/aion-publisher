@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Container, Stack, Title, Group, Paper, Text, Switch, ThemeIcon, Divider, Badge, SimpleGrid, TextInput, PasswordInput, Modal, Button, Anchor } from '@mantine/core'
-import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse } from 'react-icons/io5'
+import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse, IoCalendar } from 'react-icons/io5'
 import { useSettings, Integration } from '@/contexts/SettingsContext'
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -13,7 +13,8 @@ const iconMap: Record<string, React.ReactNode> = {
   IoLogoLinkedin: <IoLogoLinkedin size={20} />,
   IoLogoYoutube: <IoLogoYoutube size={20} />,
   IoLogoPinterest: <IoLogoPinterest size={20} />,
-  IoLogoWhatsapp: <IoLogoWhatsapp size={20} />
+  IoLogoWhatsapp: <IoLogoWhatsapp size={20} />,
+  IoCalendar: <IoCalendar size={20} />
 }
 
 function IntegrationCard({ integration }: { integration: Integration }) {
@@ -26,9 +27,11 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     webhookUrl: integration.webhookUrl || ''
   })
 
+  const isCalendly = integration.id === 'calendly'
+
   const handleToggle = (enabled: boolean) => {
     updateIntegration(integration.id, { enabled })
-    if (enabled && !integration.token && !integration.apiKey) {
+    if (enabled && !integration.token && !integration.apiKey && !integration.webhookUrl) {
       setModalOpen(true)
     }
   }
@@ -47,6 +50,10 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     })
     setModalOpen(true)
   }
+
+  const isConnected = isCalendly 
+    ? integration.webhookUrl 
+    : (integration.token || integration.apiKey)
 
   return (
     <>
@@ -73,7 +80,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
               <Text fw={500}>{integration.name}</Text>
               <Text size="xs" c="dimmed">
                 {integration.enabled 
-                  ? integration.token || integration.apiKey 
+                  ? isConnected 
                     ? 'Conectado' 
                     : 'Habilitado - Sin configurar'
                   : 'Deshabilitado'
@@ -82,7 +89,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             </div>
           </Group>
           <Group gap="xs">
-            {integration.enabled && (integration.token || integration.apiKey) && (
+            {integration.enabled && isConnected && (
               <Badge color="teal" variant="light" size="sm">
                 <Group gap={4}>
                   <IoCheckmarkCircle size={12} />
@@ -118,40 +125,68 @@ function IntegrationCard({ integration }: { integration: Integration }) {
         size="md"
       >
         <Stack gap="md">
-          <Text size="sm" c="dimmed">
-            Ingresa las credenciales de tu cuenta de {integration.name} para habilitar la integración.
-          </Text>
+          {isCalendly ? (
+            <>
+              <Text size="sm" c="dimmed">
+                Ingresa tu URL de Calendly para generar enlaces automáticos de reuniones.
+              </Text>
 
-          <Divider />
+              <Divider />
 
-          <TextInput
-            label="Token de acceso"
-            placeholder="Ingresa tu token de acceso"
-            value={tempConfig.token}
-            onChange={(e) => setTempConfig(prev => ({ ...prev, token: e.target.value }))}
-          />
+              <TextInput
+                label="URL de Calendly"
+                placeholder="https://calendly.com/tu-usuario"
+                value={tempConfig.webhookUrl}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
+                description="Ejemplo: https://calendly.com/aion-publisher"
+              />
 
-          <SimpleGrid cols={2}>
-            <TextInput
-              label="API Key"
-              placeholder="API Key"
-              value={tempConfig.apiKey}
-              onChange={(e) => setTempConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-            />
-            <PasswordInput
-              label="API Secret"
-              placeholder="API Secret"
-              value={tempConfig.apiSecret}
-              onChange={(e) => setTempConfig(prev => ({ ...prev, apiSecret: e.target.value }))}
-            />
-          </SimpleGrid>
+              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-gray-0)' }}>
+                <Text size="xs" c="dimmed">
+                  <strong>Instrucciones:</strong><br />
+                  1. Ve a calendly.com y copia tu URL pública<br />
+                  2. Pégala aquí y guarda la configuración
+                </Text>
+              </Paper>
+            </>
+          ) : (
+            <>
+              <Text size="sm" c="dimmed">
+                Ingresa las credenciales de tu cuenta de {integration.name} para habilitar la integración.
+              </Text>
 
-          <TextInput
-            label="Webhook URL (opcional)"
-            placeholder="https://tu-servidor.com/webhook"
-            value={tempConfig.webhookUrl}
-            onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-          />
+              <Divider />
+
+              <TextInput
+                label="Token de acceso"
+                placeholder="Ingresa tu token de acceso"
+                value={tempConfig.token}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, token: e.target.value }))}
+              />
+
+              <SimpleGrid cols={2}>
+                <TextInput
+                  label="API Key"
+                  placeholder="API Key"
+                  value={tempConfig.apiKey}
+                  onChange={(e) => setTempConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                />
+                <PasswordInput
+                  label="API Secret"
+                  placeholder="API Secret"
+                  value={tempConfig.apiSecret}
+                  onChange={(e) => setTempConfig(prev => ({ ...prev, apiSecret: e.target.value }))}
+                />
+              </SimpleGrid>
+
+              <TextInput
+                label="Webhook URL (opcional)"
+                placeholder="https://tu-servidor.com/webhook"
+                value={tempConfig.webhookUrl}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
+              />
+            </>
+          )}
 
           <Divider />
 

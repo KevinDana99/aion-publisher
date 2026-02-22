@@ -16,6 +16,8 @@
     "@mantine/core": "^8.3.15",
     "@mantine/form": "^8.3.15",
     "@mantine/hooks": "^8.3.15",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
