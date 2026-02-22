@@ -5,48 +5,48 @@ import { useRouter } from 'next/navigation'
 import { Title, Tooltip, UnstyledButton, Text } from '@mantine/core'
 import {
   IoHomeOutline,
-  IoStatsChartOutline,
+  IoMegaphoneOutline,
   IoAnalyticsOutline,
-  IoCalendarOutline,
-  IoPersonOutline,
-  IoShieldCheckmarkOutline,
+  IoFolderOutline,
+  IoPeopleOutline,
+  IoWalletOutline,
   IoSettingsOutline,
   IoLogOutOutline,
   IoHome,
-  IoStatsChart,
+  IoMegaphone,
   IoAnalytics,
-  IoCalendar,
-  IoPerson,
-  IoShieldCheckmark,
+  IoFolder,
+  IoPeople,
+  IoWallet,
   IoSettings
 } from 'react-icons/io5'
 import classes from './Sidebar.module.css'
 
 const mainLinksMockdata = [
-  { icon: IoHomeOutline, activeIcon: IoHome, label: 'Home', href: '/dashboard' },
-  { icon: IoStatsChartOutline, activeIcon: IoStatsChart, label: 'Dashboard', href: '/dashboard/stats' },
-  { icon: IoAnalyticsOutline, activeIcon: IoAnalytics, label: 'Analytics', href: '/dashboard/analytics' },
-  { icon: IoCalendarOutline, activeIcon: IoCalendar, label: 'Releases', href: '/dashboard/releases' },
-  { icon: IoPersonOutline, activeIcon: IoPerson, label: 'Account', href: '/dashboard/account' },
-  { icon: IoShieldCheckmarkOutline, activeIcon: IoShieldCheckmark, label: 'Security', href: '/dashboard/security' },
-  { icon: IoSettingsOutline, activeIcon: IoSettings, label: 'Settings', href: '/dashboard/settings' }
+  { icon: IoHomeOutline, activeIcon: IoHome, label: 'Dashboard', href: '/dashboard' },
+  { icon: IoMegaphoneOutline, activeIcon: IoMegaphone, label: 'Marketing', href: '/dashboard/marketing' },
+  { icon: IoAnalyticsOutline, activeIcon: IoAnalytics, label: 'Analíticas', href: '/dashboard/analytics' },
+  { icon: IoFolderOutline, activeIcon: IoFolder, label: 'Proyectos', href: '/dashboard/projects' },
+  { icon: IoPeopleOutline, activeIcon: IoPeople, label: 'Equipo', href: '/dashboard/team' },
+  { icon: IoWalletOutline, activeIcon: IoWallet, label: 'Finanzas', href: '/dashboard/finance' },
+  { icon: IoSettingsOutline, activeIcon: IoSettings, label: 'Configuración', href: '/dashboard/settings' }
 ]
 
 const linksMockdata: Record<string, string[]> = {
-  Home: ['Overview', 'Projects', 'Recent'],
-  Dashboard: ['Statistics', 'Reports', 'Metrics'],
-  Analytics: ['Overview', 'Forecasts', 'Real time'],
-  Releases: ['Upcoming', 'Previous', 'Schedule'],
-  Account: ['Profile', 'Preferences', 'Billing'],
-  Security: ['2FA', 'Password', 'Recovery'],
-  Settings: ['General', 'Notifications', 'Integrations']
+  Dashboard: ['Resumen', 'Actividad', 'Notificaciones'],
+  Marketing: ['Campañas', 'Contenido', 'Calendario', 'Redes'],
+  Analíticas: ['Website', 'Reportes', 'KPIs'],
+  Proyectos: ['Activos', 'Tareas', 'Tiempo', 'Timeline'],
+  Equipo: ['Miembros', 'Roles', 'Soporte'],
+  Finanzas: ['Facturas', 'Pagos', 'Reportes'],
+  Configuración: ['General', 'Integraciones', 'Notificaciones']
 }
 
 interface SidebarProps {
   activeSection?: string
 }
 
-export default function Sidebar({ activeSection = 'Home' }: SidebarProps) {
+export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
   const [active, setActive] = useState(activeSection)
   const [activeLink, setActiveLink] = useState('')
   const router = useRouter()
