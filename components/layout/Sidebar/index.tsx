@@ -32,14 +32,43 @@ const mainLinksMockdata = [
   { icon: IoSettingsOutline, activeIcon: IoSettings, label: 'Configuración', href: '/dashboard/settings' }
 ]
 
-const linksMockdata: Record<string, string[]> = {
-  Dashboard: ['Resumen', 'Actividad', 'Notificaciones'],
-  Marketing: ['Campañas', 'Contenido', 'Calendario', 'Redes'],
-  Analíticas: ['Website', 'Reportes', 'KPIs'],
-  Proyectos: ['Activos', 'Tareas', 'Tiempo', 'Timeline'],
-  Equipo: ['Miembros', 'Roles', 'Soporte'],
-  Finanzas: ['Facturas', 'Pagos', 'Reportes'],
-  Configuración: ['General', 'Integraciones', 'Notificaciones']
+const linksMockdata: Record<string, { label: string; href: string }[]> = {
+  Dashboard: [
+    { label: 'Resumen', href: '/dashboard' },
+    { label: 'Actividad', href: '/dashboard/activity' },
+    { label: 'Notificaciones', href: '/dashboard/notifications' }
+  ],
+  Marketing: [
+    { label: 'Dashboard', href: '/dashboard/marketing' },
+    { label: 'Campañas', href: '/dashboard/marketing/campaigns' },
+    { label: 'Calendario', href: '/dashboard/marketing/calendar' },
+    { label: 'Redes', href: '/dashboard/marketing/social' }
+  ],
+  Analíticas: [
+    { label: 'Dashboard', href: '/dashboard/analytics' },
+    { label: 'Website', href: '/dashboard/analytics/website' },
+    { label: 'Reportes', href: '/dashboard/analytics/reports' }
+  ],
+  Proyectos: [
+    { label: 'Dashboard', href: '/dashboard/projects' },
+    { label: 'Kanban', href: '/dashboard/projects/kanban' },
+    { label: 'Tareas', href: '/dashboard/projects/tasks' },
+    { label: 'Tiempo', href: '/dashboard/projects/time' }
+  ],
+  Equipo: [
+    { label: 'Miembros', href: '/dashboard/team' },
+    { label: 'Roles', href: '/dashboard/team/roles' },
+    { label: 'Soporte', href: '/dashboard/team/support' }
+  ],
+  Finanzas: [
+    { label: 'Dashboard', href: '/dashboard/finance' },
+    { label: 'Facturas', href: '/dashboard/finance/invoices' },
+    { label: 'Pagos', href: '/dashboard/finance/payments' }
+  ],
+  Configuración: [
+    { label: 'General', href: '/dashboard/settings' },
+    { label: 'Integraciones', href: '/dashboard/settings/integrations' }
+  ]
 }
 
 interface SidebarProps {
@@ -87,15 +116,16 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
   const links = (linksMockdata[active] || []).map((link) => (
     <a
       className={classes.link}
-      data-active={activeLink === link || undefined}
-      href="#"
+      data-active={activeLink === link.label || undefined}
+      href={link.href}
       onClick={(event) => {
         event.preventDefault()
-        setActiveLink(link)
+        setActiveLink(link.label)
+        router.push(link.href)
       }}
-      key={link}
+      key={link.label}
     >
-      {link}
+      {link.label}
     </a>
   ))
 

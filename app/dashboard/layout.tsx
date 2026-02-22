@@ -3,6 +3,7 @@
 import { Box } from '@mantine/core'
 import Header from '@/components/layout/Header'
 import Sidebar from '@/components/layout/Sidebar'
+import { UserProvider } from '@/contexts/UserContext'
 
 export default function DashboardLayout({
   children
@@ -10,7 +11,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <>
+    <UserProvider>
       <Header />
       <Sidebar activeSection="Home" />
       <Box
@@ -21,6 +22,6 @@ export default function DashboardLayout({
       >
         {children}
       </Box>
-    </>
+    </UserProvider>
   )
 }

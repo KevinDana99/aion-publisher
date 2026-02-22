@@ -1,23 +1,30 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import {
   ActionIcon,
   Group,
   Text,
   Box,
   useMantineColorScheme,
-  useComputedColorScheme
+  useComputedColorScheme,
+  Tooltip
 } from '@mantine/core'
-import { IoSunnyOutline, IoMoonOutline } from 'react-icons/io5'
+import { IoSunnyOutline, IoMoonOutline, IoLogOutOutline } from 'react-icons/io5'
 
 export default function Header() {
   const { setColorScheme } = useMantineColorScheme()
   const computedColorScheme = useComputedColorScheme('light', {
     getInitialValueInEffect: true
   })
+  const router = useRouter()
 
   const toggleColorScheme = () => {
     setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')
+  }
+
+  const handleLogout = () => {
+    router.push('/auth/login')
   }
 
   return (
@@ -47,19 +54,34 @@ export default function Header() {
           Aion
         </Text>
 
-        <ActionIcon
-          onClick={toggleColorScheme}
-          variant="subtle"
-          size="lg"
-          radius="md"
-          aria-label="Toggle color scheme"
-        >
-          {computedColorScheme === 'dark' ? (
-            <IoSunnyOutline size={20} />
-          ) : (
-            <IoMoonOutline size={20} />
-          )}
-        </ActionIcon>
+        <Group gap="xs">
+          <ActionIcon
+            onClick={toggleColorScheme}
+            variant="subtle"
+            size="lg"
+            radius="md"
+            aria-label="Toggle color scheme"
+          >
+            {computedColorScheme === 'dark' ? (
+              <IoSunnyOutline size={20} />
+            ) : (
+              <IoMoonOutline size={20} />
+            )}
+          </ActionIcon>
+
+          <Tooltip label="Cerrar sesión" position="bottom">
+            <ActionIcon
+              onClick={handleLogout}
+              variant="subtle"
+              size="lg"
+              radius="md"
+              aria-label="Cerrar sesión"
+              color="red"
+            >
+              <IoLogOutOutline size={20} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
       </Group>
     </Box>
   )
