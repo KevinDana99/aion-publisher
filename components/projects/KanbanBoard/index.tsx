@@ -10,16 +10,11 @@ import {
   Stack, 
   SimpleGrid, 
   Button, 
-  TextInput,
   Select,
   Indicator,
-  ThemeIcon,
-  Tooltip,
   ScrollArea,
-  Box,
   SegmentedControl,
   Drawer,
-  Title,
   Divider,
   Timeline
 } from '@mantine/core'
@@ -28,26 +23,25 @@ import {
   DragEndEvent, 
   DragOverlay, 
   DragStartEvent,
-  closestCorners,
+  DragOverEvent,
+  closestCenter,
   PointerSensor,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useDroppable } from '@dnd-kit/core'
 import { 
   IoGitBranch, 
   IoEllipse, 
-  IoChevronForward,
-  IoTime,
   IoPerson,
   IoCalendar,
   IoChatbubble,
   IoAttach,
-  IoFilter,
   IoAdd
 } from 'react-icons/io5'
-import { Task, TaskStatus, TaskPriority, User } from '@/types'
+import { Task, TaskStatus, TaskPriority } from '@/types'
 import { useUser } from '@/contexts/UserContext'
 
 const columns: { id: TaskStatus; label: string; color: string }[] = [
@@ -66,28 +60,31 @@ const priorityColors: Record<TaskPriority, string> = {
 }
 
 const mockTasks: Task[] = [
-  { id: '1', title: 'Diseñar nueva landing page', status: 'in_progress', priority: 'high', assignee: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, reporter: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, project: 'Website', labels: ['design', 'frontend'], createdAt: new Date(), updatedAt: new Date(), dueDate: new Date('2024-12-15'), comments: 5, attachments: 2 },
-  { id: '2', title: 'Implementar autenticación', status: 'todo', priority: 'urgent', assignee: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'API', labels: ['backend', 'security'], createdAt: new Date(), updatedAt: new Date(), dueDate: new Date('2024-12-10'), comments: 3, attachments: 0 },
-  { id: '3', title: 'Crear campaña Black Friday', status: 'review', priority: 'high', assignee: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'Marketing', labels: ['marketing', 'campaign'], createdAt: new Date(), updatedAt: new Date(), comments: 8, attachments: 5 },
-  { id: '4', title: 'Optimizar consultas DB', status: 'backlog', priority: 'medium', assignee: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, reporter: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, project: 'API', labels: ['backend', 'performance'], createdAt: new Date(), updatedAt: new Date(), comments: 1, attachments: 0 },
-  { id: '5', title: 'Documentar API endpoints', status: 'done', priority: 'low', assignee: { id: '4', name: 'Ana Martínez', email: 'ana@aion.com', avatar: 'AM', role: 'member' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'Docs', labels: ['documentation'], createdAt: new Date(), updatedAt: new Date(), comments: 2, attachments: 1 },
-  { id: '6', title: 'Fix responsive issues', status: 'in_progress', priority: 'medium', assignee: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, reporter: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, project: 'Website', labels: ['frontend', 'bug'], createdAt: new Date(), updatedAt: new Date(), comments: 4, attachments: 0 },
-  { id: '7', title: 'Setup CI/CD pipeline', status: 'todo', priority: 'high', assignee: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'DevOps', labels: ['devops', 'automation'], createdAt: new Date(), updatedAt: new Date(), comments: 0, attachments: 0 },
-  { id: '8', title: 'User testing session', status: 'backlog', priority: 'low', assignee: { id: '4', name: 'Ana Martínez', email: 'ana@aion.com', avatar: 'AM', role: 'member' }, reporter: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, project: 'UX', labels: ['ux', 'testing'], createdAt: new Date(), updatedAt: new Date(), comments: 0, attachments: 0 }
+  { id: 't1', title: 'Diseñar nueva landing page', status: 'in_progress', priority: 'high', assignee: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, reporter: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, project: 'Website', labels: ['design', 'frontend'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), dueDate: new Date('2024-12-15'), comments: 5, attachments: 2 },
+  { id: 't2', title: 'Implementar autenticación', status: 'todo', priority: 'urgent', assignee: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'API', labels: ['backend', 'security'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), dueDate: new Date('2024-12-10'), comments: 3, attachments: 0 },
+  { id: 't3', title: 'Crear campaña Black Friday', status: 'review', priority: 'high', assignee: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'Marketing', labels: ['marketing', 'campaign'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), comments: 8, attachments: 5 },
+  { id: 't4', title: 'Optimizar consultas DB', status: 'backlog', priority: 'medium', assignee: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, reporter: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, project: 'API', labels: ['backend', 'performance'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), comments: 1, attachments: 0 },
+  { id: 't5', title: 'Documentar API endpoints', status: 'done', priority: 'low', assignee: { id: '4', name: 'Ana Martínez', email: 'ana@aion.com', avatar: 'AM', role: 'member' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'Docs', labels: ['documentation'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), comments: 2, attachments: 1 },
+  { id: 't6', title: 'Fix responsive issues', status: 'in_progress', priority: 'medium', assignee: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, reporter: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, project: 'Website', labels: ['frontend', 'bug'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), comments: 4, attachments: 0 },
+  { id: 't7', title: 'Setup CI/CD pipeline', status: 'todo', priority: 'high', assignee: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'DevOps', labels: ['devops', 'automation'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), comments: 0, attachments: 0 },
+  { id: 't8', title: 'User testing session', status: 'backlog', priority: 'low', assignee: { id: '4', name: 'Ana Martínez', email: 'ana@aion.com', avatar: 'AM', role: 'member' }, reporter: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, project: 'UX', labels: ['ux', 'testing'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), comments: 0, attachments: 0 }
 ]
 
 interface TaskCardProps {
   task: Task
   onClick?: () => void
+  isDragging?: boolean
 }
 
-function TaskCard({ task, onClick }: TaskCardProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({ id: task.id })
+function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
+  const { attributes, listeners, setNodeRef, transform } = useSortable({ id: task.id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
-    cursor: 'grab' as const
+    cursor: 'grab' as const,
+    background: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-4))',
+    borderColor: 'light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-3))',
+    opacity: isDragging ? 0.5 : 1
   }
 
   return (
@@ -98,9 +95,10 @@ function TaskCard({ task, onClick }: TaskCardProps) {
       {...listeners}
       p="sm"
       radius="md"
-      shadow="xs"
       mb="sm"
       onClick={onClick}
+      withBorder
+      shadow="sm"
     >
       <Group justify="space-between" mb="xs">
         <Badge color={priorityColors[task.priority]} variant="light" size="sm">
@@ -147,7 +145,7 @@ function TaskCard({ task, onClick }: TaskCardProps) {
       {task.dueDate && (
         <Group gap="xs" mt="xs">
           <IoCalendar size={12} />
-          <Text size="xs" c={new Date(task.dueDate) < new Date() ? 'red' : 'dimmed'}>
+          <Text size="xs" c="dimmed">
             {new Date(task.dueDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
           </Text>
         </Group>
@@ -165,14 +163,20 @@ interface KanbanColumnProps {
 }
 
 function KanbanColumn({ id, label, color, tasks, onTaskClick }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+
   return (
     <Paper
+      ref={setNodeRef}
       p="sm"
       radius="md"
       style={{ 
-        background: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))',
+        background: isOver 
+          ? 'light-dark(var(--mantine-color-blue-0), var(--mantine-color-dark-5))'
+          : 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))',
         minHeight: 400,
-        width: 280
+        width: 280,
+        transition: 'background 0.2s ease'
       }}
     >
       <Group justify="space-between" mb="md">
@@ -183,9 +187,6 @@ function KanbanColumn({ id, label, color, tasks, onTaskClick }: KanbanColumnProp
           <Text fw={600} size="sm">{label}</Text>
           <Badge color={color} variant="light" size="sm">{tasks.length}</Badge>
         </Group>
-        <Button variant="subtle" size="compact-xs">
-          <IoAdd size={16} />
-        </Button>
       </Group>
       
       <ScrollArea.Autosize mah={500}>
@@ -230,7 +231,9 @@ export default function KanbanBoard() {
       done: []
     }
     filteredTasks.forEach(task => {
-      grouped[task.status].push(task)
+      if (grouped[task.status]) {
+        grouped[task.status]!.push(task)
+      }
     })
     return grouped
   }, [filteredTasks])
@@ -248,9 +251,11 @@ export default function KanbanBoard() {
     const taskId = active.id as string
     const newStatus = over.id as TaskStatus
 
-    setTasks(prev => prev.map(task => 
-      task.id === taskId ? { ...task, status: newStatus, updatedAt: new Date() } : task
-    ))
+    if (columns.find(col => col.id === newStatus)) {
+      setTasks(prev => prev.map(task => 
+        task.id === taskId ? { ...task, status: newStatus } : task
+      ))
+    }
   }
 
   const activeTask = activeId ? tasks.find(t => t.id === activeId) : null
@@ -282,14 +287,11 @@ export default function KanbanBoard() {
             style={{ width: 150 }}
           />
         </Group>
-        <Button leftSection={<IoAdd size={16} />}>
-          Nueva tarea
-        </Button>
       </Group>
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -301,7 +303,7 @@ export default function KanbanBoard() {
                 id={column.id}
                 label={column.label}
                 color={column.color}
-                tasks={tasksByStatus[column.id]}
+                tasks={tasksByStatus[column.id] || []}
                 onTaskClick={setSelectedTask}
               />
             ))}
@@ -309,7 +311,7 @@ export default function KanbanBoard() {
         </ScrollArea>
 
         <DragOverlay>
-          {activeTask ? <TaskCard task={activeTask} /> : null}
+          {activeTask ? <TaskCard task={activeTask} isDragging /> : null}
         </DragOverlay>
       </DndContext>
 

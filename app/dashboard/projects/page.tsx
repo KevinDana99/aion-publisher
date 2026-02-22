@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Container, Stack, Title, SimpleGrid, Group } from '@mantine/core'
 import { IoFolder, IoWallet } from 'react-icons/io5'
 import { 
@@ -9,9 +10,11 @@ import {
 } from '@/components/dashboard'
 
 export default function ProjectsPage() {
-  const today = new Date()
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-  const daysLeft = Math.ceil((endOfMonth.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  const daysLeft = useMemo(() => {
+    const today = new Date()
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    return Math.ceil((endOfMonth.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  }, [])
 
   return (
     <Container size="xl" py="xl" fluid>

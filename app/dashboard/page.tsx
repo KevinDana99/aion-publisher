@@ -1,6 +1,7 @@
 'use client'
 
-import { Container, Stack, Title, SimpleGrid, Box, Text, Group, Divider } from '@mantine/core'
+import { Suspense, useMemo } from 'react'
+import { Container, Stack, Title, SimpleGrid, Box, Text, Group, Divider, Center, Loader } from '@mantine/core'
 import { IoWallet, IoMegaphone, IoAnalytics, IoFolder, IoPeople } from 'react-icons/io5'
 import { 
   StatsGrid, 
@@ -21,10 +22,20 @@ import {
   CashFlow
 } from '@/components/dashboard'
 
-export default function DashboardPage() {
-  const today = new Date()
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-  const daysLeft = Math.ceil((endOfMonth.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+function DashboardLoader() {
+  return (
+    <Center h={400}>
+      <Loader size="lg" />
+    </Center>
+  )
+}
+
+function DashboardContent() {
+  const daysLeft = useMemo(() => {
+    const today = new Date()
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    return Math.ceil((endOfMonth.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  }, [])
 
   return (
     <Container size="xl" py="xl" fluid>
@@ -108,5 +119,13 @@ export default function DashboardPage() {
         </SimpleGrid>
       </Stack>
     </Container>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardLoader />}>
+      <DashboardContent />
+    </Suspense>
   )
 }
