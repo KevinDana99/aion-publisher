@@ -12,13 +12,15 @@ import {
   IoWalletOutline,
   IoSettingsOutline,
   IoLogOutOutline,
+  IoConstructOutline,
   IoHome,
   IoMegaphone,
   IoAnalytics,
   IoFolder,
   IoPeople,
   IoWallet,
-  IoSettings
+  IoSettings,
+  IoConstruct
 } from 'react-icons/io5'
 import classes from './Sidebar.module.css'
 
@@ -29,6 +31,7 @@ const mainLinksMockdata = [
   { icon: IoFolderOutline, activeIcon: IoFolder, label: 'Proyectos', href: '/dashboard/projects' },
   { icon: IoPeopleOutline, activeIcon: IoPeople, label: 'Equipo', href: '/dashboard/team' },
   { icon: IoWalletOutline, activeIcon: IoWallet, label: 'Finanzas', href: '/dashboard/finance' },
+  { icon: IoConstructOutline, activeIcon: IoConstruct, label: 'Herramientas', href: '/dashboard/tools' },
   { icon: IoSettingsOutline, activeIcon: IoSettings, label: 'Configuración', href: '/dashboard/settings' }
 ]
 
@@ -51,12 +54,12 @@ const linksMockdata: Record<string, { label: string; href: string }[]> = {
   ],
   Proyectos: [
     { label: 'Dashboard', href: '/dashboard/projects' },
-    { label: 'Kanban', href: '/dashboard/projects/kanban' },
     { label: 'Tareas', href: '/dashboard/projects/tasks' },
     { label: 'Tiempo', href: '/dashboard/projects/time' }
   ],
   Equipo: [
     { label: 'Miembros', href: '/dashboard/team' },
+    { label: 'Kanban', href: '/dashboard/team/kanban' },
     { label: 'Roles', href: '/dashboard/team/roles' },
     { label: 'Soporte', href: '/dashboard/team/support' }
   ],
@@ -64,6 +67,13 @@ const linksMockdata: Record<string, { label: string; href: string }[]> = {
     { label: 'Dashboard', href: '/dashboard/finance' },
     { label: 'Facturas', href: '/dashboard/finance/invoices' },
     { label: 'Pagos', href: '/dashboard/finance/payments' }
+  ],
+  Herramientas: [
+    { label: 'Dashboard', href: '/dashboard/tools' },
+    { label: 'Facturador', href: '/dashboard/tools/invoicer' },
+    { label: 'Cotizador', href: '/dashboard/tools/quoter' },
+    { label: 'Presupuestador', href: '/dashboard/tools/budgeter' },
+    { label: 'Informes', href: '/dashboard/tools/reports' }
   ],
   Configuración: [
     { label: 'General', href: '/dashboard/settings' },

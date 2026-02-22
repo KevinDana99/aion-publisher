@@ -16,7 +16,11 @@ import {
   SegmentedControl,
   Drawer,
   Divider,
-  Timeline
+  Timeline,
+  TextInput,
+  Textarea,
+  NumberInput,
+  ActionIcon
 } from '@mantine/core'
 import { 
   DndContext, 
@@ -160,9 +164,10 @@ interface KanbanColumnProps {
   color: string
   tasks: Task[]
   onTaskClick: (task: Task) => void
+  onAddTask: (status: TaskStatus) => void
 }
 
-function KanbanColumn({ id, label, color, tasks, onTaskClick }: KanbanColumnProps) {
+function KanbanColumn({ id, label, color, tasks, onTaskClick, onAddTask }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
 
   return (
@@ -187,6 +192,14 @@ function KanbanColumn({ id, label, color, tasks, onTaskClick }: KanbanColumnProp
           <Text fw={600} size="sm">{label}</Text>
           <Badge color={color} variant="light" size="sm">{tasks.length}</Badge>
         </Group>
+        <ActionIcon 
+          variant="subtle" 
+          size="md" 
+          radius="md"
+          onClick={() => onAddTask(id)}
+        >
+          <IoAdd size={16} />
+        </ActionIcon>
       </Group>
       
       <ScrollArea.Autosize mah={500}>
@@ -206,6 +219,15 @@ export default function KanbanBoard() {
   const [filter, setFilter] = useState<'all' | 'mine'>('all')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [newTaskDrawer, setNewTaskDrawer] = useState(false)
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    status: 'backlog' as TaskStatus,
+    priority: 'medium' as TaskPriority,
+    assigneeId: user?.id || '1',
+    project: 'Website'
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -260,6 +282,44 @@ export default function KanbanBoard() {
 
   const activeTask = activeId ? tasks.find(t => t.id === activeId) : null
 
+  const handleCreateTask = () => {
+    if (!newTask.title.trim()) return
+
+    const assignee = users.find(u => u.id === newTask.assigneeId) || users[0]
+    
+    const task: Task = {
+      id: `t${Date.now()}`,
+      title: newTask.title,
+      description: newTask.description,
+      status: newTask.status,
+      priority: newTask.priority,
+      assignee,
+      reporter: user || users[0],
+      project: newTask.project,
+      labels: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      comments: 0,
+      attachments: 0
+    }
+
+    setTasks(prev => [...prev, task])
+    setNewTaskDrawer(false)
+    setNewTask({
+      title: '',
+      description: '',
+      status: 'backlog',
+      priority: 'medium',
+      assigneeId: user?.id || '1',
+      project: 'Website'
+    })
+  }
+
+  const handleOpenNewTask = (status: TaskStatus) => {
+    setNewTask(prev => ({ ...prev, status }))
+    setNewTaskDrawer(true)
+  }
+
   return (
     <Stack gap="md">
       <Group justify="space-between">
@@ -287,6 +347,9 @@ export default function KanbanBoard() {
             style={{ width: 150 }}
           />
         </Group>
+        <Button leftSection={<IoAdd size={16} />} onClick={() => setNewTaskDrawer(true)}>
+          Nueva tarea
+        </Button>
       </Group>
 
       <DndContext
@@ -305,6 +368,7 @@ export default function KanbanBoard() {
                 color={column.color}
                 tasks={tasksByStatus[column.id] || []}
                 onTaskClick={setSelectedTask}
+                onAddTask={handleOpenNewTask}
               />
             ))}
           </Group>
@@ -387,6 +451,77 @@ export default function KanbanBoard() {
             </div>
           </Stack>
         )}
+      </Drawer>
+
+      <Drawer
+        opened={newTaskDrawer}
+        onClose={() => setNewTaskDrawer(false)}
+        position="right"
+        size="md"
+        title={<Text fw={600}>Nueva Tarea</Text>}
+      >
+        <Stack gap="md">
+          <TextInput
+            label="Título"
+            placeholder="Título de la tarea"
+            required
+            value={newTask.title}
+            onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+          />
+
+          <Textarea
+            label="Descripción"
+            placeholder="Descripción de la tarea"
+            rows={3}
+            value={newTask.description}
+            onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
+          />
+
+          <SimpleGrid cols={2}>
+            <Select
+              label="Estado"
+              data={columns.map(col => ({ value: col.id, label: col.label }))}
+              value={newTask.status}
+              onChange={(value) => setNewTask(prev => ({ ...prev, status: value as TaskStatus }))}
+            />
+            <Select
+              label="Prioridad"
+              data={[
+                { value: 'low', label: 'Baja' },
+                { value: 'medium', label: 'Media' },
+                { value: 'high', label: 'Alta' },
+                { value: 'urgent', label: 'Urgente' }
+              ]}
+              value={newTask.priority}
+              onChange={(value) => setNewTask(prev => ({ ...prev, priority: value as TaskPriority }))}
+            />
+          </SimpleGrid>
+
+          <Select
+            label="Asignado a"
+            data={users.map(u => ({ value: u.id, label: u.name }))}
+            value={newTask.assigneeId}
+            onChange={(value) => setNewTask(prev => ({ ...prev, assigneeId: value || '1' }))}
+          />
+
+          <Select
+            label="Proyecto"
+            data={['Website', 'API', 'Marketing', 'DevOps', 'Docs', 'UX']}
+            value={newTask.project}
+            onChange={(value) => setNewTask(prev => ({ ...prev, project: value || 'Website' }))}
+          />
+
+          <Divider />
+
+          <Group justify="flex-end">
+            <Button variant="subtle" onClick={() => setNewTaskDrawer(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateTask} disabled={!newTask.title.trim()}>
+              Crear tarea
+            </Button>
+          </Group>
+        </Stack>
       </Drawer>
     </Stack>
   )

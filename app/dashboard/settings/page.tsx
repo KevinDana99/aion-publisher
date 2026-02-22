@@ -1,9 +1,22 @@
 'use client'
 
-import { Container, Stack, Title, Paper, Text, Group, Switch, SimpleGrid, ThemeIcon, Divider } from '@mantine/core'
-import { IoSettings, IoNotifications, IoMoon, IoLanguage, IoShield, IoColorPalette } from 'react-icons/io5'
+import { useState, useEffect } from 'react'
+import { Container, Stack, Paper, Text, Group, Switch, Select, ThemeIcon, Divider, Title } from '@mantine/core'
+import { IoMoon, IoNotifications, IoLanguage, IoShield, IoSettings } from 'react-icons/io5'
+import { useSettings } from '@/contexts/SettingsContext'
 
 export default function SettingsPage() {
+  const { settings, updateSettings } = useSettings()
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  if (!isClient) {
+    return null
+  }
+
   return (
     <Container size="lg" py="xl">
       <Stack gap="xl">
@@ -20,11 +33,21 @@ export default function SettingsPage() {
                   <IoMoon size={20} />
                 </ThemeIcon>
                 <div>
-                  <Text fw={500}>Tema oscuro</Text>
+                  <Text fw={500}>Tema</Text>
                   <Text size="sm" c="dimmed">Cambiar entre modo claro y oscuro</Text>
                 </div>
               </Group>
-              <Switch size="lg" />
+              <Select
+                value={settings.theme}
+                onChange={(value) => updateSettings({ theme: value as 'light' | 'dark' | 'auto' })}
+                data={[
+                  { value: 'light', label: 'Claro' },
+                  { value: 'dark', label: 'Oscuro' },
+                  { value: 'auto', label: 'Automático' }
+                ]}
+                size="sm"
+                style={{ width: 140 }}
+              />
             </Group>
 
             <Divider />
@@ -39,7 +62,11 @@ export default function SettingsPage() {
                   <Text size="sm" c="dimmed">Recibir notificaciones por email</Text>
                 </div>
               </Group>
-              <Switch size="lg" defaultChecked />
+              <Switch
+                size="lg"
+                checked={settings.notifications}
+                onChange={(e) => updateSettings({ notifications: e.currentTarget.checked })}
+              />
             </Group>
 
             <Divider />
@@ -54,7 +81,17 @@ export default function SettingsPage() {
                   <Text size="sm" c="dimmed">Seleccionar idioma de la interfaz</Text>
                 </div>
               </Group>
-              <Text c="dimmed">Español</Text>
+              <Select
+                value={settings.language}
+                onChange={(value) => updateSettings({ language: value || 'es' })}
+                data={[
+                  { value: 'es', label: 'Español' },
+                  { value: 'en', label: 'English' },
+                  { value: 'pt', label: 'Português' }
+                ]}
+                size="sm"
+                style={{ width: 140 }}
+              />
             </Group>
 
             <Divider />
@@ -65,26 +102,15 @@ export default function SettingsPage() {
                   <IoShield size={20} />
                 </ThemeIcon>
                 <div>
-                  <Text fw={500}>Seguridad</Text>
-                  <Text size="sm" c="dimmed">Autenticación de dos factores</Text>
+                  <Text fw={500}>Autenticación de dos factores</Text>
+                  <Text size="sm" c="dimmed">Mayor seguridad para tu cuenta</Text>
                 </div>
               </Group>
-              <Switch size="lg" />
-            </Group>
-
-            <Divider />
-
-            <Group justify="space-between">
-              <Group gap="sm">
-                <ThemeIcon color="pink" variant="light" size="lg" radius="md">
-                  <IoColorPalette size={20} />
-                </ThemeIcon>
-                <div>
-                  <Text fw={500}>Widgets del Dashboard</Text>
-                  <Text size="sm" c="dimmed">Personalizar widgets visibles</Text>
-                </div>
-              </Group>
-              <Text c="blue" fw={500} style={{ cursor: 'pointer' }}>Configurar</Text>
+              <Switch
+                size="lg"
+                checked={settings.twoFactor}
+                onChange={(e) => updateSettings({ twoFactor: e.currentTarget.checked })}
+              />
             </Group>
           </Stack>
         </Paper>

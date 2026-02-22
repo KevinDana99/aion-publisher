@@ -14,6 +14,7 @@ import TeamActivity from './TeamActivity'
 import RevenueOverview from './RevenueOverview'
 import PendingInvoices from './PendingInvoices'
 import CashFlow from './CashFlow'
+import { WidgetSettingsModal } from './WidgetSettingsModal'
 
 export { 
   StatsGrid, 
@@ -31,5 +32,6 @@ export {
   TeamActivity,
   RevenueOverview,
   PendingInvoices,
-  CashFlow
+  CashFlow,
+  WidgetSettingsModal
 }
