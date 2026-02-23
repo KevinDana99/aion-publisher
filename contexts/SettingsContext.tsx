@@ -38,7 +38,14 @@ const defaultIntegrations: Integration[] = [
   { id: 'youtube', name: 'YouTube', icon: 'IoLogoYoutube', enabled: false },
   { id: 'pinterest', name: 'Pinterest', icon: 'IoLogoPinterest', enabled: false },
   { id: 'whatsapp', name: 'WhatsApp Business', icon: 'IoLogoWhatsapp', enabled: false },
-  { id: 'calendly', name: 'Calendly', icon: 'IoCalendar', enabled: false }
+  { 
+    id: 'calendly', 
+    name: 'Calendly', 
+    icon: 'IoCalendar', 
+    enabled: true,
+    token: process.env.NEXT_PUBLIC_CALENDLY_TOKEN || '',
+    webhookUrl: process.env.NEXT_PUBLIC_CALENDLY_URL || ''
+  }
 ]
 
 const defaultWidgets: Widget[] = [

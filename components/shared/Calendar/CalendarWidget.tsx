@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, forwardRef } from 'react'
-import { Box, Paper, Text, Group, Badge, Indicator, Stack, ThemeIcon, Popover, UnstyledButton } from '@mantine/core'
-import { Calendar } from '@mantine/dates'
-import type { DateStringValue } from '@mantine/dates'
-import { IoCalendar, IoTime, IoPerson, IoVideocam, IoLocationOutline, IoChevronBack, IoChevronForward } from 'react-icons/io5'
+import { useState, forwardRef, useMemo } from 'react'
+import { Box, Paper, Text, Group, Stack, UnstyledButton, SegmentedControl, ScrollArea, ActionIcon, Divider, Button, Badge, ThemeIcon } from '@mantine/core'
+import { IoCalendar, IoChevronBack, IoChevronForward, IoAdd, IoVideocam } from 'react-icons/io5'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
 
@@ -29,18 +27,15 @@ export interface CalendarWidgetProps {
   events?: CalendarEvent[]
   onDateSelect?: (date: Date) => void
   onEventClick?: (event: CalendarEvent) => void
+  onTimeSlotClick?: (date: Date, time: string) => void
   onMonthChange?: (date: Date) => void
   defaultDate?: Date
   selectedDate?: Date | null
   highlightToday?: boolean
-  showWeekends?: boolean
   locale?: string
-  minDate?: Date
-  maxDate?: Date
   title?: string
-  showLegend?: boolean
-  viewType?: 'full' | 'compact'
-  maxHeight?: number
+  workingHours?: { start: number; end: number }
+  slotDuration?: number
 }
 
 const typeColors: Record<string, string> = {
@@ -52,207 +47,455 @@ const typeColors: Record<string, string> = {
   other: 'gray'
 }
 
-const typeIcons: Record<string, React.ReactNode> = {
-  meeting: <IoVideocam size={14} />,
-  task: <IoCalendar size={14} />,
-  reminder: <IoTime size={14} />,
-  campaign: <IoCalendar size={14} />,
-  deadline: <IoCalendar size={14} />,
-  other: <IoCalendar size={14} />
-}
-
 const statusColors: Record<string, string> = {
   pending: 'blue',
   completed: 'green',
   cancelled: 'red'
 }
 
-function getDateFromEvent(event: CalendarEvent): Date {
-  return typeof event.date === 'string' ? new Date(event.date) : event.date
+function getDateKeyFromEvent(event: CalendarEvent): string {
+  if (typeof event.date === 'string') {
+    return event.date
+  }
+  return dayjs(event.date).format('YYYY-MM-DD')
 }
 
-function formatDateToDateString(date: Date): DateStringValue {
-  return dayjs(date).format('YYYY-MM-DD')
+function formatTime(hour: number): string {
+  return `${hour.toString().padStart(2, '0')}:00`
 }
+
+const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const WEEKDAYS_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
 const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
   events = [],
   onDateSelect,
   onEventClick,
-  onMonthChange,
+  onTimeSlotClick,
   defaultDate = new Date(),
   selectedDate,
-  highlightToday: highlightTodayProp = true,
-  showWeekends = true,
-  locale = 'es',
-  minDate,
-  maxDate,
+  highlightToday = true,
   title,
-  showLegend = true,
-  viewType = 'full',
-  maxHeight
+  workingHours = { start: 8, end: 20 },
 }, ref) => {
-  const [currentMonth, setCurrentMonth] = useState<Date>(defaultDate)
+  const [currentDate, setCurrentDate] = useState<Date>(defaultDate)
   const [internalSelectedDate, setInternalSelectedDate] = useState<Date | null>(selectedDate || null)
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month')
 
-  const eventsByDate = events.reduce((acc, event) => {
-    const dateKey = formatDateToDateString(getDateFromEvent(event))
-    if (!acc[dateKey]) acc[dateKey] = []
-    acc[dateKey].push(event)
-    return acc
-  }, {} as Record<string, CalendarEvent[]>)
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>()
+    events.forEach(event => {
+      const key = getDateKeyFromEvent(event)
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(event)
+    })
+    return map
+  }, [events])
 
-  const handleDateChange = (dateString: DateStringValue) => {
-    const date = new Date(dateString)
+  const eventsByDateTime = useMemo(() => {
+    const map = new Map<string, CalendarEvent>()
+    events.forEach(event => {
+      if (event.time) {
+        const key = `${getDateKeyFromEvent(event)}-${event.time}`
+        map.set(key, event)
+      }
+    })
+    return map
+  }, [events])
+
+  const handleDateClick = (date: Date) => {
     setInternalSelectedDate(date)
     onDateSelect?.(date)
+    if (view === 'month') {
+      setView('day')
+    }
   }
 
-  const handleMonthChange = (dateString: DateStringValue) => {
-    const date = new Date(dateString)
-    setCurrentMonth(date)
-    onMonthChange?.(date)
+  const handlePrev = () => {
+    const newDate = new Date(currentDate)
+    if (view === 'month') {
+      newDate.setMonth(newDate.getMonth() - 1)
+    } else if (view === 'week') {
+      newDate.setDate(newDate.getDate() - 7)
+    } else {
+      newDate.setDate(newDate.getDate() - 1)
+    }
+    setCurrentDate(newDate)
   }
 
-  const renderDay = (dateString: DateStringValue) => {
-    const date = new Date(dateString)
-    const dayEvents = eventsByDate[dateString] || []
-    const isToday = dayjs(date).isSame(dayjs(), 'day')
-    const isSelected = internalSelectedDate && dayjs(date).isSame(dayjs(internalSelectedDate), 'day')
-    const isWeekend = [0, 6].includes(date.getDay())
+  const handleNext = () => {
+    const newDate = new Date(currentDate)
+    if (view === 'month') {
+      newDate.setMonth(newDate.getMonth() + 1)
+    } else if (view === 'week') {
+      newDate.setDate(newDate.getDate() + 7)
+    } else {
+      newDate.setDate(newDate.getDate() + 1)
+    }
+    setCurrentDate(newDate)
+  }
 
-    if (dayEvents.length === 0) {
-      return (
-        <Box
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 'var(--mantine-radius-md)',
-            backgroundColor: isSelected 
-              ? 'var(--mantine-color-blue-filled)' 
-              : isToday && highlightTodayProp
-                ? 'var(--mantine-color-blue-light)'
-                : 'transparent',
-            color: isSelected 
-              ? 'white' 
-              : isToday && highlightTodayProp
-                ? 'var(--mantine-color-blue-filled)'
-                : isWeekend && !showWeekends
-                  ? 'var(--mantine-color-gray-4)'
-                  : undefined,
-            fontWeight: isToday || isSelected ? 700 : 400
-          }}
-        >
-          {date.getDate()}
-        </Box>
-      )
+  const handleToday = () => {
+    setCurrentDate(new Date())
+    setInternalSelectedDate(new Date())
+  }
+
+  const getWeekDates = () => {
+    const start = dayjs(currentDate).startOf('week').toDate()
+    const dates = []
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(start)
+      date.setDate(date.getDate() + i)
+      dates.push(date)
+    }
+    return dates
+  }
+
+  const renderMonthView = () => {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const startDate = new Date(firstDay)
+    startDate.setDate(startDate.getDate() - firstDay.getDay())
+
+    const weeks = []
+    let currentWeekDate = new Date(startDate)
+
+    while (currentWeekDate <= lastDay || weeks.length < 6) {
+      const week = []
+      for (let i = 0; i < 7; i++) {
+        week.push(new Date(currentWeekDate))
+        currentWeekDate.setDate(currentWeekDate.getDate() + 1)
+      }
+      weeks.push(week)
+      if (currentWeekDate > lastDay && weeks.length >= 4) break
     }
 
-    const primaryEvent = dayEvents[0]
-    const eventColor = primaryEvent.color || typeColors[primaryEvent.type || 'other']
-
     return (
-      <Popover position="bottom" withArrow shadow="md" withinPortal>
-        <Popover.Target>
-          <Indicator
-            size={dayEvents.length > 1 ? 12 : 6}
-            color={eventColor}
-            offset={-4}
-            withBorder
-            label={dayEvents.length > 1 ? dayEvents.length : undefined}
-          >
-            <Box
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 'var(--mantine-radius-md)',
-                backgroundColor: isSelected 
-                  ? 'var(--mantine-color-blue-filled)' 
-                  : isToday && highlightTodayProp
-                    ? 'var(--mantine-color-blue-light)'
-                    : 'transparent',
-                color: isSelected 
-                  ? 'white' 
-                  : isToday && highlightTodayProp
-                    ? 'var(--mantine-color-blue-filled)'
-                    : undefined,
-                fontWeight: isToday || isSelected ? 700 : 400,
-                cursor: 'pointer'
-              }}
-            >
-              {date.getDate()}
+      <Stack gap="sm">
+        <Group gap={0}>
+          {WEEKDAYS.map((day) => (
+            <Box key={day} style={{ flex: 1, textAlign: 'center' }}>
+              <Text size="sm" c="dimmed" fw={500}>{day}</Text>
             </Box>
-          </Indicator>
-        </Popover.Target>
-        <Popover.Dropdown>
-          <Stack gap="xs">
-            <Text fw={600} size="sm">{dayjs(date).format('dddd, DD MMMM')}</Text>
-            <Stack gap="xs">
-              {dayEvents.map((event) => (
+          ))}
+        </Group>
+
+        {weeks.map((week, weekIndex) => (
+          <Group key={weekIndex} gap={0}>
+            {week.map((date) => {
+              const dateKey = dayjs(date).format('YYYY-MM-DD')
+              const dayEvents = eventsByDate.get(dateKey) || []
+              const isCurrentMonth = date.getMonth() === month
+              const isToday = dayjs(date).isSame(dayjs(), 'day')
+              const isSelected = internalSelectedDate && dayjs(date).isSame(dayjs(internalSelectedDate), 'day')
+
+              return (
                 <UnstyledButton
-                  key={event.id}
-                  onClick={() => {
-                    onEventClick?.(event)
-                    event.onClick?.()
-                  }}
+                  key={dateKey}
+                  onClick={() => handleDateClick(date)}
                   style={{
-                    padding: 'var(--mantine-spacing-xs)',
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    backgroundColor: 'var(--mantine-color-gray-0)',
-                    width: '100%',
-                    textAlign: 'left'
+                    flex: 1,
+                    minHeight: 60,
+                    padding: 4,
+                    borderRadius: 8,
+                    backgroundColor: isSelected 
+                      ? 'var(--mantine-color-blue-1)' 
+                      : isToday && highlightToday
+                        ? 'var(--mantine-color-blue-0)'
+                        : 'transparent',
+                    border: isSelected ? '2px solid var(--mantine-color-blue-6)' : '2px solid transparent',
+                    cursor: 'pointer',
+                    opacity: isCurrentMonth ? 1 : 0.4
                   }}
                 >
-                  <Group gap="xs">
-                    <ThemeIcon variant="light" color={event.color || typeColors[event.type || 'other']} size="sm">
-                      {typeIcons[event.type || 'other']}
-                    </ThemeIcon>
-                    <Text size="sm" fw={500}>{event.title}</Text>
-                    {event.status && (
-                      <Badge color={statusColors[event.status]} variant="light" size="xs">
-                        {event.status}
-                      </Badge>
+                  <Stack gap={4} align="center">
+                    <Text 
+                      size="sm" 
+                      fw={isToday ? 700 : 400}
+                      c={isToday ? 'blue' : undefined}
+                      ta="center"
+                    >
+                      {date.getDate()}
+                    </Text>
+                    {dayEvents.length > 0 && (
+                      <Group gap={4}>
+                        {dayEvents.length <= 3 ? (
+                          dayEvents.map((event) => (
+                            <Box
+                              key={event.id}
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                backgroundColor: `var(--mantine-color-${event.color || typeColors[event.type || 'other']}-6)`
+                              }}
+                            />
+                          ))
+                        ) : (
+                          <>
+                            <Box
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                backgroundColor: 'var(--mantine-color-blue-6)'
+                              }}
+                            />
+                            <Text size="xs" c="dimmed" fw={500}>+{dayEvents.length}</Text>
+                          </>
+                        )}
+                      </Group>
                     )}
-                  </Group>
-                  {event.time && (
-                    <Text size="xs" c="dimmed" mt={4}>{event.time}</Text>
-                  )}
+                  </Stack>
                 </UnstyledButton>
-              ))}
-            </Stack>
-          </Stack>
-        </Popover.Dropdown>
-      </Popover>
+              )
+            })}
+          </Group>
+        ))}
+      </Stack>
     )
   }
 
-  const getDayProps = (dateString: DateStringValue) => {
-    const date = new Date(dateString)
-    const isSelected = internalSelectedDate && dayjs(date).isSame(dayjs(internalSelectedDate), 'day')
-    const isToday = dayjs(date).isSame(dayjs(), 'day')
-    
-    return {
-      selected: isSelected || false,
-      style: {
-        backgroundColor: isSelected 
-          ? 'var(--mantine-color-blue-filled)' 
-          : isToday && highlightTodayProp
-            ? 'var(--mantine-color-blue-light)'
-            : undefined,
-        color: isSelected 
-          ? 'white' 
-          : isToday && highlightTodayProp
-            ? 'var(--mantine-color-blue-filled)'
-            : undefined,
-        fontWeight: isToday || isSelected ? 700 : 400,
-        borderRadius: 'var(--mantine-radius-md)'
-      }
+  const renderWeekView = () => {
+    const weekDates = getWeekDates()
+    const hours: number[] = []
+    for (let h = workingHours.start; h < workingHours.end; h++) {
+      hours.push(h)
+    }
+
+    return (
+      <Box style={{ display: 'flex', flexDirection: 'column', height: 600 }}>
+        <Group gap={0} style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
+          <Box style={{ width: 60 }} />
+          {weekDates.map((date) => {
+            const isToday = dayjs(date).isSame(dayjs(), 'day')
+            const dateKey = dayjs(date).format('YYYY-MM-DD')
+            const dayEvents = eventsByDate.get(dateKey) || []
+            
+            return (
+              <Box key={date.toISOString()} style={{ flex: 1, textAlign: 'center', padding: '8px 4px' }}>
+                <Text size="xs" c="dimmed">{WEEKDAYS[date.getDay()]}</Text>
+                <Text size="lg" fw={isToday ? 700 : 400} c={isToday ? 'blue' : undefined}>
+                  {date.getDate()}
+                </Text>
+                {dayEvents.length > 0 && (
+                  <Group gap={4} justify="center" mt={2}>
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <Box
+                        key={event.id}
+                        style={{
+                          width: 4,
+                          height: 4,
+                          borderRadius: '50%',
+                          backgroundColor: `var(--mantine-color-${event.color || typeColors[event.type || 'other']}-6)`
+                        }}
+                      />
+                    ))}
+                    {dayEvents.length > 3 && (
+                      <Text size="xs" c="dimmed">+{dayEvents.length - 3}</Text>
+                    )}
+                  </Group>
+                )}
+              </Box>
+            )
+          })}
+        </Group>
+
+        <ScrollArea flex={1}>
+          <Group gap={0} align="flex-start">
+            <Box style={{ width: 60 }}>
+              {hours.map((hour) => (
+                <Box key={hour} style={{ height: 60 }}>
+                  <Text size="xs" c="dimmed" ta="right" pr={8}>
+                    {formatTime(hour)}
+                  </Text>
+                </Box>
+              ))}
+            </Box>
+
+            {weekDates.map((date) => {
+              const dateKey = dayjs(date).format('YYYY-MM-DD')
+
+              return (
+                <Box key={dateKey} style={{ flex: 1, position: 'relative' }}>
+                  {hours.map((hour) => {
+                    const timeKey = `${dateKey}-${formatTime(hour)}`
+                    const event = eventsByDateTime.get(timeKey)
+                    const slotTime = formatTime(hour)
+
+                    return (
+                      <UnstyledButton
+                        key={hour}
+                        onClick={() => onTimeSlotClick?.(date, slotTime)}
+                        style={{
+                          width: '100%',
+                          height: 60,
+                          borderTop: '1px solid var(--mantine-color-gray-2)',
+                          borderLeft: '1px solid var(--mantine-color-gray-2)',
+                          padding: 4,
+                          textAlign: 'left'
+                        }}
+                      >
+                        {event && (
+                          <Box
+                            style={{
+                              padding: '4px 6px',
+                              borderRadius: 4,
+                              backgroundColor: `var(--mantine-color-${event.color || typeColors[event.type || 'other']}-1)`,
+                              borderLeft: `2px solid var(--mantine-color-${event.color || typeColors[event.type || 'other']}-6)`,
+                              height: '100%'
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onEventClick?.(event)
+                            }}
+                          >
+                            <Text size="xs" fw={600} truncate>{event.title}</Text>
+                          </Box>
+                        )}
+                      </UnstyledButton>
+                    )
+                  })}
+                </Box>
+              )
+            })}
+          </Group>
+        </ScrollArea>
+      </Box>
+    )
+  }
+
+  const renderDayView = () => {
+    const hours: number[] = []
+    for (let h = workingHours.start; h < workingHours.end; h++) {
+      hours.push(h)
+    }
+
+    const dateKey = dayjs(currentDate).format('YYYY-MM-DD')
+    const dayEvents = eventsByDate.get(dateKey) || []
+    const dayName = WEEKDAYS_FULL[currentDate.getDay()]
+    const formattedDate = dayjs(currentDate).format('DD MMMM YYYY')
+
+    return (
+      <Stack gap="md">
+        <Box>
+          <Text fw={600}>{dayName}</Text>
+          <Text c="dimmed">{formattedDate}</Text>
+        </Box>
+
+        <ScrollArea h={500}>
+          <Group gap={0} align="flex-start">
+            <Box style={{ width: 60 }}>
+              {hours.map((hour) => (
+                <Box key={hour} style={{ height: 60 }}>
+                  <Text size="xs" c="dimmed" ta="right" pr={8}>
+                    {formatTime(hour)}
+                  </Text>
+                </Box>
+              ))}
+            </Box>
+
+            <Box style={{ flex: 1, position: 'relative' }}>
+              {hours.map((hour) => {
+                const timeKey = `${dateKey}-${formatTime(hour)}`
+                const event = eventsByDateTime.get(timeKey)
+                const slotTime = formatTime(hour)
+
+                return (
+                  <UnstyledButton
+                    key={hour}
+                    onClick={() => onTimeSlotClick?.(currentDate, slotTime)}
+                    style={{
+                      width: '100%',
+                      height: 60,
+                      borderTop: '1px solid var(--mantine-color-gray-2)',
+                      borderLeft: '1px solid var(--mantine-color-gray-2)',
+                      padding: 4,
+                      textAlign: 'left'
+                    }}
+                  >
+                    {event ? (
+                      <Box
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: 8,
+                          backgroundColor: `var(--mantine-color-${event.color || typeColors[event.type || 'other']}-1)`,
+                          borderLeft: `4px solid var(--mantine-color-${event.color || typeColors[event.type || 'other']}-6)`,
+                          height: '100%'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEventClick?.(event)
+                        }}
+                      >
+                        <Group gap="xs">
+                          <ThemeIcon variant="light" color={event.color || typeColors[event.type || 'other']} size="sm">
+                            <IoVideocam size={14} />
+                          </ThemeIcon>
+                          <Box style={{ flex: 1 }}>
+                            <Text size="sm" fw={600}>{event.title}</Text>
+                            <Group gap="xs">
+                              <Text size="xs" c="dimmed">{event.time}</Text>
+                              <Text size="xs" c="dimmed">•</Text>
+                              <Text size="xs" c="dimmed">{event.duration} min</Text>
+                            </Group>
+                            {event.attendees && event.attendees.length > 0 && (
+                              <Text size="xs" c="dimmed">{event.attendees.join(', ')}</Text>
+                            )}
+                          </Box>
+                          {event.status && (
+                            <Badge color={statusColors[event.status]} variant="light" size="xs">
+                              {event.status}
+                            </Badge>
+                          )}
+                        </Group>
+                      </Box>
+                    ) : (
+                      <Group gap="xs" style={{ opacity: 0.5 }}>
+                        <IoAdd size={16} />
+                        <Text size="xs" c="dimmed">Disponible</Text>
+                      </Group>
+                    )}
+                  </UnstyledButton>
+                )
+              })}
+            </Box>
+          </Group>
+        </ScrollArea>
+
+        {dayEvents.length > 0 && (
+          <Box>
+            <Divider label="Resumen del día" labelPosition="left" my="sm" />
+            <Group gap="xs">
+              {dayEvents.map((event) => (
+                <Badge
+                  key={event.id}
+                  color={event.color || typeColors[event.type || 'other']}
+                  variant="light"
+                >
+                  {event.time} - {event.title}
+                </Badge>
+              ))}
+            </Group>
+          </Box>
+        )}
+      </Stack>
+    )
+  }
+
+  const getViewTitle = () => {
+    if (view === 'month') {
+      return `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`
+    } else if (view === 'week') {
+      const weekDates = getWeekDates()
+      const start = weekDates[0]
+      const end = weekDates[6]
+      return `${dayjs(start).format('DD MMM')} - ${dayjs(end).format('DD MMM YYYY')}`
+    } else {
+      return dayjs(currentDate).format('dddd, DD MMMM YYYY')
     }
   }
 
@@ -260,61 +503,59 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
     <Paper ref={ref} shadow="sm" p="md" radius="md" style={{ background: 'var(--mantine-color-body)' }}>
       <Stack gap="md">
         {title && (
-          <Group justify="space-between">
-            <Group gap="xs">
-              <IoCalendar size={20} />
-              <Text fw={600} size="lg">{title}</Text>
-            </Group>
+          <Group gap="xs">
+            <IoCalendar size={20} />
+            <Text fw={600} size="lg">{title}</Text>
           </Group>
         )}
 
-        <Box style={{ maxHeight, overflow: 'auto' }}>
-          <Calendar
-            date={formatDateToDateString(currentMonth)}
-            onDateChange={handleMonthChange}
-            getDayProps={getDayProps}
-            renderDay={renderDay}
-            size={viewType === 'compact' ? 'sm' : 'md'}
-            locale={locale}
-            minDate={minDate ? formatDateToDateString(minDate) : undefined}
-            maxDate={maxDate ? formatDateToDateString(maxDate) : undefined}
-            hideOutsideDates
-            previousIcon={<IoChevronBack size={16} />}
-            nextIcon={<IoChevronForward size={16} />}
-            highlightToday={highlightTodayProp}
-            styles={{
-              calendarHeader: {
-                marginBottom: 'var(--mantine-spacing-md)'
-              },
-              calendarHeaderControl: {
-                borderRadius: 'var(--mantine-radius-md)'
-              },
-              day: {
-                borderRadius: 'var(--mantine-radius-md)',
-                width: viewType === 'compact' ? 32 : 40,
-                height: viewType === 'compact' ? 32 : 40
-              }
-            }}
+        <Group justify="space-between">
+          <Group gap="xs">
+            <ActionIcon variant="subtle" onClick={handlePrev}>
+              <IoChevronBack size={18} />
+            </ActionIcon>
+            <ActionIcon variant="subtle" onClick={handleNext}>
+              <IoChevronForward size={18} />
+            </ActionIcon>
+            <Button variant="subtle" size="compact-sm" onClick={handleToday}>
+              Hoy
+            </Button>
+            <Text fw={600} ml="sm">{getViewTitle()}</Text>
+          </Group>
+
+          <SegmentedControl
+            value={view}
+            onChange={(value) => setView(value as 'month' | 'week' | 'day')}
+            data={[
+              { label: 'Mes', value: 'month' },
+              { label: 'Semana', value: 'week' },
+              { label: 'Día', value: 'day' }
+            ]}
+            size="sm"
           />
-        </Box>
+        </Group>
 
-        {showLegend && (
-          <Group gap="md">
-            {Object.entries(typeColors).slice(0, 4).map(([type, color]) => (
-              <Group key={type} gap="xs">
-                <Box
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: `var(--mantine-color-${color}-6)`
-                  }}
-                />
-                <Text size="xs" c="dimmed" tt="capitalize">{type}</Text>
-              </Group>
-            ))}
-          </Group>
-        )}
+        <Divider />
+
+        {view === 'month' && renderMonthView()}
+        {view === 'week' && renderWeekView()}
+        {view === 'day' && renderDayView()}
+
+        <Group gap="md">
+          {Object.entries(typeColors).slice(0, 5).map(([type, color]) => (
+            <Group key={type} gap="xs">
+              <Box
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 4,
+                  backgroundColor: `var(--mantine-color-${color}-6)`
+                }}
+              />
+              <Text size="xs" c="dimmed" style={{ textTransform: 'capitalize' }}>{type}</Text>
+            </Group>
+          ))}
+        </Group>
       </Stack>
     </Paper>
   )

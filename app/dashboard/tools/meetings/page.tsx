@@ -4,9 +4,9 @@ import { Suspense, useState, useEffect, useMemo } from 'react'
 import { Container, Stack, Title, Center, Loader, Paper, Text, Group, Button, SimpleGrid, Badge, ActionIcon, Box, Modal, TextInput, Select, Divider, ThemeIcon, Tabs, Anchor, Alert, Textarea, Grid } from '@mantine/core'
 import { IoVideocam, IoAdd, IoTrash, IoLink, IoCalendar, IoTime, IoPerson, IoCheckmarkCircle, IoAlertCircle, IoOpen, IoSettings, IoRefresh } from 'react-icons/io5'
 import { useSettings } from '@/contexts/SettingsContext'
-import { CalendarWidget, type CalendarEvent } from '@/components/shared/Calendar'
-import { parseCalendlyEvent, fetchCalendlyEvents } from '@/lib/calendly'
-import type { CalendlyEvent } from '@/lib/calendly'
+import CalendarWidget, { type CalendarEvent } from '@/components/shared/Calendar/CalendarWidget'
+import { fetchCalendlyEvents } from '@/lib/calendly/actions'
+import type { CalendlyEvent } from '@/lib/calendly/types'
 import Link from 'next/link'
 import dayjs from 'dayjs'
 
@@ -30,84 +30,50 @@ interface Meeting {
   status: 'programada' | 'completada' | 'cancelada'
   calendlyLink?: string
   notes: string
+  isFromCalendly?: boolean
 }
 
-const initialMeetings: Meeting[] = [
-  {
-    id: '1',
-    title: 'Kick-off Proyecto Alpha',
-    clientName: 'Cliente Alpha',
-    clientEmail: 'alpha@email.com',
-    date: '2026-02-25',
-    time: '10:00',
-    duration: 60,
-    type: 'videocall',
-    status: 'programada',
-    calendlyLink: 'https://calendly.com/aion-publisher/60min',
-    notes: 'Reunión inicial para definir alcances del proyecto'
-  },
-  {
-    id: '2',
-    title: 'Revisión de Avances Beta',
-    clientName: 'Beta Corp',
-    clientEmail: 'beta@corp.com',
-    date: '2026-02-26',
-    time: '15:30',
-    duration: 30,
-    type: 'videocall',
-    status: 'programada',
-    calendlyLink: 'https://calendly.com/aion-publisher/30min',
-    notes: ''
-  },
-  {
-    id: '3',
-    title: 'Cierre de Proyecto Gamma',
-    clientName: 'Gamma Studios',
-    clientEmail: 'gamma@studios.com',
-    date: '2026-02-20',
-    time: '11:00',
-    duration: 45,
-    type: 'presencial',
-    status: 'completada',
-    notes: 'Entrega final de entregables'
-  },
-  {
-    id: '4',
-    title: 'Planning Sprint Q1',
-    clientName: 'Delta Inc',
-    clientEmail: 'delta@inc.com',
-    date: '2026-02-28',
-    time: '09:00',
-    duration: 90,
-    type: 'videocall',
-    status: 'programada',
-    notes: 'Planificación del primer trimestre'
-  },
-  {
-    id: '5',
-    title: 'Demo Producto',
-    clientName: 'Epsilon Labs',
-    clientEmail: 'epsilon@labs.com',
-    date: '2026-03-03',
-    time: '14:00',
-    duration: 60,
-    type: 'videocall',
-    status: 'programada',
-    notes: 'Demostración del producto final'
+const initialMeetings: Meeting[] = []
+
+function parseCalendlyEvent(event: CalendlyEvent): Meeting {
+  const startStr = event.start_time
+  const endStr = event.end_time
+  
+  const [datePart, timePart] = startStr.split('T')
+  const [year, month, day] = datePart.split('-').map(Number)
+  const [hour, minute] = timePart.split(':').map(Number)
+  
+  const localDate = new Date(year, month - 1, day + 1, hour, minute)
+  const duration = Math.round((new Date(endStr).getTime() - new Date(startStr).getTime()) / 60000)
+  const guest = event.event_guests?.[0] || event.event_memberships?.[0]
+  
+  return {
+    id: event.uri.split('/').pop() || event.uri,
+    title: event.name,
+    clientName: guest?.name || 'Cliente',
+    clientEmail: guest?.email || '',
+    date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+    duration,
+    type: event.location?.join_url ? 'videocall' : 'presencial',
+    status: event.status === 'active' ? 'programada' : 'cancelada',
+    notes: '',
+    isFromCalendly: true
   }
-]
+}
 
 function MeetingsContent() {
-  const { settings, updateIntegration } = useSettings()
+  const { settings } = useSettings()
   const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings)
   const [modalOpened, setModalOpened] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [calendlyEvents, setCalendlyEvents] = useState<CalendlyEvent[]>([])
-  const [isLoadingCalendly, setIsLoadingCalendly] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [calendlyError, setCalendlyError] = useState<string | null>(null)
 
   const calendlyIntegration = settings.integrations.find(i => i.id === 'calendly')
   const calendlyToken = calendlyIntegration?.token || ''
   const calendlyUrl = calendlyIntegration?.webhookUrl || ''
+  const isCalendlyEnabled = calendlyIntegration?.enabled && !!calendlyToken
 
   const [newMeeting, setNewMeeting] = useState<Partial<Meeting>>({
     title: '',
@@ -121,46 +87,54 @@ function MeetingsContent() {
   })
 
   useEffect(() => {
-    if (calendlyToken && calendlyIntegration?.enabled) {
+    if (isCalendlyEnabled) {
       loadCalendlyEvents()
     }
-  }, [calendlyToken, calendlyIntegration?.enabled])
+  }, [isCalendlyEnabled, calendlyToken])
 
   const loadCalendlyEvents = async () => {
     if (!calendlyToken) return
     
-    setIsLoadingCalendly(true)
+    setIsLoading(true)
+    setCalendlyError(null)
+    
     try {
-      const result = await fetchCalendlyEvents({ token: calendlyToken })
+      const result = await fetchCalendlyEvents({ 
+        token: calendlyToken,
+        count: 100
+      })
       
       if (result.success && result.events) {
-        setCalendlyEvents(result.events)
+        const calendlyMeetings = result.events.map(parseCalendlyEvent)
+        const localMeetings = meetings.filter(m => !m.isFromCalendly)
+        setMeetings([...localMeetings, ...calendlyMeetings])
+      } else if (result.error) {
+        setCalendlyError(result.error)
       }
     } catch (error) {
-      console.error('Error fetching Calendly events:', error)
+      console.error('Error loading Calendly events:', error)
+      setCalendlyError('Error al cargar eventos de Calendly')
     } finally {
-      setIsLoadingCalendly(false)
+      setIsLoading(false)
     }
   }
 
   const calendarEvents: CalendarEvent[] = useMemo(() => {
-    const localMeetings: CalendarEvent[] = meetings.map(m => ({
-      id: m.id,
-      title: m.title,
-      date: m.date,
-      time: m.time,
-      duration: m.duration,
-      type: 'meeting' as const,
-      status: m.status === 'programada' ? 'pending' : m.status === 'completada' ? 'completed' : 'cancelled',
-      description: m.notes,
-      attendees: [m.clientName],
-      location: m.type === 'videocall' ? 'Videollamada' : m.type === 'presencial' ? 'Presencial' : 'Telefónica'
-    }))
-
-    const calendlyMeetings: CalendarEvent[] = calendlyEvents.map(e => parseCalendlyEvent(e))
-
-    return [...localMeetings, ...calendlyMeetings]
-  }, [meetings, calendlyEvents])
+    return meetings
+      .filter(m => m.status !== 'cancelada')
+      .map(m => ({
+        id: m.id,
+        title: m.title,
+        date: m.date,
+        time: m.time,
+        duration: m.duration,
+        type: 'meeting' as const,
+        status: m.status === 'programada' ? 'pending' : 'completed',
+        description: m.notes,
+        attendees: [m.clientName],
+        location: m.type === 'videocall' ? 'Videollamada' : m.type === 'presencial' ? 'Presencial' : 'Telefónica'
+      }))
+  }, [meetings])
 
   const statusColors: Record<string, string> = {
     programada: 'blue',
@@ -192,7 +166,8 @@ function MeetingsContent() {
       type: newMeeting.type || 'videocall',
       status: 'programada',
       calendlyLink: calendlyUrl ? `${calendlyUrl}/${newMeeting.duration || 30}min` : undefined,
-      notes: newMeeting.notes || ''
+      notes: newMeeting.notes || '',
+      isFromCalendly: false
     }
     setMeetings([meeting, ...meetings])
     setModalOpened(false)
@@ -227,13 +202,18 @@ function MeetingsContent() {
     }
   }
 
+  const handleTimeSlotClick = (date: Date, time: string) => {
+    setNewMeeting({
+      ...newMeeting,
+      date: dayjs(date).format('YYYY-MM-DD'),
+      time: time
+    })
+    setModalOpened(true)
+  }
+
   const scheduledCount = meetings.filter(m => m.status === 'programada').length
   const completedCount = meetings.filter(m => m.status === 'completada').length
   const cancelledCount = meetings.filter(m => m.status === 'cancelada').length
-
-  const todayMeetings = selectedDate
-    ? meetings.filter(m => dayjs(m.date).isSame(selectedDate, 'day') && m.status === 'programada')
-    : []
 
   return (
     <Container size="xl" py="xl" fluid>
@@ -244,14 +224,14 @@ function MeetingsContent() {
             <Title order={2}>Reuniones</Title>
           </Group>
           <Group>
-            {calendlyIntegration?.enabled && (
+            {isCalendlyEnabled && (
               <Button 
                 variant="subtle" 
-                onClick={() => loadCalendlyEvents()}
-                loading={isLoadingCalendly}
+                onClick={loadCalendlyEvents}
+                loading={isLoading}
                 leftSection={<IoRefresh size={16} />}
               >
-                Sincronizar Calendly
+                Sincronizar
               </Button>
             )}
             <Button 
@@ -260,7 +240,7 @@ function MeetingsContent() {
               href="/dashboard/settings/integrations"
               leftSection={<IoSettings size={16} />}
             >
-              Configurar Calendly
+              Configurar
             </Button>
             <Button leftSection={<IoAdd size={18} />} onClick={() => setModalOpened(true)}>
               Nueva Reunión
@@ -268,7 +248,17 @@ function MeetingsContent() {
           </Group>
         </Group>
 
-        {!calendlyToken && (
+        {isCalendlyEnabled ? (
+          <Alert icon={<IoCheckmarkCircle size={18} />} color="green">
+            <Group justify="space-between">
+              <Box>
+                <Text size="sm" fw={500}>Calendly conectado</Text>
+                <Text size="xs" c="dimmed">{calendlyUrl}</Text>
+              </Box>
+              <Text size="sm">{meetings.filter(m => m.isFromCalendly).length} eventos sincronizados</Text>
+            </Group>
+          </Alert>
+        ) : (
           <Alert icon={<IoAlertCircle size={18} />} title="Calendly no configurado" color="yellow">
             <Group justify="space-between">
               <Text size="sm">Configura tu token de Calendly para sincronizar tus reuniones automáticamente.</Text>
@@ -279,6 +269,17 @@ function MeetingsContent() {
                 href="/dashboard/settings/integrations"
               >
                 Configurar
+              </Button>
+            </Group>
+          </Alert>
+        )}
+
+        {calendlyError && (
+          <Alert icon={<IoAlertCircle size={18} />} color="red">
+            <Group justify="space-between">
+              <Text size="sm">{calendlyError}</Text>
+              <Button size="xs" variant="light" onClick={loadCalendlyEvents}>
+                Reintentar
               </Button>
             </Group>
           </Alert>
@@ -311,47 +312,28 @@ function MeetingsContent() {
               <Text size="sm" c="dimmed">Este mes</Text>
               <ThemeIcon variant="light" color="violet"><IoTime size={18} /></ThemeIcon>
             </Group>
-            <Text size="xl" fw={700}>{meetings.filter(m => m.date.startsWith('2026-02')).length}</Text>
+            <Text size="xl" fw={700}>{meetings.filter(m => m.date.startsWith(dayjs().format('YYYY-MM'))).length}</Text>
           </Paper>
         </SimpleGrid>
 
         <Grid gutter="lg">
-          <Grid.Col span={{ base: 12, md: 5 }}>
+          <Grid.Col span={{ base: 12, md: 6 }}>
             <CalendarWidget
               events={calendarEvents}
               onDateSelect={handleDateSelect}
               onEventClick={handleEventClick}
+              onTimeSlotClick={handleTimeSlotClick}
               title="Calendario de Reuniones"
               highlightToday
+              workingHours={{ start: 8, end: 20 }}
             />
-            
-            {selectedDate && todayMeetings.length > 0 && (
-              <Paper shadow="xs" p="md" radius="md" mt="md">
-                <Text fw={600} mb="sm">
-                  Reuniones del {dayjs(selectedDate).format('DD/MM/YYYY')}
-                </Text>
-                <Stack gap="xs">
-                  {todayMeetings.map(m => (
-                    <Group key={m.id} justify="space-between">
-                      <Group gap="xs">
-                        <ThemeIcon variant="light" color="blue" size="sm">
-                          {typeIcons[m.type]}
-                        </ThemeIcon>
-                        <Text size="sm">{m.time} - {m.title}</Text>
-                      </Group>
-                      <Text size="xs" c="dimmed">{m.duration} min</Text>
-                    </Group>
-                  ))}
-                </Stack>
-              </Paper>
-            )}
           </Grid.Col>
           
-          <Grid.Col span={{ base: 12, md: 7 }}>
+          <Grid.Col span={{ base: 12, md: 6 }}>
             <Tabs defaultValue="programadas">
               <Tabs.List>
-                <Tabs.Tab value="programadas">Programadas</Tabs.Tab>
-                <Tabs.Tab value="todas">Todas</Tabs.Tab>
+                <Tabs.Tab value="programadas">Programadas ({meetings.filter(m => m.status === 'programada').length})</Tabs.Tab>
+                <Tabs.Tab value="todas">Todas ({meetings.length})</Tabs.Tab>
                 <Tabs.Tab value="completadas">Completadas</Tabs.Tab>
               </Tabs.List>
 
@@ -363,6 +345,7 @@ function MeetingsContent() {
                   typeIcons={typeIcons}
                   onDelete={deleteMeeting}
                   onUpdateStatus={updateStatus}
+                  isLoading={isLoading}
                 />
               </Tabs.Panel>
 
@@ -374,6 +357,7 @@ function MeetingsContent() {
                   typeIcons={typeIcons}
                   onDelete={deleteMeeting}
                   onUpdateStatus={updateStatus}
+                  isLoading={isLoading}
                 />
               </Tabs.Panel>
 
@@ -385,6 +369,7 @@ function MeetingsContent() {
                   typeIcons={typeIcons}
                   onDelete={deleteMeeting}
                   onUpdateStatus={updateStatus}
+                  isLoading={isLoading}
                 />
               </Tabs.Panel>
             </Tabs>
@@ -511,9 +496,21 @@ interface MeetingsListProps {
   typeIcons: Record<string, React.ReactNode>
   onDelete: (id: string) => void
   onUpdateStatus: (id: string, status: 'programada' | 'completada' | 'cancelada') => void
+  isLoading?: boolean
 }
 
-function MeetingsList({ meetings, statusColors, typeLabels, typeIcons, onDelete, onUpdateStatus }: MeetingsListProps) {
+function MeetingsList({ meetings, statusColors, typeLabels, typeIcons, onDelete, onUpdateStatus, isLoading }: MeetingsListProps) {
+  if (isLoading) {
+    return (
+      <Paper shadow="xs" p="xl" radius="md">
+        <Center>
+          <Loader size="sm" />
+          <Text c="dimmed" ml="sm">Cargando reuniones...</Text>
+        </Center>
+      </Paper>
+    )
+  }
+
   if (meetings.length === 0) {
     return (
       <Paper shadow="xs" p="xl" radius="md">
@@ -523,51 +520,46 @@ function MeetingsList({ meetings, statusColors, typeLabels, typeIcons, onDelete,
   }
 
   return (
-    <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+    <Stack gap="sm" style={{ maxHeight: 500, overflow: 'auto' }}>
       {meetings.map((meeting) => (
-        <Paper key={meeting.id} shadow="xs" p="md" radius="md">
+        <Paper key={meeting.id} shadow="xs" p="md" radius="md" style={{ 
+          borderLeft: meeting.isFromCalendly ? '4px solid var(--mantine-color-green-6)' : undefined 
+        }}>
           <Stack gap="sm">
             <Group justify="space-between">
               <Group gap="xs">
                 <ThemeIcon variant="light" color="blue">
                   {typeIcons[meeting.type]}
                 </ThemeIcon>
-                <Text fw={600}>{meeting.title}</Text>
+                <Box>
+                  <Group gap="xs">
+                    <Text fw={600}>{meeting.title}</Text>
+                    {meeting.isFromCalendly && (
+                      <Badge color="green" variant="light" size="xs">Calendly</Badge>
+                    )}
+                  </Group>
+                  <Group gap="xs">
+                    <IoPerson size={12} style={{ opacity: 0.6 }} />
+                    <Text size="xs" c="dimmed">{meeting.clientName}</Text>
+                  </Group>
+                </Box>
               </Group>
               <Badge color={statusColors[meeting.status]} variant="light" size="sm">
                 {meeting.status}
               </Badge>
             </Group>
 
-            <Group gap="xl">
-              <Group gap="xs">
-                <IoPerson size={14} style={{ opacity: 0.6 }} />
-                <Text size="sm" c="dimmed">{meeting.clientName}</Text>
-              </Group>
+            <Group gap="md">
               <Group gap="xs">
                 <IoCalendar size={14} style={{ opacity: 0.6 }} />
                 <Text size="sm" c="dimmed">{meeting.date}</Text>
               </Group>
               <Group gap="xs">
                 <IoTime size={14} style={{ opacity: 0.6 }} />
-                <Text size="sm" c="dimmed">{meeting.time} ({meeting.duration} min)</Text>
+                <Text size="sm" c="dimmed">{meeting.time}</Text>
               </Group>
-            </Group>
-
-            <Group gap="xs">
               <Badge variant="outline" size="sm">{typeLabels[meeting.type]}</Badge>
-              {meeting.calendlyLink && (
-                <Anchor 
-                  href={meeting.calendlyLink} 
-                  target="_blank" 
-                  size="sm"
-                  style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-                >
-                  <IoLink size={14} />
-                  Calendly
-                  <IoOpen size={12} />
-                </Anchor>
-              )}
+              <Text size="xs" c="dimmed">{meeting.duration} min</Text>
             </Group>
 
             {meeting.notes && (
@@ -576,37 +568,40 @@ function MeetingsList({ meetings, statusColors, typeLabels, typeIcons, onDelete,
               </Text>
             )}
 
-            <Divider />
-
-            <Group justify="flex-end" gap="xs">
-              {meeting.status === 'programada' && (
-                <>
-                  <Button 
-                    size="xs" 
-                    variant="light" 
-                    color="green"
-                    onClick={() => onUpdateStatus(meeting.id, 'completada')}
-                  >
-                    Completar
-                  </Button>
-                  <Button 
-                    size="xs" 
-                    variant="light" 
-                    color="red"
-                    onClick={() => onUpdateStatus(meeting.id, 'cancelada')}
-                  >
-                    Cancelar
-                  </Button>
-                </>
-              )}
-              <ActionIcon variant="subtle" color="red" onClick={() => onDelete(meeting.id)}>
-                <IoTrash size={16} />
-              </ActionIcon>
-            </Group>
+            {!meeting.isFromCalendly && (
+              <>
+                <Divider />
+                <Group justify="flex-end" gap="xs">
+                  {meeting.status === 'programada' && (
+                    <>
+                      <Button 
+                        size="xs" 
+                        variant="light" 
+                        color="green"
+                        onClick={() => onUpdateStatus(meeting.id, 'completada')}
+                      >
+                        Completar
+                      </Button>
+                      <Button 
+                        size="xs" 
+                        variant="light" 
+                        color="red"
+                        onClick={() => onUpdateStatus(meeting.id, 'cancelada')}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  )}
+                  <ActionIcon variant="subtle" color="red" onClick={() => onDelete(meeting.id)}>
+                    <IoTrash size={16} />
+                  </ActionIcon>
+                </Group>
+              </>
+            )}
           </Stack>
         </Paper>
       ))}
-    </SimpleGrid>
+    </Stack>
   )
 }
 
