@@ -1,8 +1,7 @@
 'use client'
 
-import { IoCalendar, IoWallet } from 'react-icons/io5'
+import { IoCalendar } from 'react-icons/io5'
 import { Group, Paper, Progress, Text, ThemeIcon } from '@mantine/core'
-import classes from './ProgressCard.module.css'
 
 interface ProgressCardProps {
   title: string
@@ -28,7 +27,7 @@ export default function ProgressCard({
   return (
     <Paper p="lg" radius="lg" shadow="sm" style={{ background: 'var(--mantine-color-body)' }}>
       <Group justify="apart" mb="md">
-        <Text c="dimmed" tt="uppercase" fw={700} fz="xs" className={classes.label}>
+        <Text c="dimmed" tt="uppercase" fw={700} fz="xs">
           {title}
         </Text>
         <ThemeIcon color={color} variant="light" size="lg" radius="md">
@@ -52,7 +51,7 @@ export default function ProgressCard({
         radius="md" 
         striped 
         animated
-        className={classes.progress}
+        mt="md"
       />
 
       <Group justify="space-between" mt="md">

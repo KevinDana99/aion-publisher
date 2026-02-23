@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Title, Tooltip, UnstyledButton, Text } from '@mantine/core'
+import { Box, Title, Tooltip, UnstyledButton, Text, Stack, useMantineTheme } from '@mantine/core'
 import {
   IoHomeOutline,
   IoMegaphoneOutline,
@@ -22,7 +22,6 @@ import {
   IoSettings,
   IoConstruct
 } from 'react-icons/io5'
-import classes from './Sidebar.module.css'
 
 const mainLinksMockdata = [
   { icon: IoHomeOutline, activeIcon: IoHome, label: 'Dashboard', href: '/dashboard' },
@@ -90,6 +89,7 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
   const [active, setActive] = useState(activeSection)
   const [activeLink, setActiveLink] = useState('')
   const router = useRouter()
+  const theme = useMantineTheme()
 
   const handleLogout = () => {
     router.push('/auth/login')
@@ -114,8 +114,16 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
             setActiveLink('')
             router.push(link.href)
           }}
-          className={classes.mainLink}
-          data-active={isActive || undefined}
+          w={44}
+          h={44}
+          style={{ 
+            borderRadius: theme.radius.md,
+            display: 'flex',
+            alignItems: 'center', 
+            justifyContent: 'center',
+            color: isActive ? 'var(--mantine-color-blue-light-color)' : 'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))',
+            backgroundColor: isActive ? 'var(--mantine-color-blue-light)' : 'transparent'
+          }}
           aria-label={link.label}
         >
           {isActive ? <ActiveIcon size={22} /> : <Icon size={22} />}
@@ -125,31 +133,78 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
   })
 
   const links = (linksMockdata[active] || []).map((link) => (
-    <a
-      className={classes.link}
-      data-active={activeLink === link.label || undefined}
+    <UnstyledButton
+      component="a"
+      key={link.label}
       href={link.href}
       onClick={(event) => {
         event.preventDefault()
         setActiveLink(link.label)
         router.push(link.href)
       }}
-      key={link.label}
+      display="block"
+      style={{ 
+        textDecoration: 'none',
+        borderTopRightRadius: theme.radius.md,
+        borderBottomRightRadius: theme.radius.md,
+        padding: '0 var(--mantine-spacing-md)',
+        marginRight: 'var(--mantine-spacing-md)',
+        fontWeight: 500,
+        height: 44,
+        lineHeight: '44px',
+        color: activeLink === link.label ? 'var(--mantine-color-white)' : 'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))',
+        backgroundColor: activeLink === link.label ? 'var(--mantine-color-blue-filled)' : 'transparent'
+      }}
     >
       {link.label}
-    </a>
+    </UnstyledButton>
   ))
 
   return (
-    <nav className={classes.navbar}>
-      <div className={classes.wrapper}>
-        <div className={classes.aside}>
-          <div className={classes.logo}>
+    <Box
+      component="nav"
+      h="100vh"
+      w={300}
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        borderRight: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4))',
+        position: 'fixed',
+        top: 60,
+        left: 0,
+        backgroundColor: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-6))'
+      }}
+    >
+      <Box style={{ display: 'flex', flex: 1 }}>
+        <Box
+          style={{ 
+            flex: '0 0 60px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            borderRight: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))',
+            paddingBottom: 'var(--mantine-spacing-md)',
+            backgroundColor: 'light-dark(var(--mantine-color-body), var(--mantine-color-dark-6))'
+          }}
+        >
+          <Box
+            w="100%"
+            h={60}
+            pt="md"
+            pb="md"
+            style={{ 
+              display: 'flex',
+              justifyContent: 'center',
+              borderBottom: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))'
+            }}
+          >
             <Text fw={700} size="xl" c="blue">
               A
             </Text>
-          </div>
-          {mainLinks}
+          </Box>
+          <Stack gap={0} mt="xl" align="center">
+            {mainLinks}
+          </Stack>
           <Tooltip
             label="Cerrar sesión"
             position="right"
@@ -158,21 +213,43 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
           >
             <UnstyledButton
               onClick={handleLogout}
-              className={classes.mainLink}
+              w={44}
+              h={44}
+              style={{ 
+                borderRadius: theme.radius.md,
+                display: 'flex',
+                alignItems: 'center', 
+                justifyContent: 'center',
+                marginTop: 'auto', 
+                marginBottom: '1rem',
+                color: 'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))'
+              }}
               aria-label="Cerrar sesión"
-              style={{ marginTop: 'auto', marginBottom: '1rem' }}
             >
               <IoLogOutOutline size={22} />
             </UnstyledButton>
           </Tooltip>
-        </div>
-        <div className={classes.main}>
-          <Title order={4} className={classes.title}>
+        </Box>
+        <Box style={{ flex: 1, backgroundColor: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))' }}>
+          <Title 
+            order={4} 
+            mb="xl"
+            p="md"
+            pt={18}
+            h={60}
+            style={{ 
+              fontWeight: 500,
+              borderBottom: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))',
+              backgroundColor: 'light-dark(var(--mantine-color-body), var(--mantine-color-dark-6))'
+            }}
+          >
             {active}
           </Title>
-          {links}
-        </div>
-      </div>
-    </nav>
+          <Stack gap={0}>
+            {links}
+          </Stack>
+        </Box>
+      </Box>
+    </Box>
   )
 }

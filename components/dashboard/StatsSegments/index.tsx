@@ -2,7 +2,6 @@
 
 import { IoTrendingUp, IoPhonePortrait, IoLaptop, IoTabletPortrait } from 'react-icons/io5'
 import { Box, Group, Paper, Progress, SimpleGrid, Text } from '@mantine/core'
-import classes from './StatsSegments.module.css'
 
 const data = [
   { label: 'Mobile', count: '204,001', part: 59, color: '#228BE6', icon: IoPhonePortrait },
@@ -23,7 +22,11 @@ export default function StatsSegments() {
   ))
 
   const descriptions = data.map((stat) => (
-    <Box key={stat.label} style={{ borderBottomColor: stat.color }} className={classes.stat}>
+    <Box 
+      key={stat.label} 
+      py="xs" 
+      style={{ borderBottom: '3px solid transparent', borderBottomColor: stat.color }}
+    >
       <Group justify="space-between" mb={4}>
         <Group gap="xs">
           <stat.icon size={16} style={{ color: stat.color }} />
@@ -31,7 +34,7 @@ export default function StatsSegments() {
             {stat.label}
           </Text>
         </Group>
-        <Text c={stat.color} fw={700} size="sm" className={classes.statCount}>
+        <Text c={stat.color} fw={700} size="sm">
           {stat.part}%
         </Text>
       </Group>
@@ -49,7 +52,7 @@ export default function StatsSegments() {
             <Text fz="xl" fw={700}>
               356,136
             </Text>
-            <Text c="teal" className={classes.diff} fz="sm" fw={700}>
+            <Text c="teal" fz="sm" fw={700}>
               <span>18%</span>
               <IoTrendingUp size={16} style={{ marginBottom: 4, marginLeft: 4 }} />
             </Text>
@@ -60,7 +63,7 @@ export default function StatsSegments() {
         </div>
       </Group>
 
-      <Progress.Root size={24} classNames={{ label: classes.progressLabel }} mt="xl" mb="lg">
+      <Progress.Root size={24} mt="xl" mb="lg">
         {segments}
       </Progress.Root>
       

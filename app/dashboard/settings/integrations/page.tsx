@@ -52,7 +52,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   }
 
   const isConnected = isCalendly 
-    ? integration.webhookUrl 
+    ? integration.token && integration.webhookUrl
     : (integration.token || integration.apiKey)
 
   return (
@@ -128,24 +128,33 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           {isCalendly ? (
             <>
               <Text size="sm" c="dimmed">
-                Ingresa tu URL de Calendly para generar enlaces automáticos de reuniones.
+                Configura tu integración con Calendly para sincronizar reuniones automáticamente.
               </Text>
 
               <Divider />
+
+              <PasswordInput
+                label="Token de Acceso (OAuth)"
+                placeholder="Ingresa tu token de acceso de Calendly"
+                value={tempConfig.token}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, token: e.target.value }))}
+                description="Token OAuth de Calendly para acceder a la API"
+              />
 
               <TextInput
                 label="URL de Calendly"
                 placeholder="https://calendly.com/tu-usuario"
                 value={tempConfig.webhookUrl}
                 onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                description="Ejemplo: https://calendly.com/aion-publisher"
+                description="Tu URL pública de Calendly para generar enlaces de reunión"
               />
 
               <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-gray-0)' }}>
                 <Text size="xs" c="dimmed">
-                  <strong>Instrucciones:</strong><br />
-                  1. Ve a calendly.com y copia tu URL pública<br />
-                  2. Pégala aquí y guarda la configuración
+                  <strong>Cómo obtener tu token de Calendly:</strong><br />
+                  1. Ve a calendly.com/integrations/api_webhooks<br />
+                  2. Copia tu API Token o genera uno nuevo en "Integrations"<br />
+                  3. Pega el token aquí y guarda la configuración
                 </Text>
               </Paper>
             </>

@@ -1,8 +1,7 @@
 'use client'
 
-import { IoTrendingUp, IoTrendingDown, IoEye, IoDocumentText, IoPeople, IoHeart } from 'react-icons/io5'
-import { Group, Paper, SimpleGrid, Text, ThemeIcon } from '@mantine/core'
-import classes from './StatsGrid.module.css'
+import { IoTrendingUp, IoTrendingDown, IoDocumentText, IoPeople, IoHeart } from 'react-icons/io5'
+import { Box, Group, Paper, SimpleGrid, Text, ThemeIcon } from '@mantine/core'
 
 const data = [
   { title: 'Ingresos', value: '$13,456', diff: 34, icon: IoTrendingUp },
@@ -13,12 +12,10 @@ const data = [
 
 export default function StatsGrid() {
   const stats = data.map((stat) => {
-    const DiffIcon = stat.diff > 0 ? IoTrendingUp : IoTrendingDown
-
     return (
       <Paper p="md" radius="lg" shadow="sm" key={stat.title} style={{ background: 'var(--mantine-color-body)' }}>
         <Group justify="apart" mb="xs">
-          <Text c="dimmed" tt="uppercase" fw={700} fz="xs" className={classes.label}>
+          <Text c="dimmed" tt="uppercase" fw={700} fz="xs">
             {stat.title}
           </Text>
           <ThemeIcon
@@ -48,8 +45,8 @@ export default function StatsGrid() {
   })
 
   return (
-    <div className={classes.root}>
+    <Box p="md">
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>{stats}</SimpleGrid>
-    </div>
+    </Box>
   )
 }
