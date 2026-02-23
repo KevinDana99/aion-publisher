@@ -14,6 +14,7 @@ import TeamActivity from './TeamActivity'
 import RevenueOverview from './RevenueOverview'
 import PendingInvoices from './PendingInvoices'
 import CashFlow from './CashFlow'
+import DashboardCalendarWidget from './CalendarWidget'
 import { WidgetSettingsModal } from './WidgetSettingsModal'
 
 export { 
@@ -33,5 +34,6 @@ export {
   RevenueOverview,
   PendingInvoices,
   CashFlow,
+  DashboardCalendarWidget,
   WidgetSettingsModal
 }

@@ -2,7 +2,7 @@
 
 import { useState, forwardRef, useMemo } from 'react'
 import { Box, Paper, Text, Group, Stack, UnstyledButton, SegmentedControl, ScrollArea, ActionIcon, Divider, Button, Badge, ThemeIcon } from '@mantine/core'
-import { IoCalendar, IoChevronBack, IoChevronForward, IoAdd, IoVideocam } from 'react-icons/io5'
+import { IoCalendar, IoChevronBack, IoChevronForward, IoAdd, IoVideocam, IoSettings } from 'react-icons/io5'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
 
@@ -23,12 +23,20 @@ export interface CalendarEvent {
   onClick?: () => void
 }
 
+export interface DisabledSlot {
+  date: string
+  time: string
+  duration?: number
+}
+
 export interface CalendarWidgetProps {
   events?: CalendarEvent[]
+  disabledSlots?: DisabledSlot[]
   onDateSelect?: (date: Date) => void
   onEventClick?: (event: CalendarEvent) => void
   onTimeSlotClick?: (date: Date, time: string) => void
   onMonthChange?: (date: Date) => void
+  onSettingsClick?: () => void
   defaultDate?: Date
   selectedDate?: Date | null
   highlightToday?: boolean
@@ -70,9 +78,11 @@ const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 
 
 const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
   events = [],
+  disabledSlots = [],
   onDateSelect,
   onEventClick,
   onTimeSlotClick,
+  onSettingsClick,
   defaultDate = new Date(),
   selectedDate,
   highlightToday = true,
@@ -103,6 +113,38 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
     })
     return map
   }, [events])
+
+  const occupiedSlots = useMemo(() => {
+    const set = new Set<string>()
+    disabledSlots.forEach(slot => {
+      const [hour, minute] = slot.time.split(':').map(Number)
+      const duration = slot.duration || 30
+      const slotsCount = Math.ceil(duration / 60)
+      for (let i = 0; i < slotsCount; i++) {
+        const slotHour = hour + i
+        if (slotHour < workingHours.end) {
+          set.add(`${slot.date}-${String(slotHour).padStart(2, '0')}:00`)
+        }
+      }
+    })
+    events.forEach(event => {
+      if (event.time && event.duration) {
+        const [hour, minute] = event.time.split(':').map(Number)
+        const slotsCount = Math.ceil(event.duration / 60)
+        for (let i = 0; i < slotsCount; i++) {
+          const slotHour = hour + i
+          if (slotHour < workingHours.end) {
+            set.add(`${getDateKeyFromEvent(event)}-${String(slotHour).padStart(2, '0')}:00`)
+          }
+        }
+      }
+    })
+    return set
+  }, [disabledSlots, events, workingHours.end])
+
+  const isSlotOccupied = (dateKey: string, time: string): boolean => {
+    return occupiedSlots.has(`${dateKey}-${time}`)
+  }
 
   const handleDateClick = (date: Date) => {
     setInternalSelectedDate(date)
@@ -202,9 +244,9 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
                     padding: 4,
                     borderRadius: 8,
                     backgroundColor: isSelected 
-                      ? 'var(--mantine-color-blue-1)' 
+                      ? 'var(--mantine-color-blue-filled)' 
                       : isToday && highlightToday
-                        ? 'var(--mantine-color-blue-0)'
+                        ? 'rgba(34, 139, 230, 0.15)'
                         : 'transparent',
                     border: isSelected ? '2px solid var(--mantine-color-blue-6)' : '2px solid transparent',
                     cursor: 'pointer',
@@ -266,80 +308,85 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
       hours.push(h)
     }
 
-    return (
-      <Box style={{ display: 'flex', flexDirection: 'column', height: 600 }}>
-        <Group gap={0} style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
-          <Box style={{ width: 60 }} />
-          {weekDates.map((date) => {
-            const isToday = dayjs(date).isSame(dayjs(), 'day')
-            const dateKey = dayjs(date).format('YYYY-MM-DD')
-            const dayEvents = eventsByDate.get(dateKey) || []
-            
-            return (
-              <Box key={date.toISOString()} style={{ flex: 1, textAlign: 'center', padding: '8px 4px' }}>
-                <Text size="xs" c="dimmed">{WEEKDAYS[date.getDay()]}</Text>
-                <Text size="lg" fw={isToday ? 700 : 400} c={isToday ? 'blue' : undefined}>
-                  {date.getDate()}
-                </Text>
-                {dayEvents.length > 0 && (
-                  <Group gap={4} justify="center" mt={2}>
-                    {dayEvents.slice(0, 3).map((event) => (
-                      <Box
-                        key={event.id}
-                        style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: '50%',
-                          backgroundColor: `var(--mantine-color-${event.color || typeColors[event.type || 'other']}-6)`
-                        }}
-                      />
-                    ))}
-                    {dayEvents.length > 3 && (
-                      <Text size="xs" c="dimmed">+{dayEvents.length - 3}</Text>
-                    )}
-                  </Group>
-                )}
-              </Box>
-            )
-          })}
-        </Group>
-
-        <ScrollArea flex={1}>
-          <Group gap={0} align="flex-start">
-            <Box style={{ width: 60 }}>
-              {hours.map((hour) => (
-                <Box key={hour} style={{ height: 60 }}>
-                  <Text size="xs" c="dimmed" ta="right" pr={8}>
-                    {formatTime(hour)}
-                  </Text>
-                </Box>
-              ))}
+  return (
+    <Box style={{ display: 'flex', flexDirection: 'column', height: 600 }}>
+      <Group gap={0} style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
+        <Box style={{ width: 60 }} />
+        {weekDates.map((date) => {
+          const isToday = dayjs(date).isSame(dayjs(), 'day')
+          const dateKey = dayjs(date).format('YYYY-MM-DD')
+          const dayEvents = eventsByDate.get(dateKey) || []
+          
+          return (
+            <Box key={date.toISOString()} style={{ flex: 1, textAlign: 'center', padding: '8px 4px' }}>
+              <Text size="xs" c="dimmed">{WEEKDAYS[date.getDay()]}</Text>
+              <Text size="lg" fw={isToday ? 700 : 400} c={isToday ? 'blue' : undefined}>
+                {date.getDate()}
+              </Text>
+              {dayEvents.length > 0 && (
+                <Group gap={4} justify="center" mt={2}>
+                  {dayEvents.slice(0, 3).map((event) => (
+                    <Box
+                      key={event.id}
+                      style={{
+                        width: 4,
+                        height: 4,
+                        borderRadius: '50%',
+                        backgroundColor: `var(--mantine-color-${event.color || typeColors[event.type || 'other']}-6)`
+                      }}
+                    />
+                  ))}
+                  {dayEvents.length > 3 && (
+                    <Text size="xs" c="dimmed">+{dayEvents.length - 3}</Text>
+                  )}
+                </Group>
+              )}
             </Box>
+          )
+        })}
+      </Group>
 
-            {weekDates.map((date) => {
-              const dateKey = dayjs(date).format('YYYY-MM-DD')
+      <ScrollArea flex={1}>
+        <Group gap={0} align="flex-start">
+          <Box style={{ width: 60 }}>
+            {hours.map((hour) => (
+              <Box key={hour} style={{ height: 60 }}>
+                <Text size="xs" c="dimmed" ta="right" pr={8}>
+                  {formatTime(hour)}
+                </Text>
+              </Box>
+            ))}
+          </Box>
 
-              return (
-                <Box key={dateKey} style={{ flex: 1, position: 'relative' }}>
-                  {hours.map((hour) => {
-                    const timeKey = `${dateKey}-${formatTime(hour)}`
-                    const event = eventsByDateTime.get(timeKey)
-                    const slotTime = formatTime(hour)
+          {weekDates.map((date) => {
+            const dateKey = dayjs(date).format('YYYY-MM-DD')
 
-                    return (
-                      <UnstyledButton
-                        key={hour}
-                        onClick={() => onTimeSlotClick?.(date, slotTime)}
-                        style={{
-                          width: '100%',
-                          height: 60,
-                          borderTop: '1px solid var(--mantine-color-gray-2)',
-                          borderLeft: '1px solid var(--mantine-color-gray-2)',
-                          padding: 4,
-                          textAlign: 'left'
-                        }}
-                      >
-                        {event && (
+            return (
+              <Box key={dateKey} style={{ flex: 1, position: 'relative' }}>
+                {hours.map((hour) => {
+                  const timeKey = `${dateKey}-${formatTime(hour)}`
+                  const event = eventsByDateTime.get(timeKey)
+                  const slotTime = formatTime(hour)
+                  const isOccupied = isSlotOccupied(dateKey, slotTime)
+
+                  return (
+                    <UnstyledButton
+                      key={hour}
+                      onClick={() => !isOccupied && !event && onTimeSlotClick?.(date, slotTime)}
+                      disabled={isOccupied && !event}
+                      style={{
+                        width: '100%',
+                        height: 60,
+                        borderTop: '1px solid var(--mantine-color-default-border)',
+                        borderLeft: '1px solid var(--mantine-color-default-border)',
+                        padding: 4,
+                        textAlign: 'left',
+                        cursor: isOccupied && !event ? 'not-allowed' : 'pointer',
+                        opacity: isOccupied && !event ? 0.4 : 1,
+                        backgroundColor: isOccupied && !event ? 'var(--mantine-color-gray-1)' : 'transparent'
+                      }}
+                    >
+                        {event ? (
                           <Box
                             style={{
                               padding: '4px 6px',
@@ -355,7 +402,9 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
                           >
                             <Text size="xs" fw={600} truncate>{event.title}</Text>
                           </Box>
-                        )}
+                        ) : isOccupied ? (
+                          <Text size="xs" c="dimmed" style={{ fontStyle: 'italic' }}>Ocupado</Text>
+                        ) : null}
                       </UnstyledButton>
                     )
                   })}
@@ -403,18 +452,23 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
                 const timeKey = `${dateKey}-${formatTime(hour)}`
                 const event = eventsByDateTime.get(timeKey)
                 const slotTime = formatTime(hour)
+                const isOccupied = isSlotOccupied(dateKey, slotTime)
 
                 return (
                   <UnstyledButton
                     key={hour}
-                    onClick={() => onTimeSlotClick?.(currentDate, slotTime)}
+                    onClick={() => !isOccupied && !event && onTimeSlotClick?.(currentDate, slotTime)}
+                    disabled={isOccupied && !event}
                     style={{
                       width: '100%',
                       height: 60,
-                      borderTop: '1px solid var(--mantine-color-gray-2)',
-                      borderLeft: '1px solid var(--mantine-color-gray-2)',
+                      borderTop: '1px solid var(--mantine-color-default-border)',
+                      borderLeft: '1px solid var(--mantine-color-default-border)',
                       padding: 4,
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      cursor: isOccupied && !event ? 'not-allowed' : 'pointer',
+                      opacity: isOccupied && !event ? 0.4 : 1,
+                      backgroundColor: isOccupied && !event ? 'var(--mantine-color-gray-1)' : 'transparent'
                     }}
                   >
                     {event ? (
@@ -453,6 +507,8 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
                           )}
                         </Group>
                       </Box>
+                    ) : isOccupied ? (
+                      <Text size="xs" c="dimmed" style={{ fontStyle: 'italic' }}>Ocupado</Text>
                     ) : (
                       <Group gap="xs" style={{ opacity: 0.5 }}>
                         <IoAdd size={16} />
@@ -503,9 +559,16 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
     <Paper ref={ref} shadow="sm" p="md" radius="md" style={{ background: 'var(--mantine-color-body)' }}>
       <Stack gap="md">
         {title && (
-          <Group gap="xs">
-            <IoCalendar size={20} />
-            <Text fw={600} size="lg">{title}</Text>
+          <Group justify="space-between">
+            <Group gap="xs">
+              <IoCalendar size={20} />
+              <Text fw={600} size="lg">{title}</Text>
+            </Group>
+            {onSettingsClick && (
+              <ActionIcon variant="subtle" size="sm" onClick={onSettingsClick}>
+                <IoSettings size={16} />
+              </ActionIcon>
+            )}
           </Group>
         )}
 
@@ -532,6 +595,10 @@ const CalendarWidget = forwardRef<HTMLDivElement, CalendarWidgetProps>(({
               { label: 'Día', value: 'day' }
             ]}
             size="sm"
+            styles={{
+              root: { background: 'var(--mantine-color-dark-6)' },
+              indicator: { background: 'var(--mantine-color-dark-4)' }
+            }}
           />
         </Group>
 

@@ -4,8 +4,8 @@ import { Suspense, useState, useEffect, useMemo } from 'react'
 import { Container, Stack, Title, Center, Loader, Paper, Text, Group, Button, SimpleGrid, Badge, ActionIcon, Box, Modal, TextInput, Select, Divider, ThemeIcon, Tabs, Anchor, Alert, Textarea, Grid } from '@mantine/core'
 import { IoVideocam, IoAdd, IoTrash, IoLink, IoCalendar, IoTime, IoPerson, IoCheckmarkCircle, IoAlertCircle, IoOpen, IoSettings, IoRefresh } from 'react-icons/io5'
 import { useSettings } from '@/contexts/SettingsContext'
-import CalendarWidget, { type CalendarEvent } from '@/components/shared/Calendar/CalendarWidget'
-import { fetchCalendlyEvents } from '@/lib/calendly/actions'
+import CalendarWidget, { type CalendarEvent, type DisabledSlot } from '@/components/shared/Calendar/CalendarWidget'
+import { fetchCalendlyEvents, createCalendlyBooking } from '@/lib/calendly/actions'
 import type { CalendlyEvent } from '@/lib/calendly/types'
 import Link from 'next/link'
 import dayjs from 'dayjs'
@@ -23,6 +23,7 @@ interface Meeting {
   title: string
   clientName: string
   clientEmail: string
+  clientPhone?: string
   date: string
   time: string
   duration: number
@@ -79,12 +80,34 @@ function MeetingsContent() {
     title: '',
     clientName: '',
     clientEmail: '',
+    clientPhone: '',
     date: '',
     time: '',
     duration: 30,
     type: 'videocall',
     notes: ''
   })
+
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+
+  const validatePhone = (phone: string): boolean => {
+    if (!phone) return true
+    const phoneRegex = /^(\+?\d{1,3}[\s-]?)?(\d{2,4}[\s-]?)?\d{3,4}[\s-]?\d{3,4}$/
+    return phoneRegex.test(phone.replace(/\s/g, ''))
+  }
+
+  const handlePhoneChange = (value: string) => {
+    setNewMeeting({ ...newMeeting, clientPhone: value })
+    if (value && !validatePhone(value)) {
+      setPhoneError('Formato de teléfono inválido')
+    } else {
+      setPhoneError(null)
+    }
+  }
+
+  const handleDateChange = (date: string) => {
+    setNewMeeting({ ...newMeeting, date, time: '' })
+  }
 
   useEffect(() => {
     if (isCalendlyEnabled) {
@@ -136,6 +159,27 @@ function MeetingsContent() {
       }))
   }, [meetings])
 
+  const disabledSlots: DisabledSlot[] = useMemo(() => {
+    return meetings
+      .filter(m => m.status !== 'cancelada')
+      .map(m => ({
+        date: m.date,
+        time: m.time,
+        duration: m.duration
+      }))
+  }, [meetings])
+
+  const isSlotAvailable = (date: string, time: string): boolean => {
+    return !meetings.some(m => {
+      if (m.status === 'cancelada') return false
+      if (m.date !== date) return false
+      const [existingHour] = m.time.split(':').map(Number)
+      const [newHour] = time.split(':').map(Number)
+      const durationHours = Math.ceil(m.duration / 60)
+      return newHour >= existingHour && newHour < existingHour + durationHours
+    })
+  }
+
   const statusColors: Record<string, string> = {
     programada: 'blue',
     completada: 'green',
@@ -160,6 +204,7 @@ function MeetingsContent() {
       title: newMeeting.title || '',
       clientName: newMeeting.clientName || '',
       clientEmail: newMeeting.clientEmail || '',
+      clientPhone: newMeeting.clientPhone || '',
       date: newMeeting.date || '',
       time: newMeeting.time || '',
       duration: newMeeting.duration || 30,
@@ -175,12 +220,14 @@ function MeetingsContent() {
       title: '',
       clientName: '',
       clientEmail: '',
+      clientPhone: '',
       date: '',
       time: '',
       duration: 30,
       type: 'videocall',
       notes: ''
     })
+    setPhoneError(null)
   }
 
   const deleteMeeting = (id: string) => {
@@ -320,6 +367,7 @@ function MeetingsContent() {
           <Grid.Col span={{ base: 12, md: 6 }}>
             <CalendarWidget
               events={calendarEvents}
+              disabledSlots={disabledSlots}
               onDateSelect={handleDateSelect}
               onEventClick={handleEventClick}
               onTimeSlotClick={handleTimeSlotClick}
@@ -414,20 +462,47 @@ function MeetingsContent() {
             />
           </SimpleGrid>
 
+          <TextInput 
+            label="Teléfono del cliente" 
+            placeholder="+54 11 1234-5678"
+            value={newMeeting.clientPhone || ''}
+            onChange={(e) => handlePhoneChange(e.target.value)}
+            error={phoneError}
+            description="Formato: +54 11 1234-5678 o 11-1234-5678"
+          />
+
           <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
             <TextInput 
               label="Fecha" 
               type="date"
               value={newMeeting.date || ''}
-              onChange={(e) => setNewMeeting({ ...newMeeting, date: e.target.value })}
+              onChange={(e) => handleDateChange(e.target.value)}
               required
             />
-            <TextInput 
-              label="Hora" 
-              type="time"
+            <Select
+              label="Hora"
+              placeholder={newMeeting.date ? "Seleccionar hora" : "Primero selecciona fecha"}
+              data={(() => {
+                if (!newMeeting.date) return []
+                const times: { value: string; label: string; disabled: boolean }[] = []
+                for (let hour = 8; hour < 20; hour++) {
+                  for (let minute = 0; minute < 60; minute += 30) {
+                    const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+                    const occupied = !isSlotAvailable(newMeeting.date, timeStr)
+                    times.push({
+                      value: timeStr,
+                      label: occupied ? `${timeStr} (Ocupado)` : timeStr,
+                      disabled: occupied
+                    })
+                  }
+                }
+                return times
+              })()}
               value={newMeeting.time || ''}
-              onChange={(e) => setNewMeeting({ ...newMeeting, time: e.target.value })}
+              onChange={(value) => setNewMeeting({ ...newMeeting, time: value || '' })}
+              disabled={!newMeeting.date}
               required
+              searchable
             />
             <Select
               label="Duración"
@@ -478,7 +553,7 @@ function MeetingsContent() {
             </Button>
             <Button 
               onClick={createMeeting}
-              disabled={!newMeeting.title || !newMeeting.clientName || !newMeeting.date || !newMeeting.time}
+              disabled={!newMeeting.title || !newMeeting.clientName || !newMeeting.date || !newMeeting.time || !!phoneError}
             >
               Crear Reunión
             </Button>

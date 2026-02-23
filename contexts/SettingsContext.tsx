@@ -50,6 +50,7 @@ const defaultIntegrations: Integration[] = [
 
 const defaultWidgets: Widget[] = [
   { id: 'statsGrid', name: 'Estadísticas Generales', category: 'general', enabled: true },
+  { id: 'calendarWidget', name: 'Calendario', category: 'general', enabled: true },
   { id: 'campaignPerformance', name: 'Performance de Campañas', category: 'marketing', enabled: true },
   { id: 'upcomingPosts', name: 'Próximas Publicaciones', category: 'marketing', enabled: true },
   { id: 'pendingComments', name: 'Comentarios Pendientes', category: 'marketing', enabled: true },

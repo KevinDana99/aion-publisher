@@ -1,6 +1,6 @@
 'use server'
 
-import type { CalendlyEvent, CalendlyUser } from '@/lib/calendly/types'
+import type { CalendlyUser } from '@/lib/calendly/types'
 
 const CALENDLY_API_BASE = 'https://api.calendly.com'
 
@@ -9,6 +9,18 @@ export interface FetchCalendlyEventsParams {
   minStartTime?: string
   maxStartTime?: string
   count?: number
+}
+
+export interface CreateCalendlyMeetingParams {
+  token: string
+  eventTypeId: string
+  startTime: string
+  endTime: string
+  inviteeName: string
+  inviteeEmail: string
+  inviteePhone?: string
+  location?: string
+  customQuestions?: Array<{ name: string; answer: string }>
 }
 
 export async function fetchCalendlyUser(token: string): Promise<{
@@ -49,7 +61,7 @@ export async function fetchCalendlyEvents({
   count = 50
 }: FetchCalendlyEventsParams): Promise<{
   success: boolean
-  events?: CalendlyEvent[]
+  events?: any[]
   error?: string
 }> {
   try {
@@ -57,7 +69,6 @@ export async function fetchCalendlyEvents({
       return { success: false, error: 'Token de acceso requerido' }
     }
 
-    // First get the user to get the user URI
     const userResult = await fetchCalendlyUser(token)
     if (!userResult.success || !userResult.user) {
       return { success: false, error: userResult.error || 'No se pudo obtener el usuario' }
@@ -65,7 +76,6 @@ export async function fetchCalendlyEvents({
 
     const userUri = userResult.user.uri
 
-    // Now fetch events with the user URI
     const params = new URLSearchParams({
       user: userUri,
       status: 'active',
@@ -116,6 +126,7 @@ export async function fetchCalendlyEventTypes(token: string): Promise<{
     name: string
     duration: number
     scheduling_url: string
+    slug: string
   }>
   error?: string
 }> {
@@ -124,7 +135,6 @@ export async function fetchCalendlyEventTypes(token: string): Promise<{
       return { success: false, error: 'Token de acceso requerido' }
     }
 
-    // First get the user to get the user URI
     const userResult = await fetchCalendlyUser(token)
     if (!userResult.success || !userResult.user) {
       return { success: false, error: userResult.error || 'No se pudo obtener el usuario' }
@@ -151,11 +161,56 @@ export async function fetchCalendlyEventTypes(token: string): Promise<{
         uri: et.uri,
         name: et.name,
         duration: et.duration,
-        scheduling_url: et.scheduling_url
+        scheduling_url: et.scheduling_url,
+        slug: et.slug
       }))
     }
   } catch (error) {
     console.error('Error fetching Calendly event types:', error)
     return { success: false, error: 'Error al conectar con Calendly' }
+  }
+}
+
+export async function createCalendlyBooking(params: CreateCalendlyMeetingParams): Promise<{
+  success: boolean
+  bookingUrl?: string
+  error?: string
+}> {
+  try {
+    if (!params.token) {
+      return { success: false, error: 'Token de acceso requerido' }
+    }
+
+    const eventTypesResult = await fetchCalendlyEventTypes(params.token)
+    if (!eventTypesResult.success || !eventTypesResult.eventTypes?.length) {
+      return { success: false, error: 'No se encontraron tipos de evento' }
+    }
+
+    const eventType = eventTypesResult.eventTypes.find(et => 
+      et.duration === 30 || et.duration === 60
+    ) || eventTypesResult.eventTypes[0]
+
+    const bookingUrl = new URL(eventType.scheduling_url)
+    
+    bookingUrl.searchParams.set('name', params.inviteeName)
+    bookingUrl.searchParams.set('email', params.inviteeEmail)
+    
+    if (params.inviteePhone) {
+      bookingUrl.searchParams.set('a1', params.inviteePhone)
+    }
+    
+    const startDate = new Date(params.startTime)
+    const month = startDate.getMonth() + 1
+    const day = startDate.getDate()
+    bookingUrl.searchParams.set('month', String(month))
+    bookingUrl.searchParams.set('date', String(day))
+
+    return {
+      success: true,
+      bookingUrl: bookingUrl.toString()
+    }
+  } catch (error) {
+    console.error('Error creating Calendly booking:', error)
+    return { success: false, error: 'Error al crear la reserva' }
   }
 }

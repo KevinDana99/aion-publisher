@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useMemo, useState } from 'react'
-import { Container, Stack, Title, SimpleGrid, Group, Divider, Center, Loader, ActionIcon, Paper } from '@mantine/core'
+import { Container, Stack, Title, SimpleGrid, Group, Divider, Center, Loader, ActionIcon, Paper, Box } from '@mantine/core'
 import { IoWallet, IoMegaphone, IoAnalytics, IoFolder, IoPeople, IoSettings } from 'react-icons/io5'
 import { 
   StatsGrid, 
@@ -20,6 +20,7 @@ import {
   RevenueOverview,
   PendingInvoices,
   CashFlow,
+  DashboardCalendarWidget,
   WidgetSettingsModal
 } from '@/components/dashboard'
 import { useSettings } from '@/contexts/SettingsContext'
@@ -74,6 +75,13 @@ function DashboardContent() {
         </Group>
 
         {isWidgetEnabled('statsGrid') && <StatsGrid />}
+
+        {(isWidgetEnabled('calendarWidget') || isWidgetEnabled('statsGrid')) && (
+          <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="lg">
+            {!isWidgetEnabled('statsGrid') && isWidgetEnabled('calendarWidget') && <Box />}
+            {isWidgetEnabled('calendarWidget') && <DashboardCalendarWidget onSettingsClick={() => setSettingsOpened(true)} />}
+          </SimpleGrid>
+        )}
 
         {hasEnabledWidget(marketingWidgets) && (
           <>
