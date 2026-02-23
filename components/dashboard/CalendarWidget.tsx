@@ -1,61 +1,89 @@
 'use client'
 
-import { useMemo } from 'react'
-import { Paper, Group, Text, ActionIcon, Box, Badge, Stack, ThemeIcon, ScrollArea, Divider, Button, SegmentedControl } from '@mantine/core'
-import { IoCalendar, IoChevronBack, IoChevronForward, IoAdd, IoVideocam, IoSettings } from 'react-icons/io5'
+import { useState, useEffect, useMemo } from 'react'
+import { Paper, Group, Text, Box, Badge, Stack, ThemeIcon, ScrollArea, Center, Loader, Button } from '@mantine/core'
+import { IoCalendar, IoVideocam, IoRefresh } from 'react-icons/io5'
+import { useSettings } from '@/contexts/SettingsContext'
+import { fetchCalendlyEvents } from '@/lib/calendly/actions'
+import type { CalendlyEvent } from '@/lib/calendly/types'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
-import { useSettings } from '@/contexts/SettingsContext'
 
 dayjs.locale('es')
 
-interface DashboardCalendarEvent {
+interface Meeting {
   id: string
   title: string
+  clientName: string
   date: string
-  time?: string
-  duration?: number
-  type?: 'meeting' | 'task' | 'reminder' | 'deadline'
-  status?: 'pending' | 'completed'
+  time: string
+  duration: number
+  type: 'videocall' | 'presencial'
+  joinUrl?: string
 }
 
-const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-
-interface DashboardCalendarWidgetProps {
-  onSettingsClick?: () => void
-}
-
-export default function DashboardCalendarWidget({ onSettingsClick }: DashboardCalendarWidgetProps) {
-  const { settings } = useSettings()
+function parseCalendlyEvent(event: CalendlyEvent): Meeting {
+  const startStr = event.start_time
+  const [datePart, timePart] = startStr.split('T')
+  const [year, month, day] = datePart.split('-').map(Number)
+  const [hour, minute] = timePart.split(':').map(Number)
   
-  const mockEvents: DashboardCalendarEvent[] = useMemo(() => [
-    { id: '1', title: 'Reunión con cliente', date: dayjs().format('YYYY-MM-DD'), time: '10:00', duration: 30, type: 'meeting', status: 'pending' },
-    { id: '2', title: 'Demo producto', date: dayjs().add(1, 'day').format('YYYY-MM-DD'), time: '14:00', duration: 60, type: 'meeting', status: 'pending' },
-    { id: '3', title: 'Deadline proyecto', date: dayjs().add(2, 'day').format('YYYY-MM-DD'), type: 'deadline', status: 'pending' },
-  ], [])
+  const duration = Math.round((new Date(event.end_time).getTime() - new Date(startStr).getTime()) / 60000)
+  const guest = event.event_guests?.[0] || event.event_memberships?.[0]
+  
+  return {
+    id: event.uri.split('/').pop() || event.uri,
+    title: event.name,
+    clientName: guest?.name || 'Cliente',
+    date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+    duration,
+    type: event.location?.join_url ? 'videocall' : 'presencial',
+    joinUrl: event.location?.join_url
+  }
+}
+
+export default function DashboardCalendarWidget() {
+  const { settings } = useSettings()
+  const [meetings, setMeetings] = useState<Meeting[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const calendlyIntegration = settings.integrations.find(i => i.id === 'calendly')
+  const calendlyToken = calendlyIntegration?.token || ''
+  const isCalendlyEnabled = calendlyIntegration?.enabled && !!calendlyToken
+
+  const loadMeetings = async () => {
+    if (!calendlyToken) return
+    
+    setIsLoading(true)
+    try {
+      const result = await fetchCalendlyEvents({ token: calendlyToken, count: 50 })
+      if (result.success && result.events) {
+        setMeetings(result.events.map(parseCalendlyEvent))
+      }
+    } catch {
+      console.error('Error loading meetings')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isCalendlyEnabled && calendlyToken) {
+      loadMeetings()
+    }
+  }, [isCalendlyEnabled, calendlyToken])
 
   const today = dayjs()
-  const daysInMonth = today.daysInMonth()
-  const firstDayOfMonth = today.startOf('month').day()
   
-  const days = []
-  for (let i = 0; i < firstDayOfMonth; i++) {
-    days.push(null)
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    days.push(i)
-  }
+  const upcomingMeetings = useMemo(() => {
+    return meetings
+      .filter(m => dayjs(`${m.date} ${m.time}`).isAfter(today.subtract(1, 'day')))
+      .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+      .slice(0, 6)
+  }, [meetings, today])
 
-  const getEventsForDay = (day: number) => {
-    const dateStr = today.date(day).format('YYYY-MM-DD')
-    return mockEvents.filter(e => e.date === dateStr)
-  }
-
-  const upcomingEvents = mockEvents
-    .filter(e => dayjs(e.date).isAfter(today.subtract(1, 'day')))
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 5)
+  const scheduledCount = meetings.filter(m => dayjs(`${m.date} ${m.time}`).isAfter(today)).length
 
   return (
     <Paper shadow="xs" p="md" radius="md" style={{ background: 'var(--mantine-color-body)' }}>
@@ -65,94 +93,85 @@ export default function DashboardCalendarWidget({ onSettingsClick }: DashboardCa
             <IoCalendar size={18} />
             <Text fw={600}>Calendario</Text>
           </Group>
-          <ActionIcon variant="subtle" size="sm" onClick={onSettingsClick}>
-            <IoSettings size={16} />
-          </ActionIcon>
-        </Group>
-
-        <Group gap={0}>
-          {WEEKDAYS.map((day) => (
-            <Box key={day} style={{ flex: 1, textAlign: 'center' }}>
-              <Text size="xs" c="dimmed" fw={500}>{day}</Text>
-            </Box>
-          ))}
-        </Group>
-
-        <Group gap={0}>
-          {days.slice(0, 35).map((day, index) => {
-            const isToday = day === today.date()
-            const events = day ? getEventsForDay(day) : []
-            
-            return (
+          <Group gap="xs">
+            <Badge variant="light" size="sm">{scheduledCount} próximos</Badge>
+            {isCalendlyEnabled && (
               <Box
-                key={index}
-                style={{
-                  flex: 1,
-                  minHeight: 40,
-                  padding: 4,
-                  textAlign: 'center',
-                  borderRadius: 4,
-                  cursor: day ? 'pointer' : 'default',
-                  background: isToday ? 'var(--mantine-color-blue-1)' : 'transparent',
-                }}
+                component="button"
+                onClick={loadMeetings}
+                disabled={isLoading}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: isLoading ? 0.5 : 1 }}
               >
-                {day && (
-                  <Stack gap={2} align="center">
-                    <Text 
-                      size="sm" 
-                      fw={isToday ? 700 : 400}
-                      c={isToday ? 'blue' : undefined}
-                    >
-                      {day}
-                    </Text>
-                    {events.length > 0 && (
-                      <Box
-                        style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: '50%',
-                          background: isToday ? 'var(--mantine-color-blue-6)' : 'var(--mantine-color-violet-6)'
-                        }}
-                      />
-                    )}
-                  </Stack>
-                )}
+                <IoRefresh size={14} />
               </Box>
-            )
-          })}
-        </Group>
-
-        <Divider />
-
-        <Group justify="space-between">
-          <Text size="sm" c="dimmed">Próximos eventos</Text>
-          <Badge variant="light" size="sm">{upcomingEvents.length}</Badge>
-        </Group>
-
-        <ScrollArea h={150}>
-          <Stack gap="xs">
-            {upcomingEvents.length === 0 ? (
-              <Text size="sm" c="dimmed" ta="center">No hay eventos próximos</Text>
-            ) : (
-              upcomingEvents.map((event) => (
-                <Paper key={event.id} p="xs" radius="sm" style={{ background: 'var(--mantine-color-default)' }}>
-                  <Group gap="xs">
-                    <ThemeIcon variant="light" color="blue" size="sm">
-                      <IoVideocam size={12} />
-                    </ThemeIcon>
-                    <Box style={{ flex: 1 }}>
-                      <Text size="sm" fw={500} truncate>{event.title}</Text>
-                      <Text size="xs" c="dimmed">
-                        {dayjs(event.date).format('DD MMM')}
-                        {event.time && ` • ${event.time}`}
-                      </Text>
-                    </Box>
-                  </Group>
-                </Paper>
-              ))
             )}
-          </Stack>
-        </ScrollArea>
+          </Group>
+        </Group>
+
+        {!isCalendlyEnabled && (
+          <Text size="sm" c="dimmed" ta="center">
+            Configura Calendly para ver tus reuniones
+          </Text>
+        )}
+
+        {isCalendlyEnabled && isLoading && (
+          <Center py="xl">
+            <Loader size="sm" />
+          </Center>
+        )}
+
+        {isCalendlyEnabled && !isLoading && (
+          <ScrollArea h={280}>
+            <Stack gap="xs">
+              {upcomingMeetings.length === 0 ? (
+                <Text size="sm" c="dimmed" ta="center">No hay reuniones próximas</Text>
+              ) : (
+                upcomingMeetings.map((meeting) => {
+                  const isToday = dayjs(meeting.date).isSame(today, 'day')
+                  const isTomorrow = dayjs(meeting.date).isSame(today.add(1, 'day'), 'day')
+                  const dateLabel = isToday ? 'Hoy' : isTomorrow ? 'Mañana' : dayjs(meeting.date).format('DD MMM')
+                  
+                  return (
+                    <Paper key={meeting.id} p="xs" radius="sm" style={{ background: 'var(--mantine-color-default)' }}>
+                      <Stack gap="xs">
+                        <Group gap="xs">
+                          <ThemeIcon variant="light" color="blue" size="sm">
+                            <IoVideocam size={12} />
+                          </ThemeIcon>
+                          <Box style={{ flex: 1 }}>
+                            <Text size="sm" fw={500} truncate>{meeting.title}</Text>
+                            <Text size="xs" c="dimmed">
+                              {dateLabel}
+                              {meeting.time && ` • ${meeting.time}`}
+                              {meeting.duration && ` (${meeting.duration} min)`}
+                            </Text>
+                          </Box>
+                          {isToday && (
+                            <Badge color="blue" variant="filled" size="xs">Hoy</Badge>
+                          )}
+                        </Group>
+                        {meeting.joinUrl && (
+                          <Button
+                            size="xs"
+                            variant="light"
+                            color="blue"
+                            component="a"
+                            href={meeting.joinUrl}
+                            target="_blank"
+                            leftSection={<IoVideocam size={12} />}
+                            fullWidth
+                          >
+                            Unirse a la reunión
+                          </Button>
+                        )}
+                      </Stack>
+                    </Paper>
+                  )
+                })
+              )}
+            </Stack>
+          </ScrollArea>
+        )}
       </Stack>
     </Paper>
   )

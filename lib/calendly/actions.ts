@@ -63,18 +63,26 @@ export async function fetchCalendlyEvents({
   success: boolean
   events?: any[]
   error?: string
+  debug?: any
 }> {
   try {
     if (!token) {
-      return { success: false, error: 'Token de acceso requerido' }
+      return { success: false, error: 'Token de acceso requerido', debug: { reason: 'no_token' } }
     }
 
+    console.log('[Calendly] Fetching user with token:', token.substring(0, 20) + '...')
+    
     const userResult = await fetchCalendlyUser(token)
     if (!userResult.success || !userResult.user) {
-      return { success: false, error: userResult.error || 'No se pudo obtener el usuario' }
+      return { 
+        success: false, 
+        error: userResult.error || 'No se pudo obtener el usuario', 
+        debug: { userResult } 
+      }
     }
 
     const userUri = userResult.user.uri
+    console.log('[Calendly] User URI:', userUri)
 
     const params = new URLSearchParams({
       user: userUri,
@@ -88,34 +96,43 @@ export async function fetchCalendlyEvents({
       params.set('max_start_time', maxStartTime)
     }
 
-    console.log('Fetching Calendly events with params:', params.toString())
+    const url = `${CALENDLY_API_BASE}/scheduled_events?${params.toString()}`
+    console.log('[Calendly] Fetching events from:', url)
 
-    const response = await fetch(`${CALENDLY_API_BASE}/scheduled_events?${params.toString()}`, {
+    const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     })
 
+    console.log('[Calendly] Response status:', response.status)
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error('Calendly API error:', errorData)
+      console.error('[Calendly] API error:', errorData)
       return { 
         success: false, 
-        error: `Error ${response.status}: ${errorData?.message || 'Error al obtener eventos'}` 
+        error: `Error ${response.status}: ${errorData?.message || 'Error al obtener eventos'}`,
+        debug: { status: response.status, errorData, url }
       }
     }
 
     const data = await response.json()
-    console.log('Calendly events response:', data)
+    console.log('[Calendly] Events found:', data.collection?.length || 0)
     
     return {
       success: true,
-      events: data.collection || []
+      events: data.collection || [],
+      debug: { total: data.collection?.length || 0, userUri }
     }
   } catch (error) {
-    console.error('Error fetching Calendly events:', error)
-    return { success: false, error: 'Error al conectar con Calendly' }
+    console.error('[Calendly] Exception:', error)
+    return { 
+      success: false, 
+      error: 'Error al conectar con Calendly',
+      debug: { error: String(error) }
+    }
   }
 }
 

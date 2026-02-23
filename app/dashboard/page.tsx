@@ -76,10 +76,9 @@ function DashboardContent() {
 
         {isWidgetEnabled('statsGrid') && <StatsGrid />}
 
-        {(isWidgetEnabled('calendarWidget') || isWidgetEnabled('statsGrid')) && (
-          <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="lg">
-            {!isWidgetEnabled('statsGrid') && isWidgetEnabled('calendarWidget') && <Box />}
-            {isWidgetEnabled('calendarWidget') && <DashboardCalendarWidget onSettingsClick={() => setSettingsOpened(true)} />}
+        {isWidgetEnabled('calendarWidget') && (
+          <SimpleGrid cols={{ base: 1 }} spacing="lg">
+            <DashboardCalendarWidget />
           </SimpleGrid>
         )}
 

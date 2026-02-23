@@ -29,6 +29,13 @@ export interface Settings {
   widgets: Widget[]
 }
 
+const ENV_TOKENS: Record<string, { token?: string; webhookUrl?: string }> = {
+  calendly: {
+    token: process.env.NEXT_PUBLIC_CALENDLY_TOKEN || '',
+    webhookUrl: process.env.NEXT_PUBLIC_CALENDLY_URL || ''
+  }
+}
+
 const defaultIntegrations: Integration[] = [
   { id: 'instagram', name: 'Instagram', icon: 'IoLogoInstagram', enabled: false },
   { id: 'facebook', name: 'Facebook', icon: 'IoLogoFacebook', enabled: false },
@@ -38,14 +45,7 @@ const defaultIntegrations: Integration[] = [
   { id: 'youtube', name: 'YouTube', icon: 'IoLogoYoutube', enabled: false },
   { id: 'pinterest', name: 'Pinterest', icon: 'IoLogoPinterest', enabled: false },
   { id: 'whatsapp', name: 'WhatsApp Business', icon: 'IoLogoWhatsapp', enabled: false },
-  { 
-    id: 'calendly', 
-    name: 'Calendly', 
-    icon: 'IoCalendar', 
-    enabled: true,
-    token: process.env.NEXT_PUBLIC_CALENDLY_TOKEN || '',
-    webhookUrl: process.env.NEXT_PUBLIC_CALENDLY_URL || ''
-  }
+  { id: 'calendly', name: 'Calendly', icon: 'IoCalendar', enabled: true }
 ]
 
 const defaultWidgets: Widget[] = [
@@ -101,10 +101,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSettings({
           ...defaultSettings,
           ...parsed,
-          integrations: defaultIntegrations.map(int => ({
-            ...int,
-            ...(parsed.integrations?.find((i: Integration) => i.id === int.id) || {})
-          })),
+          integrations: defaultIntegrations.map(int => {
+            const storedInt = parsed.integrations?.find((i: Integration) => i.id === int.id)
+            const envTokens = ENV_TOKENS[int.id]
+            return {
+              ...int,
+              ...storedInt,
+              token: envTokens?.token || storedInt?.token || '',
+              webhookUrl: envTokens?.webhookUrl || storedInt?.webhookUrl || ''
+            }
+          }),
           widgets: defaultWidgets.map(widget => ({
             ...widget,
             ...(parsed.widgets?.find((w: Widget) => w.id === widget.id) || {})
@@ -113,13 +119,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         console.error('Error parsing settings from localStorage', e)
       }
+    } else {
+      setSettings({
+        ...defaultSettings,
+        integrations: defaultIntegrations.map(int => ({
+          ...int,
+          ...(ENV_TOKENS[int.id] || {})
+        }))
+      })
     }
     setIsLoaded(true)
   }, [])
 
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+      const settingsToStore = {
+        ...settings,
+        integrations: settings.integrations.map(int => {
+          const envTokens = ENV_TOKENS[int.id]
+          return {
+            ...int,
+            token: envTokens?.token ? undefined : int.token,
+            webhookUrl: envTokens?.webhookUrl ? undefined : int.webhookUrl
+          }
+        })
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsToStore))
     }
   }, [settings, isLoaded])
 
@@ -130,9 +155,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const updateIntegration = (id: string, updates: Partial<Integration>) => {
     setSettings(prev => ({
       ...prev,
-      integrations: prev.integrations.map(int =>
-        int.id === id ? { ...int, ...updates } : int
-      )
+      integrations: prev.integrations.map(int => {
+        if (int.id !== id) return int
+        const envTokens = ENV_TOKENS[id]
+        return {
+          ...int,
+          ...updates,
+          token: envTokens?.token || updates.token || int.token,
+          webhookUrl: envTokens?.webhookUrl || updates.webhookUrl || int.webhookUrl
+        }
+      })
     }))
   }
 
@@ -146,7 +178,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }
 
   const resetSettings = () => {
-    setSettings(defaultSettings)
+    setSettings({
+      ...defaultSettings,
+      integrations: defaultIntegrations.map(int => ({
+        ...int,
+        ...(ENV_TOKENS[int.id] || {})
+      }))
+    })
   }
 
   return (

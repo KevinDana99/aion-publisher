@@ -1,7 +1,7 @@
 'use client'
 
 import { Modal, Stack, Group, Text, Switch, Divider, Button, Box } from '@mantine/core'
-import { IoSettings, IoMegaphone, IoAnalytics, IoFolder, IoPeople, IoWallet } from 'react-icons/io5'
+import { IoSettings, IoMegaphone, IoAnalytics, IoFolder, IoPeople, IoWallet, IoGrid } from 'react-icons/io5'
 import { useSettings } from '@/contexts/SettingsContext'
 
 interface WidgetSettingsModalProps {
@@ -10,7 +10,7 @@ interface WidgetSettingsModalProps {
 }
 
 const categoryIcons: Record<string, React.ReactNode> = {
-  general: null,
+  general: <IoGrid size={18} />,
   marketing: <IoMegaphone size={18} />,
   analytics: <IoAnalytics size={18} />,
   projects: <IoFolder size={18} />,

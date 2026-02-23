@@ -19,7 +19,6 @@ import {
   Timeline,
   TextInput,
   Textarea,
-  NumberInput,
   ActionIcon
 } from '@mantine/core'
 import { 
@@ -28,14 +27,20 @@ import {
   DragOverlay, 
   DragStartEvent,
   DragOverEvent,
-  closestCenter,
+  closestCorners,
   PointerSensor,
   useSensor,
-  useSensors
+  useSensors,
+  UniqueIdentifier,
+  useDroppable
 } from '@dnd-kit/core'
-import { useSortable } from '@dnd-kit/sortable'
+import { 
+  useSortable, 
+  SortableContext, 
+  verticalListSortingStrategy,
+  arrayMove
+} from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useDroppable } from '@dnd-kit/core'
 import { 
   IoGitBranch, 
   IoEllipse, 
@@ -81,14 +86,15 @@ interface TaskCardProps {
 }
 
 function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
-  const { attributes, listeners, setNodeRef, transform } = useSortable({ id: task.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortableDragging } = useSortable({ id: task.id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
+    transition,
     cursor: 'grab' as const,
     background: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-4))',
     borderColor: 'light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-3))',
-    opacity: isDragging ? 0.5 : 1
+    opacity: isSortableDragging ? 0 : isDragging ? 0.5 : 1
   }
 
   return (
@@ -169,18 +175,22 @@ interface KanbanColumnProps {
 
 function KanbanColumn({ id, label, color, tasks, onTaskClick, onAddTask }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
+  const taskIds = tasks.map(t => t.id)
 
   return (
     <Paper
       ref={setNodeRef}
+      data-column={id}
       p="sm"
       radius="md"
       style={{ 
         background: isOver 
           ? 'light-dark(var(--mantine-color-blue-0), var(--mantine-color-dark-5))'
           : 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))',
-        minHeight: 400,
+        minHeight: 'calc(100vh - 300px)',
         width: 280,
+        display: 'flex',
+        flexDirection: 'column',
         transition: 'background 0.2s ease'
       }}
     >
@@ -202,13 +212,13 @@ function KanbanColumn({ id, label, color, tasks, onTaskClick, onAddTask }: Kanba
         </ActionIcon>
       </Group>
       
-      <ScrollArea.Autosize mah={500}>
-        <Stack gap={0}>
+      <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+        <Stack gap={0} style={{ flex: 1, minHeight: 100 }}>
           {tasks.map((task) => (
             <TaskCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
           ))}
         </Stack>
-      </ScrollArea.Autosize>
+      </SortableContext>
     </Paper>
   )
 }
@@ -218,7 +228,7 @@ export default function KanbanBoard() {
   const [tasks, setTasks] = useState<Task[]>(mockTasks)
   const [filter, setFilter] = useState<'all' | 'mine'>('all')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [newTaskDrawer, setNewTaskDrawer] = useState(false)
   const [newTask, setNewTask] = useState({
     title: '',
@@ -232,7 +242,7 @@ export default function KanbanBoard() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8
+        distance: 10
       }
     })
   )
@@ -260,8 +270,31 @@ export default function KanbanBoard() {
     return grouped
   }, [filteredTasks])
 
+  const findTaskColumn = (taskId: UniqueIdentifier): TaskStatus | null => {
+    const task = tasks.find(t => t.id === taskId)
+    return task?.status || null
+  }
+
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string)
+    setActiveId(event.active.id)
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event
+    if (!over) return
+
+    const activeId = active.id
+    const overId = over.id
+
+    const activeColumn = findTaskColumn(activeId)
+    const overIsColumn = columns.some(c => c.id === overId)
+    const overColumn = findTaskColumn(overId) || (overIsColumn ? overId as TaskStatus : null)
+
+    if (!activeColumn || !overColumn || activeColumn === overColumn) return
+
+    setTasks(prev => prev.map(task => 
+      task.id === activeId ? { ...task, status: overColumn } : task
+    ))
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -270,12 +303,29 @@ export default function KanbanBoard() {
 
     if (!over) return
 
-    const taskId = active.id as string
-    const newStatus = over.id as TaskStatus
+    const activeId = active.id
+    const overId = over.id
 
-    if (columns.find(col => col.id === newStatus)) {
+    const activeColumn = findTaskColumn(activeId)
+    const overColumn = findTaskColumn(overId) || (columns.find(c => c.id === overId)?.id as TaskStatus)
+
+    if (!activeColumn) return
+
+    if (activeColumn === overColumn) {
+      const columnTasks = tasks.filter(t => t.status === activeColumn)
+      const oldIndex = columnTasks.findIndex(t => t.id === activeId)
+      const newIndex = columnTasks.findIndex(t => t.id === overId)
+      
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const reordered = arrayMove(columnTasks, oldIndex, newIndex)
+        setTasks(prev => {
+          const otherTasks = prev.filter(t => t.status !== activeColumn)
+          return [...otherTasks, ...reordered]
+        })
+      }
+    } else if (overColumn) {
       setTasks(prev => prev.map(task => 
-        task.id === taskId ? { ...task, status: newStatus } : task
+        task.id === activeId ? { ...task, status: overColumn } : task
       ))
     }
   }
@@ -354,8 +404,9 @@ export default function KanbanBoard() {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={closestCorners}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <ScrollArea>
