@@ -7,6 +7,10 @@ import {
 
 import './globals.css'
 import theme from '@/global/theme'
+import { SettingsProvider } from '@/contexts/SettingsContext'
+import { UserProvider } from '@/contexts/UserContext'
+import Header from '@/components/layout/Header'
+import Sidebar from '@/components/layout/Sidebar'
 
 export const metadata: Metadata = {
   title: 'Aion',
@@ -21,11 +25,26 @@ export default function RootLayout({
   return (
     <html lang='en' {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript defaultColorScheme="auto" />
+        <ColorSchemeScript defaultColorScheme='auto' />
       </head>
-      <body className="antialiased">
-        <MantineProvider theme={theme} defaultColorScheme="auto">
-          {children}
+
+      <body className='antialiased'>
+        <MantineProvider theme={theme} defaultColorScheme='auto'>
+          <UserProvider>
+            <SettingsProvider>
+              <Header />
+              <div
+                style={{
+                  display: 'flex'
+                }}
+              >
+                <Sidebar activeSection='Home' />
+                <div className='gap' style={{ padding: '20px 20px' }}>
+                  {children}
+                </div>
+              </div>
+            </SettingsProvider>
+          </UserProvider>
         </MantineProvider>
       </body>
     </html>

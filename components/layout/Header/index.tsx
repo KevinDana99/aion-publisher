@@ -29,9 +29,9 @@ export default function Header() {
 
   return (
     <Box
-      component="header"
+      component='header'
       style={{
-        position: 'fixed',
+        position: 'sticky',
         top: 0,
         left: 0,
         right: 0,
@@ -49,18 +49,18 @@ export default function Header() {
             : '1px solid rgba(0, 0, 0, 0.1)'
       }}
     >
-      <Group justify="space-between" h="100%">
-        <Text fw={700} size="xl">
+      <Group justify='space-between' h='100%'>
+        <Text fw={700} size='xl'>
           Aion
         </Text>
 
-        <Group gap="xs">
+        <Group gap='xs'>
           <ActionIcon
             onClick={toggleColorScheme}
-            variant="subtle"
-            size="lg"
-            radius="md"
-            aria-label="Toggle color scheme"
+            variant='subtle'
+            size='lg'
+            radius='md'
+            aria-label='Toggle color scheme'
           >
             {computedColorScheme === 'dark' ? (
               <IoSunnyOutline size={20} />
@@ -69,14 +69,14 @@ export default function Header() {
             )}
           </ActionIcon>
 
-          <Tooltip label="Cerrar sesión" position="bottom">
+          <Tooltip label='Cerrar sesión' position='bottom'>
             <ActionIcon
               onClick={handleLogout}
-              variant="subtle"
-              size="lg"
-              radius="md"
-              aria-label="Cerrar sesión"
-              color="red"
+              variant='subtle'
+              size='lg'
+              radius='md'
+              aria-label='Cerrar sesión'
+              color='red'
             >
               <IoLogOutOutline size={20} />
             </ActionIcon>

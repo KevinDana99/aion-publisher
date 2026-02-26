@@ -2,7 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Title, Tooltip, UnstyledButton, Text, Stack, useMantineTheme } from '@mantine/core'
+import {
+  Box,
+  Title,
+  Tooltip,
+  UnstyledButton,
+  Text,
+  Stack,
+  useMantineTheme
+} from '@mantine/core'
 import {
   IoHomeOutline,
   IoMegaphoneOutline,
@@ -20,18 +28,66 @@ import {
   IoPeople,
   IoWallet,
   IoSettings,
-  IoConstruct
+  IoConstruct,
+  IoChatbubble,
+  IoChatbubbleOutline
 } from 'react-icons/io5'
 
 const mainLinksMockdata = [
-  { icon: IoHomeOutline, activeIcon: IoHome, label: 'Dashboard', href: '/dashboard' },
-  { icon: IoMegaphoneOutline, activeIcon: IoMegaphone, label: 'Marketing', href: '/dashboard/marketing' },
-  { icon: IoAnalyticsOutline, activeIcon: IoAnalytics, label: 'Analíticas', href: '/dashboard/analytics' },
-  { icon: IoFolderOutline, activeIcon: IoFolder, label: 'Proyectos', href: '/dashboard/projects' },
-  { icon: IoPeopleOutline, activeIcon: IoPeople, label: 'Equipo', href: '/dashboard/team' },
-  { icon: IoWalletOutline, activeIcon: IoWallet, label: 'Finanzas', href: '/dashboard/finance' },
-  { icon: IoConstructOutline, activeIcon: IoConstruct, label: 'Herramientas', href: '/dashboard/tools' },
-  { icon: IoSettingsOutline, activeIcon: IoSettings, label: 'Configuración', href: '/dashboard/settings' }
+  {
+    icon: IoHomeOutline,
+    activeIcon: IoHome,
+    label: 'Dashboard',
+    href: '/dashboard'
+  },
+  {
+    icon: IoMegaphoneOutline,
+    activeIcon: IoMegaphone,
+    label: 'Marketing',
+    href: '/marketing'
+  },
+  {
+    icon: IoAnalyticsOutline,
+    activeIcon: IoAnalytics,
+    label: 'Analíticas',
+    href: '/analytics'
+  },
+  {
+    icon: IoFolderOutline,
+    activeIcon: IoFolder,
+    label: 'Proyectos',
+    href: '/projects'
+  },
+  {
+    icon: IoPeopleOutline,
+    activeIcon: IoPeople,
+    label: 'Equipo',
+    href: '/team'
+  },
+  {
+    icon: IoWalletOutline,
+    activeIcon: IoWallet,
+    label: 'Finanzas',
+    href: '/finance'
+  },
+  {
+    icon: IoConstructOutline,
+    activeIcon: IoConstruct,
+    label: 'Herramientas',
+    href: '/tools'
+  },
+  {
+    icon: IoChatbubbleOutline,
+    activeIcon: IoChatbubble,
+    label: 'CRM',
+    href: '/crm'
+  },
+  {
+    icon: IoSettingsOutline,
+    activeIcon: IoSettings,
+    label: 'Configuración',
+    href: '/settings'
+  }
 ]
 
 const linksMockdata: Record<string, { label: string; href: string }[]> = {
@@ -103,7 +159,7 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
     return (
       <Tooltip
         label={link.label}
-        position="right"
+        position='right'
         withArrow
         transitionProps={{ duration: 0 }}
         key={link.label}
@@ -116,13 +172,17 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
           }}
           w={44}
           h={44}
-          style={{ 
+          style={{
             borderRadius: theme.radius.md,
             display: 'flex',
-            alignItems: 'center', 
+            alignItems: 'center',
             justifyContent: 'center',
-            color: isActive ? 'var(--mantine-color-blue-light-color)' : 'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))',
-            backgroundColor: isActive ? 'var(--mantine-color-blue-light)' : 'transparent'
+            color: isActive
+              ? 'var(--mantine-color-blue-light-color)'
+              : 'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))',
+            backgroundColor: isActive
+              ? 'var(--mantine-color-blue-light)'
+              : 'transparent'
           }}
           aria-label={link.label}
         >
@@ -134,7 +194,7 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
 
   const links = (linksMockdata[active] || []).map((link) => (
     <UnstyledButton
-      component="a"
+      component='a'
       key={link.label}
       href={link.href}
       onClick={(event) => {
@@ -142,8 +202,8 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
         setActiveLink(link.label)
         router.push(link.href)
       }}
-      display="block"
-      style={{ 
+      display='block'
+      style={{
         textDecoration: 'none',
         borderTopRightRadius: theme.radius.md,
         borderBottomRightRadius: theme.radius.md,
@@ -152,8 +212,14 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
         fontWeight: 500,
         height: 44,
         lineHeight: '44px',
-        color: activeLink === link.label ? 'var(--mantine-color-white)' : 'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))',
-        backgroundColor: activeLink === link.label ? 'var(--mantine-color-blue-filled)' : 'transparent'
+        color:
+          activeLink === link.label
+            ? 'var(--mantine-color-white)'
+            : 'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))',
+        backgroundColor:
+          activeLink === link.label
+            ? 'var(--mantine-color-blue-filled)'
+            : 'transparent'
       }}
     >
       {link.label}
@@ -162,52 +228,58 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
 
   return (
     <Box
-      component="nav"
-      h="100vh"
+      component='nav'
+      h='100vh'
       w={300}
-      style={{ 
-        display: 'flex', 
+      style={{
+        minWidth: 300,
+        display: 'flex',
         flexDirection: 'column',
-        borderRight: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4))',
-        position: 'fixed',
+        borderRight:
+          '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4))',
+        position: 'sticky',
         top: 60,
         left: 0,
-        backgroundColor: 'light-dark(var(--mantine-color-white), var(--mantine-color-dark-6))'
+        backgroundColor:
+          'light-dark(var(--mantine-color-white), var(--mantine-color-dark-6))'
       }}
     >
       <Box style={{ display: 'flex', flex: 1 }}>
         <Box
-          style={{ 
+          style={{
             flex: '0 0 60px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            borderRight: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))',
+            borderRight:
+              '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))',
             paddingBottom: 'var(--mantine-spacing-md)',
-            backgroundColor: 'light-dark(var(--mantine-color-body), var(--mantine-color-dark-6))'
+            backgroundColor:
+              'light-dark(var(--mantine-color-body), var(--mantine-color-dark-6))'
           }}
         >
           <Box
-            w="100%"
+            w='100%'
             h={60}
-            pt="md"
-            pb="md"
-            style={{ 
+            pt='md'
+            pb='md'
+            style={{
               display: 'flex',
               justifyContent: 'center',
-              borderBottom: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))'
+              borderBottom:
+                '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))'
             }}
           >
-            <Text fw={700} size="xl" c="blue">
+            <Text fw={700} size='xl' c='blue'>
               A
             </Text>
           </Box>
-          <Stack gap={0} mt="xl" align="center">
+          <Stack gap={0} mt='xl' align='center'>
             {mainLinks}
           </Stack>
           <Tooltip
-            label="Cerrar sesión"
-            position="right"
+            label='Cerrar sesión'
+            position='right'
             withArrow
             transitionProps={{ duration: 0 }}
           >
@@ -215,39 +287,46 @@ export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
               onClick={handleLogout}
               w={44}
               h={44}
-              style={{ 
+              style={{
                 borderRadius: theme.radius.md,
                 display: 'flex',
-                alignItems: 'center', 
+                alignItems: 'center',
                 justifyContent: 'center',
-                marginTop: 'auto', 
+                marginTop: 'auto',
                 marginBottom: '1rem',
-                color: 'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))'
+                color:
+                  'light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0))'
               }}
-              aria-label="Cerrar sesión"
+              aria-label='Cerrar sesión'
             >
               <IoLogOutOutline size={22} />
             </UnstyledButton>
           </Tooltip>
         </Box>
-        <Box style={{ flex: 1, backgroundColor: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))' }}>
-          <Title 
-            order={4} 
-            mb="xl"
-            p="md"
+        <Box
+          style={{
+            flex: 1,
+            backgroundColor:
+              'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))'
+          }}
+        >
+          <Title
+            order={4}
+            mb='xl'
+            p='md'
             pt={18}
             h={60}
-            style={{ 
+            style={{
               fontWeight: 500,
-              borderBottom: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))',
-              backgroundColor: 'light-dark(var(--mantine-color-body), var(--mantine-color-dark-6))'
+              borderBottom:
+                '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7))',
+              backgroundColor:
+                'light-dark(var(--mantine-color-body), var(--mantine-color-dark-6))'
             }}
           >
             {active}
           </Title>
-          <Stack gap={0}>
-            {links}
-          </Stack>
+          <Stack gap={0}>{links}</Stack>
         </Box>
       </Box>
     </Box>
