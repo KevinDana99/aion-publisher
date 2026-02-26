@@ -92,48 +92,48 @@ const mainLinksMockdata = [
 
 const linksMockdata: Record<string, { label: string; href: string }[]> = {
   Dashboard: [
-    { label: 'Resumen', href: '/dashboard' },
-    { label: 'Actividad', href: '/dashboard/activity' },
-    { label: 'Notificaciones', href: '/dashboard/notifications' }
+    { label: 'Resumen', href: '' },
+    { label: 'Actividad', href: '/activity' },
+    { label: 'Notificaciones', href: '/notifications' }
   ],
   Marketing: [
-    { label: 'Dashboard', href: '/dashboard/marketing' },
-    { label: 'Campañas', href: '/dashboard/marketing/campaigns' },
-    { label: 'Calendario', href: '/dashboard/marketing/calendar' },
-    { label: 'Redes', href: '/dashboard/marketing/social' }
+    { label: 'Dashboard', href: '/marketing' },
+    { label: 'Campañas', href: '/marketing/campaigns' },
+    { label: 'Calendario', href: '/marketing/calendar' },
+    { label: 'Redes', href: '/marketing/social' }
   ],
   Analíticas: [
-    { label: 'Dashboard', href: '/dashboard/analytics' },
-    { label: 'Website', href: '/dashboard/analytics/website' },
-    { label: 'Reportes', href: '/dashboard/analytics/reports' }
+    { label: 'Dashboard', href: '/analytics' },
+    { label: 'Website', href: '/analytics/website' },
+    { label: 'Reportes', href: '/analytics/reports' }
   ],
   Proyectos: [
-    { label: 'Dashboard', href: '/dashboard/projects' },
-    { label: 'Tareas', href: '/dashboard/projects/tasks' },
-    { label: 'Tiempo', href: '/dashboard/projects/time' }
+    { label: 'Dashboard', href: '/projects' },
+    { label: 'Tareas', href: '/projects/tasks' },
+    { label: 'Tiempo', href: '/projects/time' }
   ],
   Equipo: [
-    { label: 'Miembros', href: '/dashboard/team' },
-    { label: 'Tableros', href: '/dashboard/team/boards' },
-    { label: 'Roles', href: '/dashboard/team/roles' },
-    { label: 'Soporte', href: '/dashboard/team/support' }
+    { label: 'Miembros', href: '/team' },
+    { label: 'Tableros', href: '/team/boards' },
+    { label: 'Roles', href: '/team/roles' },
+    { label: 'Soporte', href: '/team/support' }
   ],
   Finanzas: [
-    { label: 'Dashboard', href: '/dashboard/finance' },
-    { label: 'Facturas', href: '/dashboard/finance/invoices' },
-    { label: 'Pagos', href: '/dashboard/finance/payments' }
+    { label: 'Dashboard', href: '/finance' },
+    { label: 'Facturas', href: '/finance/invoices' },
+    { label: 'Pagos', href: '/finance/payments' }
   ],
   Herramientas: [
-    { label: 'Dashboard', href: '/dashboard/tools' },
-    { label: 'Facturador', href: '/dashboard/tools/invoicer' },
-    { label: 'Cotizador', href: '/dashboard/tools/quoter' },
-    { label: 'Presupuestador', href: '/dashboard/tools/budgeter' },
-    { label: 'Informes', href: '/dashboard/tools/reports' },
-    { label: 'Reuniones', href: '/dashboard/tools/meetings' }
+    { label: 'Dashboard', href: '/tools' },
+    { label: 'Facturador', href: '/tools/invoicer' },
+    { label: 'Cotizador', href: '/tools/quoter' },
+    { label: 'Presupuestador', href: '/tools/budgeter' },
+    { label: 'Informes', href: '/tools/reports' },
+    { label: 'Reuniones', href: '/tools/meetings' }
   ],
   Configuración: [
-    { label: 'General', href: '/dashboard/settings' },
-    { label: 'Integraciones', href: '/dashboard/settings/integrations' }
+    { label: 'General', href: '/settings' },
+    { label: 'Integraciones', href: '/settings/integrations' }
   ]
 }
 

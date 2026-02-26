@@ -2,7 +2,22 @@
 
 import { Suspense } from 'react'
 import { useRouter } from 'next/navigation'
-import { Container, Stack, Title, Group, Loader, Center, SimpleGrid, Paper, Text, Badge, Progress, Avatar, ActionIcon, Box } from '@mantine/core'
+import {
+  Container,
+  Stack,
+  Title,
+  Group,
+  Loader,
+  Center,
+  SimpleGrid,
+  Paper,
+  Text,
+  Badge,
+  Progress,
+  Avatar,
+  ActionIcon,
+  Box
+} from '@mantine/core'
 import { IoGrid, IoChevronForward, IoGitBranch } from 'react-icons/io5'
 
 const mockBoards = [
@@ -53,9 +68,7 @@ const mockBoards = [
     color: '#fd7e14',
     totalTasks: 15,
     completedTasks: 10,
-    members: [
-      { id: '3', name: 'Carlos López', avatar: 'CL' }
-    ],
+    members: [{ id: '3', name: 'Carlos López', avatar: 'CL' }],
     status: 'active'
   },
   {
@@ -65,9 +78,7 @@ const mockBoards = [
     color: '#40c057',
     totalTasks: 10,
     completedTasks: 10,
-    members: [
-      { id: '4', name: 'Ana Martínez', avatar: 'AM' }
-    ],
+    members: [{ id: '4', name: 'Ana Martínez', avatar: 'AM' }],
     status: 'completed'
   },
   {
@@ -88,13 +99,13 @@ const mockBoards = [
 function BoardsLoader() {
   return (
     <Center h={400}>
-      <Loader size="lg" />
+      <Loader size='lg' />
     </Center>
   )
 }
 
 interface BoardCardProps {
-  board: typeof mockBoards[0]
+  board: (typeof mockBoards)[0]
   onClick: () => void
 }
 
@@ -103,9 +114,9 @@ function BoardCard({ board, onClick }: BoardCardProps) {
 
   return (
     <Paper
-      shadow="sm"
-      radius="md"
-      p="lg"
+      shadow='sm'
+      radius='md'
+      p='lg'
       withBorder
       style={{
         cursor: 'pointer',
@@ -114,52 +125,54 @@ function BoardCard({ board, onClick }: BoardCardProps) {
       }}
       onClick={onClick}
     >
-      <Stack gap="md">
-        <Group justify="space-between" align="flex-start">
+      <Stack gap='md'>
+        <Group justify='space-between' align='flex-start'>
           <Stack gap={4}>
-            <Group gap="xs">
+            <Group gap='xs'>
               <IoGitBranch size={18} color={board.color} />
-              <Text fw={600} size="lg">{board.name}</Text>
+              <Text fw={600} size='lg'>
+                {board.name}
+              </Text>
             </Group>
-            <Text size="sm" c="dimmed" lineClamp={2}>
+            <Text size='sm' c='dimmed' lineClamp={2}>
               {board.description}
             </Text>
           </Stack>
-          <Badge 
-            color={board.status === 'completed' ? 'teal' : 'blue'} 
-            variant="light"
-            size="sm"
+          <Badge
+            color={board.status === 'completed' ? 'teal' : 'blue'}
+            variant='light'
+            size='sm'
           >
             {board.status === 'completed' ? 'Completado' : 'En curso'}
           </Badge>
         </Group>
 
         <Box>
-          <Group justify="space-between" mb="xs">
-            <Text size="xs" c="dimmed">
+          <Group justify='space-between' mb='xs'>
+            <Text size='xs' c='dimmed'>
               {board.completedTasks} de {board.totalTasks} tareas
             </Text>
-            <Text size="xs" fw={500}>
+            <Text size='xs' fw={500}>
               {progress}%
             </Text>
           </Group>
-          <Progress 
-            value={progress} 
+          <Progress
+            value={progress}
             color={board.color}
-            size="sm"
-            radius="xl"
+            size='sm'
+            radius='xl'
           />
         </Box>
 
-        <Group justify="space-between">
+        <Group justify='space-between'>
           <Group gap={0}>
             {board.members.slice(0, 3).map((member, index) => (
               <Avatar
                 key={member.id}
-                size="sm"
-                radius="xl"
-                color="blue"
-                style={{ 
+                size='sm'
+                radius='xl'
+                color='blue'
+                style={{
                   marginLeft: index > 0 ? -8 : 0,
                   border: '2px solid var(--mantine-color-body)'
                 }}
@@ -169,16 +182,16 @@ function BoardCard({ board, onClick }: BoardCardProps) {
             ))}
             {board.members.length > 3 && (
               <Avatar
-                size="sm"
-                radius="xl"
-                color="gray"
+                size='sm'
+                radius='xl'
+                color='gray'
                 style={{ marginLeft: -8 }}
               >
                 +{board.members.length - 3}
               </Avatar>
             )}
           </Group>
-          <ActionIcon variant="subtle" size="md">
+          <ActionIcon variant='subtle' size='md'>
             <IoChevronForward size={16} />
           </ActionIcon>
         </Group>
@@ -190,26 +203,28 @@ function BoardCard({ board, onClick }: BoardCardProps) {
 function BoardsContent() {
   const router = useRouter()
 
-  const activeBoards = mockBoards.filter(b => b.status === 'active')
-  const completedBoards = mockBoards.filter(b => b.status === 'completed')
+  const activeBoards = mockBoards.filter((b) => b.status === 'active')
+  const completedBoards = mockBoards.filter((b) => b.status === 'completed')
 
   return (
-    <Container size="xl" py="xl" fluid>
-      <Stack gap="xl">
-        <Group gap="xs">
+    <Container size='xl' py='xl' fluid>
+      <Stack gap='xl'>
+        <Group gap='xs'>
           <IoGrid size={28} />
           <Title order={2}>Tableros</Title>
         </Group>
 
         {activeBoards.length > 0 && (
-          <Stack gap="md">
-            <Text fw={500} c="dimmed">En curso</Text>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+          <Stack gap='md'>
+            <Text fw={500} c='dimmed'>
+              En curso
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing='lg'>
               {activeBoards.map((board) => (
                 <BoardCard
                   key={board.id}
                   board={board}
-                  onClick={() => router.push(`/dashboard/team/boards/${board.id}`)}
+                  onClick={() => router.push(`/team/boards/${board.id}`)}
                 />
               ))}
             </SimpleGrid>
@@ -217,14 +232,16 @@ function BoardsContent() {
         )}
 
         {completedBoards.length > 0 && (
-          <Stack gap="md">
-            <Text fw={500} c="dimmed">Completados</Text>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+          <Stack gap='md'>
+            <Text fw={500} c='dimmed'>
+              Completados
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing='lg'>
               {completedBoards.map((board) => (
                 <BoardCard
                   key={board.id}
                   board={board}
-                  onClick={() => router.push(`/dashboard/team/boards/${board.id}`)}
+                  onClick={() => router.push(`/team/boards/${board.id}`)}
                 />
               ))}
             </SimpleGrid>

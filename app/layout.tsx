@@ -35,11 +35,21 @@ export default function RootLayout({
               <Header />
               <div
                 style={{
-                  display: 'flex'
+                  display: 'flex',
+                  width: '100%'
                 }}
               >
                 <Sidebar activeSection='Home' />
-                <div className='gap' style={{ padding: '20px 20px' }}>
+                <div
+                  className='gap'
+                  style={{
+                    width: '100%',
+                    padding: '20px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}
+                >
                   {children}
                 </div>
               </div>

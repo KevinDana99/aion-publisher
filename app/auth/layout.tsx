@@ -10,7 +10,6 @@ export default function AuthLayout({
 }) {
   return (
     <>
-      <Header />
       <Box pt={60} style={{ minHeight: '100vh' }}>
         {children}
       </Box>

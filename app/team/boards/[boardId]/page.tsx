@@ -2,7 +2,16 @@
 
 import { Suspense } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Container, Stack, Title, Group, Loader, Center, ActionIcon, Paper } from '@mantine/core'
+import {
+  Container,
+  Stack,
+  Title,
+  Group,
+  Loader,
+  Center,
+  ActionIcon,
+  Paper
+} from '@mantine/core'
 import { IoGitBranch, IoArrowBack } from 'react-icons/io5'
 import KanbanBoard from '@/components/shared/boards/KanbanBoard'
 
@@ -18,7 +27,7 @@ const projectInfo: Record<string, { name: string; color: string }> = {
 function BoardLoader() {
   return (
     <Center h={400}>
-      <Loader size="lg" />
+      <Loader size='lg' />
     </Center>
   )
 }
@@ -30,15 +39,19 @@ function BoardContent() {
   const project = projectInfo[boardId] || { name: boardId, color: '#228be6' }
 
   return (
-    <Container size="xl" py="xl" fluid>
-      <Stack gap="lg">
-        <Group gap="xs">
-          <Paper shadow="xs" radius="xl" style={{ background: 'var(--mantine-color-default)' }}>
+    <Container size='xl' py='xl' fluid>
+      <Stack gap='lg'>
+        <Group gap='xs'>
+          <Paper
+            shadow='xs'
+            radius='xl'
+            style={{ background: 'var(--mantine-color-default)' }}
+          >
             <ActionIcon
-              variant="subtle"
-              size="lg"
-              onClick={() => router.push('/dashboard/team/boards')}
-              aria-label="Volver a tableros"
+              variant='subtle'
+              size='lg'
+              onClick={() => router.push('/team/boards')}
+              aria-label='Volver a tableros'
             >
               <IoArrowBack size={20} />
             </ActionIcon>
