@@ -223,7 +223,11 @@ function KanbanColumn({ id, label, color, tasks, onTaskClick, onAddTask }: Kanba
   )
 }
 
-export default function KanbanBoard() {
+interface KanbanBoardProps {
+  project?: string
+}
+
+export default function KanbanBoard({ project }: KanbanBoardProps) {
   const { user, users } = useUser()
   const [tasks, setTasks] = useState<Task[]>(mockTasks)
   const [filter, setFilter] = useState<'all' | 'mine'>('all')
@@ -236,7 +240,7 @@ export default function KanbanBoard() {
     status: 'backlog' as TaskStatus,
     priority: 'medium' as TaskPriority,
     assigneeId: user?.id || '1',
-    project: 'Website'
+    project: project || 'Website'
   })
 
   const sensors = useSensors(
@@ -248,11 +252,15 @@ export default function KanbanBoard() {
   )
 
   const filteredTasks = useMemo(() => {
-    if (filter === 'mine' && user) {
-      return tasks.filter(t => t.assignee.id === user.id)
+    let result = tasks
+    if (project) {
+      result = result.filter(t => t.project.toLowerCase() === project.toLowerCase())
     }
-    return tasks
-  }, [tasks, filter, user])
+    if (filter === 'mine' && user) {
+      result = result.filter(t => t.assignee.id === user.id)
+    }
+    return result
+  }, [tasks, filter, user, project])
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -361,7 +369,7 @@ export default function KanbanBoard() {
       status: 'backlog',
       priority: 'medium',
       assigneeId: user?.id || '1',
-      project: 'Website'
+      project: project || 'Website'
     })
   }
 
@@ -389,13 +397,15 @@ export default function KanbanBoard() {
             size="sm"
             style={{ width: 200 }}
           />
-          <Select
-            placeholder="Filtrar por proyecto"
-            data={['Website', 'API', 'Marketing', 'DevOps', 'Docs', 'UX']}
-            clearable
-            size="sm"
-            style={{ width: 150 }}
-          />
+          {!project && (
+            <Select
+              placeholder="Filtrar por proyecto"
+              data={['Website', 'API', 'Marketing', 'DevOps', 'Docs', 'UX']}
+              clearable
+              size="sm"
+              style={{ width: 150 }}
+            />
+          )}
         </Group>
         <Button leftSection={<IoAdd size={16} />} onClick={() => setNewTaskDrawer(true)}>
           Nueva tarea

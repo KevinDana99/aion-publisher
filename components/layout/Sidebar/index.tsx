@@ -58,7 +58,7 @@ const linksMockdata: Record<string, { label: string; href: string }[]> = {
   ],
   Equipo: [
     { label: 'Miembros', href: '/dashboard/team' },
-    { label: 'Kanban', href: '/dashboard/team/kanban' },
+    { label: 'Tableros', href: '/dashboard/team/boards' },
     { label: 'Roles', href: '/dashboard/team/roles' },
     { label: 'Soporte', href: '/dashboard/team/support' }
   ],
