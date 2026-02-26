@@ -45,12 +45,14 @@ const defaultIntegrations: Integration[] = [
   { id: 'youtube', name: 'YouTube', icon: 'IoLogoYoutube', enabled: false },
   { id: 'pinterest', name: 'Pinterest', icon: 'IoLogoPinterest', enabled: false },
   { id: 'whatsapp', name: 'WhatsApp Business', icon: 'IoLogoWhatsapp', enabled: false },
-  { id: 'calendly', name: 'Calendly', icon: 'IoCalendar', enabled: true }
+  { id: 'calendly', name: 'Calendly', icon: 'IoCalendar', enabled: true },
+  { id: 'github', name: 'GitHub', icon: 'IoLogoGithub', enabled: false }
 ]
 
 const defaultWidgets: Widget[] = [
   { id: 'statsGrid', name: 'Estadísticas Generales', category: 'general', enabled: true },
   { id: 'calendarWidget', name: 'Calendario', category: 'general', enabled: true },
+  { id: 'crmOverview', name: 'Resumen CRM', category: 'crm', enabled: true },
   { id: 'campaignPerformance', name: 'Performance de Campañas', category: 'marketing', enabled: true },
   { id: 'upcomingPosts', name: 'Próximas Publicaciones', category: 'marketing', enabled: true },
   { id: 'pendingComments', name: 'Comentarios Pendientes', category: 'marketing', enabled: true },

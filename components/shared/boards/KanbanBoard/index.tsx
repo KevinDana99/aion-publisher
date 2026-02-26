@@ -68,6 +68,15 @@ const priorityColors: Record<TaskPriority, string> = {
   urgent: 'red'
 }
 
+const projectUuidMap: Record<string, string> = {
+  '550e8400-e29b-41d4-a716-446655440001': 'Website',
+  '550e8400-e29b-41d4-a716-446655440002': 'API',
+  '550e8400-e29b-41d4-a716-446655440003': 'Marketing',
+  '550e8400-e29b-41d4-a716-446655440004': 'DevOps',
+  '550e8400-e29b-41d4-a716-446655440005': 'Docs',
+  '550e8400-e29b-41d4-a716-446655440006': 'UX'
+}
+
 const mockTasks: Task[] = [
   { id: 't1', title: 'Diseñar nueva landing page', status: 'in_progress', priority: 'high', assignee: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, reporter: { id: '2', name: 'María García', email: 'maria@aion.com', avatar: 'MG', role: 'manager' }, project: 'Website', labels: ['design', 'frontend'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), dueDate: new Date('2024-12-15'), comments: 5, attachments: 2 },
   { id: 't2', title: 'Implementar autenticación', status: 'todo', priority: 'urgent', assignee: { id: '3', name: 'Carlos López', email: 'carlos@aion.com', avatar: 'CL', role: 'member' }, reporter: { id: '1', name: 'Juan Pérez', email: 'juan@aion.com', avatar: 'JP', role: 'admin' }, project: 'API', labels: ['backend', 'security'], createdAt: new Date('2024-12-01'), updatedAt: new Date('2024-12-01'), dueDate: new Date('2024-12-10'), comments: 3, attachments: 0 },
@@ -253,8 +262,9 @@ export default function KanbanBoard({ project }: KanbanBoardProps) {
 
   const filteredTasks = useMemo(() => {
     let result = tasks
-    if (project) {
-      result = result.filter(t => t.project.toLowerCase() === project.toLowerCase())
+    if (project && projectUuidMap[project]) {
+      const projectName = projectUuidMap[project]
+      result = result.filter(t => t.project === projectName)
     }
     if (filter === 'mine' && user) {
       result = result.filter(t => t.assignee.id === user.id)

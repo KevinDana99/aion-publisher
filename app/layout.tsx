@@ -31,29 +31,7 @@ export default function RootLayout({
       <body className='antialiased'>
         <MantineProvider theme={theme} defaultColorScheme='auto'>
           <UserProvider>
-            <SettingsProvider>
-              <Header />
-              <div
-                style={{
-                  display: 'flex',
-                  width: '100%'
-                }}
-              >
-                <Sidebar activeSection='Home' />
-                <div
-                  className='gap'
-                  style={{
-                    width: '100%',
-                    padding: '20px 20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                  }}
-                >
-                  {children}
-                </div>
-              </div>
-            </SettingsProvider>
+            <SettingsProvider>{children}</SettingsProvider>
           </UserProvider>
         </MantineProvider>
       </body>

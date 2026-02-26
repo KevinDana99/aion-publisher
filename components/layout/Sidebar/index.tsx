@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   Box,
   Title,
@@ -108,9 +108,7 @@ const linksMockdata: Record<string, { label: string; href: string }[]> = {
     { label: 'Reportes', href: '/analytics/reports' }
   ],
   Proyectos: [
-    { label: 'Dashboard', href: '/projects' },
-    { label: 'Tareas', href: '/projects/tasks' },
-    { label: 'Tiempo', href: '/projects/time' }
+    { label: 'Dashboard', href: '/projects' }
   ],
   Equipo: [
     { label: 'Miembros', href: '/team' },
@@ -131,6 +129,10 @@ const linksMockdata: Record<string, { label: string; href: string }[]> = {
     { label: 'Informes', href: '/tools/reports' },
     { label: 'Reuniones', href: '/tools/meetings' }
   ],
+  CRM: [
+    { label: 'Resumen', href: '/crm' },
+    { label: 'Mensajes', href: '/crm/messages' }
+  ],
   Configuración: [
     { label: 'General', href: '/settings' },
     { label: 'Integraciones', href: '/settings/integrations' }
@@ -141,14 +143,29 @@ interface SidebarProps {
   activeSection?: string
 }
 
-export default function Sidebar({ activeSection = 'Dashboard' }: SidebarProps) {
-  const [active, setActive] = useState(activeSection)
+export default function Sidebar({ activeSection }: SidebarProps) {
+  const pathname = usePathname()
+  
+  const getInitialSection = () => {
+    if (pathname.startsWith('/dashboard')) return 'Dashboard'
+    if (pathname.startsWith('/marketing')) return 'Marketing'
+    if (pathname.startsWith('/analytics')) return 'Analíticas'
+    if (pathname.startsWith('/projects')) return 'Proyectos'
+    if (pathname.startsWith('/team')) return 'Equipo'
+    if (pathname.startsWith('/finance')) return 'Finanzas'
+    if (pathname.startsWith('/tools')) return 'Herramientas'
+    if (pathname.startsWith('/crm')) return 'CRM'
+    if (pathname.startsWith('/settings')) return 'Configuración'
+    return activeSection || 'Dashboard'
+  }
+  
+  const [active, setActive] = useState(getInitialSection())
   const [activeLink, setActiveLink] = useState('')
   const router = useRouter()
   const theme = useMantineTheme()
 
   const handleLogout = () => {
-    router.push('/auth/login')
+    router.push('/login')
   }
 
   const mainLinks = mainLinksMockdata.map((link) => {

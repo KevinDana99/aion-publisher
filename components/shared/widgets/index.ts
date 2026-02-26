@@ -15,6 +15,7 @@ import RevenueOverview from './RevenueOverview'
 import PendingInvoices from './PendingInvoices'
 import CashFlow from './CashFlow'
 import DashboardCalendarWidget from './CalendarWidget'
+import CRMOverview from './CRMOverview'
 import { WidgetSettingsModal } from './WidgetSettingsModal'
 
 export { 
@@ -35,5 +36,6 @@ export {
   PendingInvoices,
   CashFlow,
   DashboardCalendarWidget,
+  CRMOverview,
   WidgetSettingsModal
 }
