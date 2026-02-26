@@ -1,6 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   Box,
   Stack,
@@ -14,7 +15,8 @@ import {
   SimpleGrid,
   Card,
   Button,
-  Divider
+  Divider,
+  Alert
 } from '@mantine/core'
 import {
   IoArrowBack,
@@ -23,9 +25,11 @@ import {
   IoCodeSlash,
   IoAlertCircle,
   IoGrid,
-  IoLink
+  IoLink,
+  IoSync
 } from 'react-icons/io5'
 import KanbanBoard from '@/components/shared/boards/KanbanBoard'
+import { useSettings } from '@/contexts/SettingsContext'
 
 const mockProjects = [
   {
@@ -98,8 +102,12 @@ const mockProjects = [
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { settings } = useSettings()
   const projectId = params.uuid as string
   const project = mockProjects.find((p) => p.id === projectId)
+
+  const githubIntegration = settings.integrations.find((i) => i.id === 'github')
+  const isGithubEnabled = githubIntegration?.enabled && githubIntegration?.token
 
   if (!project) {
     return (
@@ -164,28 +172,43 @@ export default function ProjectDetailPage() {
         </Group>
 
         <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing='md'>
-          <Card shadow='sm' radius='md' withBorder>
-            <Group justify='space-between' mb='xs'>
-              <Text size='xs' c='dimmed' tt='uppercase' fw={700}>
-                Repo
+          {!isGithubEnabled ? (
+            <Card shadow='sm' radius='md' withBorder style={{ gridColumn: 'span 2' }}>
+              <Alert icon={<IoAlertCircle size={18} />} color='yellow' title='GitHub no configurado'>
+                <Group justify='space-between'>
+                  <Text size='sm'>
+                    Conecta tu cuenta de GitHub para ver el repositorio de este proyecto.
+                  </Text>
+                  <Button size='xs' variant='light' component={Link} href='/settings/integrations'>
+                    Configurar
+                  </Button>
+                </Group>
+              </Alert>
+            </Card>
+          ) : (
+            <Card shadow='sm' radius='md' withBorder>
+              <Group justify='space-between' mb='xs'>
+                <Text size='xs' c='dimmed' tt='uppercase' fw={700}>
+                  Repo
+                </Text>
+                <IoGitBranch size={16} color={project.color} />
+              </Group>
+              <Text size='sm' fw={500} lineClamp={1}>
+                {project.repoUrl.replace('https://github.com/', '')}
               </Text>
-              <IoGitBranch size={16} color={project.color} />
-            </Group>
-            <Text size='sm' fw={500} lineClamp={1}>
-              {project.repoUrl.replace('https://github.com/', '')}
-            </Text>
-            <Button
-              variant='subtle'
-              size='xs'
-              mt='xs'
-              leftSection={<IoLink size={14} />}
-              component='a'
-              href={project.repoUrl}
-              target='_blank'
-            >
-              Abrir
-            </Button>
-          </Card>
+              <Button
+                variant='subtle'
+                size='xs'
+                mt='xs'
+                leftSection={<IoLink size={14} />}
+                component='a'
+                href={project.repoUrl}
+                target='_blank'
+              >
+                Abrir
+              </Button>
+            </Card>
+          )}
 
           <Card shadow='sm' radius='md' withBorder>
             <Group justify='space-between' mb='xs'>

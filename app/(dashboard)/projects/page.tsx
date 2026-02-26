@@ -19,8 +19,16 @@ import {
   Progress,
   Avatar,
   Tooltip,
-  TextInput
+  TextInput,
+  Button,
+  Modal,
+  Textarea,
+  ColorSwatch,
+  Grid,
+  Alert,
+  Menu
 } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { 
   IoFolder, 
   IoChevronForward, 
@@ -32,9 +40,20 @@ import {
   IoCloudDone,
   IoCloudOffline,
   IoSettings,
-  IoSearch
+  IoSearch,
+  IoAdd,
+  IoTrash,
+  IoPencil,
+  IoLink,
+  IoEllipsisVertical,
+  IoSync,
+  IoCheckmark,
+  IoClose
 } from 'react-icons/io5'
 import { useSettings } from '@/contexts/SettingsContext'
+import { fetchGithubRepos, type GithubRepo } from '@/lib/github/service'
+
+const COLORS = ['#228be6', '#15aabf', '#be4bdb', '#fd7e14', '#40c057', '#fab005', '#fa5252', '#868e96']
 
 const mockProjects = [
   {
@@ -130,9 +149,11 @@ function ProjectsLoader() {
 interface ProjectCardProps {
   project: (typeof mockProjects)[0]
   onClick: () => void
+  onEdit: () => void
+  onDelete: () => void
 }
 
-function ProjectCard({ project, onClick }: ProjectCardProps) {
+function ProjectCard({ project, onClick, onEdit, onDelete }: ProjectCardProps) {
   const router = useRouter()
   const progress = Math.round(((project.totalIssues - project.pendingIssues) / project.totalIssues) * 100)
 
@@ -262,9 +283,19 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
               </Tooltip>
             ))}
           </Avatar.Group>
-          <ActionIcon variant='subtle' color='gray'>
-            <IoChevronForward size={16} />
-          </ActionIcon>
+          <Menu shadow='md' width={150}>
+            <Menu.Target>
+              <ActionIcon variant='subtle' color='gray'>
+                <IoEllipsisVertical size={16} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item leftSection={<IoPencil size={14} />} onClick={onEdit}>Editar</Menu.Item>
+              <Menu.Item leftSection={<IoLink size={14} />}>Vincular Repositorio</Menu.Item>
+              <Menu.Divider />
+              <Menu.Item leftSection={<IoTrash size={14} />} color='red' onClick={onDelete}>Eliminar</Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Group>
       </Stack>
     </Paper>
@@ -273,12 +304,100 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
 
 function ProjectsContent() {
   const router = useRouter()
+  const { settings } = useSettings()
   const [search, setSearch] = useState('')
+  const [projects, setProjects] = useState(mockProjects)
+  const [modalOpen, { open: openModal, close: closeModal }] = useDisclosure(false)
+  const [editingProject, setEditingProject] = useState<typeof mockProjects[0] | null>(null)
+  const [newProject, setNewProject] = useState({
+    name: '',
+    description: '',
+    color: '#228be6',
+    repoUrl: '',
+    devDeployUrl: '',
+    prodDeployUrl: ''
+  })
+  const [githubRepos, setGithubRepos] = useState<GithubRepo[]>([])
+  const [loadingRepos, setLoadingRepos] = useState(false)
+  const [showRepoSelector, setShowRepoSelector] = useState(false)
+  const [repoError, setRepoError] = useState<string | null>(null)
 
-  const filteredProjects = mockProjects.filter(p => 
+  const githubIntegration = settings.integrations.find(i => i.id === 'github')
+  const isGithubEnabled = githubIntegration?.enabled && githubIntegration?.token
+  const githubOrg = githubIntegration?.webhookUrl?.trim() || undefined
+
+  const loadGithubRepos = async () => {
+    if (!githubIntegration?.token) return
+    setLoadingRepos(true)
+    setRepoError(null)
+    try {
+      const repos = await fetchGithubRepos(githubIntegration.token)
+      setGithubRepos(repos)
+      setShowRepoSelector(true)
+    } catch (error) {
+      setRepoError('Error al cargar repositorios. Verifica tu token.')
+      console.error('Error loading GitHub repos:', error)
+    } finally {
+      setLoadingRepos(false)
+    }
+  }
+
+  const handleSelectRepo = (repo: GithubRepo) => {
+    setNewProject({
+      ...newProject,
+      name: repo.name,
+      description: repo.description || '',
+      repoUrl: repo.html_url
+    })
+    setShowRepoSelector(false)
+  }
+
+  const filteredProjects = projects.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.description.toLowerCase().includes(search.toLowerCase())
   )
+
+  const handleSaveProject = () => {
+    if (!newProject.name.trim()) return
+
+    if (editingProject) {
+      setProjects(projects.map(p => 
+        p.id === editingProject.id 
+          ? { ...p, ...newProject }
+          : p
+      ))
+    } else {
+      const project = {
+        id: crypto.randomUUID(),
+        ...newProject,
+        status: 'active',
+        totalIssues: 0,
+        pendingIssues: 0,
+        members: []
+      }
+      setProjects([...projects, project])
+    }
+    closeModal()
+    setEditingProject(null)
+    setNewProject({ name: '', description: '', color: '#228be6', repoUrl: '', devDeployUrl: '', prodDeployUrl: '' })
+  }
+
+  const handleEditProject = (project: typeof mockProjects[0]) => {
+    setEditingProject(project)
+    setNewProject({
+      name: project.name,
+      description: project.description,
+      color: project.color,
+      repoUrl: project.repoUrl,
+      devDeployUrl: project.devDeployUrl || '',
+      prodDeployUrl: project.prodDeployUrl || ''
+    })
+    openModal()
+  }
+
+  const handleDeleteProject = (id: string) => {
+    setProjects(projects.filter(p => p.id !== id))
+  }
 
   return (
     <Box style={{ width: '100%' }}>
@@ -290,14 +409,139 @@ function ProjectsContent() {
             </ThemeIcon>
             <Title order={2}>Proyectos</Title>
           </Group>
-          <TextInput
-            placeholder='Buscar proyectos...'
-            leftSection={<IoSearch size={16} />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            w={250}
-          />
+          <Group>
+            <TextInput
+              placeholder='Buscar proyectos...'
+              leftSection={<IoSearch size={16} />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              w={250}
+            />
+            <Button leftSection={<IoAdd size={16} />} onClick={() => { setEditingProject(null); openModal() }}>
+              Nuevo Proyecto
+            </Button>
+          </Group>
         </Group>
+
+        {!isGithubEnabled && (
+          <Alert icon={<IoAlertCircle size={18} />} color='yellow' title='GitHub no configurado'>
+            <Group justify='space-between'>
+              <Text size='sm'>
+                Configura tu token de GitHub para sincronizar tus repositorios.
+              </Text>
+              <Button size='xs' variant='light' component={Link} href='/settings/integrations'>
+                Configurar
+              </Button>
+            </Group>
+          </Alert>
+        )}
+
+        <Modal opened={modalOpen} onClose={closeModal} title={editingProject ? 'Editar Proyecto' : 'Nuevo Proyecto'} size='lg'>
+          <Stack gap='md'>
+            <TextInput
+              label='Nombre'
+              placeholder='Nombre del proyecto'
+              value={newProject.name}
+              onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+              required
+            />
+            <Textarea
+              label='Descripción'
+              placeholder='Descripción del proyecto'
+              value={newProject.description}
+              onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+              rows={3}
+            />
+            <Text size='sm' fw={500}>Color</Text>
+            <Group>
+              {COLORS.map(color => (
+                <ColorSwatch 
+                  key={color} 
+                  color={color} 
+                  onClick={() => setNewProject({ ...newProject, color })}
+                  style={{ cursor: 'pointer', border: newProject.color === color ? '2px solid #000' : 'none' }}
+                />
+              ))}
+            </Group>
+            {isGithubEnabled ? (
+              <Button 
+                variant='light' 
+                leftSection={loadingRepos ? <Loader size={14} /> : <IoSync size={16} />}
+                onClick={loadGithubRepos}
+                loading={loadingRepos}
+              >
+                Sincronizar desde GitHub
+              </Button>
+            ) : (
+              <Alert icon={<IoAlertCircle size={16} />} color='yellow' variant='light'>
+                <Text size='sm'>Configura GitHub para sincronizar repositorios</Text>
+              </Alert>
+            )}
+
+            {repoError && (
+              <Alert icon={<IoAlertCircle size={16} />} color='red' variant='light'>
+                <Text size='sm'>{repoError}</Text>
+              </Alert>
+            )}
+
+            {showRepoSelector && githubRepos.length > 0 && (
+              <Paper shadow='xs' p='md' withBorder>
+                <Text size='sm' fw={500} mb='sm'>Selecciona un repositorio</Text>
+                <Stack gap='xs' style={{ maxHeight: 200, overflowY: 'auto' }}>
+                  {githubRepos.map(repo => (
+                    <Paper 
+                      key={repo.id} 
+                      p='xs' 
+                      withBorder 
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleSelectRepo(repo)}
+                    >
+                      <Group justify='space-between'>
+                        <div>
+                          <Text size='sm' fw={500}>{repo.name}</Text>
+                          <Text size='xs' c='dimmed' lineClamp={1}>{repo.description}</Text>
+                        </div>
+                        {repo.language && <Badge size='xs' variant='light'>{repo.language}</Badge>}
+                      </Group>
+                    </Paper>
+                  ))}
+                </Stack>
+                <Button variant='subtle' size='xs' mt='sm' onClick={() => setShowRepoSelector(false)}>
+                  Cancelar
+                </Button>
+              </Paper>
+            )}
+
+            <TextInput
+              label='URL del Repositorio'
+              placeholder='https://github.com/usuario/repo'
+              value={newProject.repoUrl}
+              onChange={(e) => setNewProject({ ...newProject, repoUrl: e.target.value })}
+            />
+            <Grid>
+              <Grid.Col span={6}>
+                <TextInput
+                  label='URL Dev'
+                  placeholder='https://dev-proyecto.com'
+                  value={newProject.devDeployUrl}
+                  onChange={(e) => setNewProject({ ...newProject, devDeployUrl: e.target.value })}
+                />
+              </Grid.Col>
+              <Grid.Col span={6}>
+                <TextInput
+                  label='URL Producción'
+                  placeholder='https://proyecto.com'
+                  value={newProject.prodDeployUrl}
+                  onChange={(e) => setNewProject({ ...newProject, prodDeployUrl: e.target.value })}
+                />
+              </Grid.Col>
+            </Grid>
+            <Group justify='flex-end' mt='md'>
+              <Button variant='subtle' onClick={closeModal}>Cancelar</Button>
+              <Button onClick={handleSaveProject}>Guardar</Button>
+            </Group>
+          </Stack>
+        </Modal>
 
         <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing='lg'>
           {filteredProjects.map((project) => (
@@ -305,6 +549,8 @@ function ProjectsContent() {
               key={project.id}
               project={project}
               onClick={() => router.push(`/projects/${project.id}`)}
+              onEdit={() => handleEditProject(project)}
+              onDelete={() => handleDeleteProject(project.id)}
             />
           ))}
         </SimpleGrid>
