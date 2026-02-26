@@ -7,7 +7,7 @@ import {
   PendingInvoices, 
   CashFlow,
   StatsGrid
-} from '@/components/dashboard'
+} from '@/components/shared/widgets'
 
 export default function FinancePage() {
   return (

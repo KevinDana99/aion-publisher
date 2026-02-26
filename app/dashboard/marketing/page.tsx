@@ -7,7 +7,7 @@ import {
   UpcomingPosts, 
   PendingComments,
   StatsGrid
-} from '@/components/dashboard'
+} from '@/components/shared/widgets'
 
 export default function MarketingPage() {
   return (

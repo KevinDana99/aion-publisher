@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Container, Stack, Title, Group, Loader, Center, ActionIcon, Paper } from '@mantine/core'
 import { IoGitBranch, IoArrowBack } from 'react-icons/io5'
-import KanbanBoard from '@/components/team/KanbanBoard'
+import KanbanBoard from '@/components/shared/boards/KanbanBoard'
 
 const projectInfo: Record<string, { name: string; color: string }> = {
   website: { name: 'Website Redesign', color: '#228be6' },

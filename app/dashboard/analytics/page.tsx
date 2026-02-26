@@ -7,7 +7,7 @@ import {
   TopPages, 
   StatsRing,
   StatsSegments
-} from '@/components/dashboard'
+} from '@/components/shared/widgets'
 
 export default function AnalyticsPage() {
   return (

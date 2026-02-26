@@ -22,7 +22,7 @@ import {
   CashFlow,
   DashboardCalendarWidget,
   WidgetSettingsModal
-} from '@/components/dashboard'
+} from '@/components/shared/widgets'
 import { useSettings } from '@/contexts/SettingsContext'
 
 function DashboardLoader() {

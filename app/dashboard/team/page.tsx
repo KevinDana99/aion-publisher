@@ -6,7 +6,7 @@ import {
   OnlineMembers, 
   TeamActivity, 
   StatsSegments
-} from '@/components/dashboard'
+} from '@/components/shared/widgets'
 
 export default function TeamPage() {
   return (
