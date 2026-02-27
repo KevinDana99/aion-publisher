@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { facebookWebhookService } from '@/lib/facebook/service'
+import { getFacebookVerifyToken } from '@/lib/credentials/tokens'
 import type { FacebookWebhookPayload } from '@/lib/facebook/types'
 
 export async function GET(request: NextRequest) {
@@ -10,13 +10,9 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
 
-    const cookieStore = await cookies()
-    const storedToken = cookieStore.get('fb_verify_token')?.value
-    const envToken = process.env.FACEBOOK_VERIFY_TOKEN || ''
+    const storedToken = await getFacebookVerifyToken()
     
-    const tokenToVerify = storedToken || envToken
-    
-    if (!tokenToVerify) {
+    if (!storedToken) {
       console.log('[Facebook Webhook] No verify token configured')
       return NextResponse.json(
         { error: 'Verify token not configured' },
@@ -24,9 +20,9 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    facebookWebhookService.setVerifyToken(tokenToVerify)
+    facebookWebhookService.setVerifyToken(storedToken)
 
-    console.log('[Facebook Webhook] Verifying. From cookie:', !!storedToken, 'From env:', !!envToken, 'Got from Meta:', !!token)
+    console.log('[Facebook Webhook] Verifying with Redis token')
 
     if (!facebookWebhookService.verifyWebhookMode(mode || '', token || '')) {
       return NextResponse.json(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { instagramWebhookService } from '@/lib/instagram/service'
+import { getInstagramVerifyToken } from '@/lib/credentials/tokens'
 import type { InstagramWebhookPayload } from '@/lib/instagram/types'
 
 export async function GET(request: NextRequest) {
@@ -10,13 +10,9 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
 
-    const cookieStore = await cookies()
-    const storedToken = cookieStore.get('ig_verify_token')?.value
-    const envToken = process.env.INSTAGRAM_VERIFY_TOKEN || ''
+    const storedToken = await getInstagramVerifyToken()
     
-    const verifyToken = storedToken || envToken
-    
-    if (!verifyToken) {
+    if (!storedToken) {
       console.log('[Instagram Webhook] No verify token configured')
       return NextResponse.json(
         { error: 'Verify token not configured' },
@@ -24,9 +20,9 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    instagramWebhookService.setVerifyToken(verifyToken)
+    instagramWebhookService.setVerifyToken(storedToken)
 
-    console.log('[Instagram Webhook] Verifying. From cookie:', !!storedToken, 'From env:', !!envToken, 'Got from Meta:', !!token)
+    console.log('[Instagram Webhook] Verifying with Redis token')
 
     if (!instagramWebhookService.verifyWebhookMode(mode || '', token || '')) {
       return NextResponse.json(
