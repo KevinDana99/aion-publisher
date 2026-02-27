@@ -4,6 +4,7 @@ import {
   mantineHtmlProps,
   MantineProvider
 } from '@mantine/core'
+import { Suspense } from 'react'
 
 import './globals.css'
 import theme from '@/global/theme'
@@ -19,6 +20,14 @@ export const metadata: Metadata = {
   description: 'Aion Publisher'
 }
 
+function LoadingProviders() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      Loading...
+    </div>
+  )
+}
+
 export default function RootLayout({
   children
 }: Readonly<{
@@ -32,13 +41,15 @@ export default function RootLayout({
 
       <body className='antialiased'>
         <MantineProvider theme={theme} defaultColorScheme='auto'>
-          <UserProvider>
-            <InstagramProvider>
-              <FacebookProvider>
-                <SettingsProvider>{children}</SettingsProvider>
-              </FacebookProvider>
-            </InstagramProvider>
-          </UserProvider>
+          <Suspense fallback={<LoadingProviders />}>
+            <UserProvider>
+              <InstagramProvider>
+                <FacebookProvider>
+                  <SettingsProvider>{children}</SettingsProvider>
+                </FacebookProvider>
+              </InstagramProvider>
+            </UserProvider>
+          </Suspense>
         </MantineProvider>
       </body>
     </html>
