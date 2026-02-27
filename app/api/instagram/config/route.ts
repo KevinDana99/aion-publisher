@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getClientId, getRedirectUri, setVerifyToken as setAppVerifyToken } from '@/lib/instagram/app-config'
+import { getClientId, getRedirectUri } from '@/lib/instagram/app-config'
+import { setInstagramVerifyToken } from '@/lib/credentials/tokens'
 
 export async function GET() {
   const clientId = getClientId()
@@ -17,18 +18,10 @@ export async function POST(request: Request) {
     const { verifyToken: token } = body
     
     if (token) {
-      setAppVerifyToken(token)
+      await setInstagramVerifyToken(token)
     }
     
-    const response = NextResponse.json({ success: true })
-    response.cookies.set('ig_verify_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 365 // 1 year
-    })
-    
-    return response
+    return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to save config' }, { status: 500 })
   }
