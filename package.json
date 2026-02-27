@@ -17,6 +17,8 @@
     "@mantine/dates": "^8.3.15",
     "@mantine/form": "^8.3.15",
     "@mantine/hooks": "^8.3.15",
+    "@vercel/kv": "^3.0.0",
+    "better-sqlite3": "^12.6.2",
     "dayjs": "^1.11.19",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",

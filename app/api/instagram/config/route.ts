@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getClientId, getVerifyToken, getRedirectUri } from '@/lib/instagram/app-config'
+import { getClientId, getRedirectUri, setVerifyToken as setAppVerifyToken } from '@/lib/instagram/app-config'
 
 export async function GET() {
   const clientId = getClientId()
-  const verifyToken = getVerifyToken()
   const redirectUri = getRedirectUri()
   
   return NextResponse.json({
     clientId: clientId || '',
-    verifyToken: verifyToken ? '***' : '',
     redirectUri: redirectUri || ''
   })
 }
@@ -19,11 +17,18 @@ export async function POST(request: Request) {
     const { verifyToken: token } = body
     
     if (token) {
-      const { setVerifyToken } = await import('@/lib/instagram/app-config')
-      setVerifyToken(token)
+      setAppVerifyToken(token)
     }
     
-    return NextResponse.json({ success: true })
+    const response = NextResponse.json({ success: true })
+    response.cookies.set('ig_verify_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365 // 1 year
+    })
+    
+    return response
   } catch (error) {
     return NextResponse.json({ error: 'Failed to save config' }, { status: 500 })
   }

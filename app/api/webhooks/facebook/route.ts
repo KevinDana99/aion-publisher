@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { facebookWebhookService } from '@/lib/facebook/service'
-import { getVerifyToken, setVerifyToken } from '@/lib/facebook/app-config'
 import type { FacebookWebhookPayload } from '@/lib/facebook/types'
 
 export async function GET(request: NextRequest) {
@@ -9,14 +9,31 @@ export async function GET(request: NextRequest) {
     const mode = searchParams.get('hub.mode')
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
-    const clientToken = searchParams.get('verify_token')
 
-    const storedToken = getVerifyToken()
-    const tokenToVerify = clientToken || storedToken
+    const cookieStore = await cookies()
+    const storedToken = cookieStore.get('fb_verify_token')?.value
+    const envToken = process.env.FACEBOOK_VERIFY_TOKEN || ''
+    
+    const tokenToVerify = storedToken || envToken
+    
+    if (!tokenToVerify) {
+      console.log('[Facebook Webhook] No verify token configured')
+      return NextResponse.json(
+        { error: 'Verify token not configured' },
+        { status: 403 }
+      )
+    }
     
     facebookWebhookService.setVerifyToken(tokenToVerify)
 
-    console.log('[Facebook Webhook] Verifying. Client token:', clientToken ? 'yes' : 'no', 'Stored token:', storedToken ? 'yes' : 'no', 'Got token from Meta:', token)
+    console.log('[Facebook Webhook] Verifying. From cookie:', !!storedToken, 'From env:', !!envToken, 'Got from Meta:', !!token)
+
+    if (!facebookWebhookService.verifyWebhookMode(mode || '', token || '')) {
+      return NextResponse.json(
+        { error: 'Verification failed' },
+        { status: 403 }
+      )
+    }
 
     if (!facebookWebhookService.verifyWebhookMode(mode || '', token || '')) {
       return NextResponse.json(

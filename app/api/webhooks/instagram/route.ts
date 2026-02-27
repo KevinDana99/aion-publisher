@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { instagramWebhookService } from '@/lib/instagram/service'
 import type { InstagramWebhookPayload } from '@/lib/instagram/types'
-import { getVerifyToken } from '@/lib/instagram/app-config'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,12 +9,24 @@ export async function GET(request: NextRequest) {
     const mode = searchParams.get('hub.mode')
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
-    const clientToken = searchParams.get('verify_token')
 
-    const verifyToken = clientToken || getVerifyToken()
+    const cookieStore = await cookies()
+    const storedToken = cookieStore.get('ig_verify_token')?.value
+    const envToken = process.env.INSTAGRAM_VERIFY_TOKEN || ''
+    
+    const verifyToken = storedToken || envToken
+    
+    if (!verifyToken) {
+      console.log('[Instagram Webhook] No verify token configured')
+      return NextResponse.json(
+        { error: 'Verify token not configured' },
+        { status: 403 }
+      )
+    }
+    
     instagramWebhookService.setVerifyToken(verifyToken)
 
-    console.log('[Instagram Webhook] Verifying. Client token:', clientToken ? 'yes' : 'no', 'Got token from Meta:', token)
+    console.log('[Instagram Webhook] Verifying. From cookie:', !!storedToken, 'From env:', !!envToken, 'Got from Meta:', !!token)
 
     if (!instagramWebhookService.verifyWebhookMode(mode || '', token || '')) {
       return NextResponse.json(
