@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { facebookWebhookService } from '@/lib/facebook/service'
 import type { FacebookWebhookPayload } from '@/lib/facebook/types'
-import { addMessage } from '@/lib/facebook/storage'
-import { getVerifyToken } from '@/lib/facebook/app-config'
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +9,7 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
 
-    const verifyToken = getVerifyToken() || 'facebook_verify_token'
+    const verifyToken = process.env.FACEBOOK_VERIFY_TOKEN || 'facebook_verify_token'
     facebookWebhookService.setVerifyToken(verifyToken)
 
     console.log('[Facebook Webhook] Verifying with token:', verifyToken, 'Got token:', token)
@@ -63,31 +61,28 @@ export async function POST(request: NextRequest) {
     const events = facebookWebhookService.processWebhookPayload(payload)
 
     console.log('[Facebook Webhook] Events processed:', events.length)
+    
+    const messages = []
     for (const event of events) {
       console.log('[Facebook Webhook] Event:', JSON.stringify(event))
 
       if (event.type === 'messages' && event.data.messageId && event.data.message) {
-        const messageId = event.data.messageId
-        const text = event.data.message
-        const timestamp = event.timestamp
-        const conversationId = event.userId
-
-        addMessage({
-          id: messageId,
-          conversationId,
+        messages.push({
+          id: event.data.messageId,
+          conversationId: event.userId,
           senderId: event.userId,
-          text,
-          timestamp,
+          text: event.data.message,
+          timestamp: event.timestamp,
           isFromMe: false
         })
 
-        console.log(`[Facebook Webhook] 💾 Message saved: ${messageId} from ${conversationId}`)
+        console.log(`[Facebook Webhook] Message: ${event.data.messageId} from ${event.userId}`)
       }
     }
 
     console.log(`[Facebook Webhook] ✅ Processed ${events.length} event(s)`)
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    return NextResponse.json({ success: true, messages }, { status: 200 })
   } catch (error) {
     console.error('Facebook webhook processing error:', error)
     return NextResponse.json(

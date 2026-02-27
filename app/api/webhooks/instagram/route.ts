@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { instagramWebhookService } from '@/lib/instagram/service'
 import type { InstagramWebhookPayload } from '@/lib/instagram/types'
-import { addMessage } from '@/lib/instagram/storage'
 import { getVerifyToken } from '@/lib/instagram/app-config'
 
 export async function GET(request: NextRequest) {
@@ -11,7 +10,7 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
 
-    const verifyToken = getVerifyToken() || 'instagram_verify_token'
+    const verifyToken = process.env.INSTAGRAM_VERIFY_TOKEN || 'instagram_verify_token'
     instagramWebhookService.setVerifyToken(verifyToken)
 
     console.log('[Instagram Webhook] Verifying with token:', verifyToken, 'Got token:', token)
@@ -60,51 +59,38 @@ export async function POST(request: NextRequest) {
     const events = instagramWebhookService.processWebhookPayload(payload)
 
     console.log('[Instagram Webhook] Events processed:', events.length)
+    
+    const messages = []
     for (const event of events) {
       console.log('[Instagram Webhook] Event:', JSON.stringify(event))
 
       if (event.type === 'messages' && event.data.messageId && event.data.message) {
-        const messageId = event.data.messageId
-        const text = event.data.message
-        const timestamp = event.timestamp
-        const conversationId = event.userId
-
-        addMessage({
-          id: messageId,
-          conversationId,
+        messages.push({
+          id: event.data.messageId,
+          conversationId: event.userId,
           senderId: event.userId,
-          text,
-          timestamp,
+          text: event.data.message,
+          timestamp: event.timestamp,
           isFromMe: false
         })
-
-        console.log(`[Instagram Webhook] 💾 Message saved: ${messageId} from ${conversationId}`)
       }
 
       if (event.type === 'message_echoes' && event.data.messageId && event.data.message) {
-        const messageId = event.data.messageId
-        const text = event.data.message
-        const timestamp = event.timestamp
         const recipientId = event.data.recipientId || event.userId
-
-        if (recipientId) {
-          addMessage({
-            id: messageId,
-            conversationId: recipientId,
-            senderId: 'business',
-            text,
-            timestamp,
-            isFromMe: true
-          })
-
-          console.log(`[Instagram Webhook] 💾 Echo saved: ${messageId} to ${recipientId}`)
-        }
+        messages.push({
+          id: event.data.messageId,
+          conversationId: recipientId,
+          senderId: 'business',
+          text: event.data.message,
+          timestamp: event.timestamp,
+          isFromMe: true
+        })
       }
     }
 
     console.log(`[Instagram Webhook] ✅ Processed ${events.length} event(s)`)
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    return NextResponse.json({ success: true, messages }, { status: 200 })
   } catch (error) {
     console.error('Instagram webhook processing error:', error)
     return NextResponse.json(

@@ -1,9 +1,3 @@
-import fs from 'fs'
-import path from 'path'
-
-const DATA_DIR = path.join(process.cwd(), 'data')
-const CREDENTIALS_FILE = path.join(DATA_DIR, 'instagram-credentials.json')
-
 interface InstagramCredentials {
   accessToken: string
   userId: string
@@ -11,36 +5,27 @@ interface InstagramCredentials {
   expiresAt?: number
 }
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true })
+const STORAGE_KEY = 'instagram-credentials'
+
+export function saveCredentials(credentials: InstagramCredentials): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(credentials))
   }
 }
 
-function readCredentials(): InstagramCredentials | null {
-  ensureDataDir()
-  if (!fs.existsSync(CREDENTIALS_FILE)) {
-    return null
-  }
+export function getCredentials(): InstagramCredentials | null {
+  if (typeof window === 'undefined') return null
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (!stored) return null
   try {
-    const data = fs.readFileSync(CREDENTIALS_FILE, 'utf-8')
-    return JSON.parse(data)
+    return JSON.parse(stored)
   } catch {
     return null
   }
 }
 
-export function saveCredentials(credentials: InstagramCredentials): void {
-  ensureDataDir()
-  fs.writeFileSync(CREDENTIALS_FILE, JSON.stringify(credentials, null, 2))
-}
-
-export function getCredentials(): InstagramCredentials | null {
-  return readCredentials()
-}
-
 export function clearCredentials(): void {
-  if (fs.existsSync(CREDENTIALS_FILE)) {
-    fs.unlinkSync(CREDENTIALS_FILE)
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(STORAGE_KEY)
   }
 }

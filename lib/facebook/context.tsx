@@ -338,6 +338,15 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
           console.log('[Facebook] Sync response:', syncData)
           if (syncData.success) {
             console.log('[Facebook] Synced from API:', syncData.messages, 'messages')
+            // Guardar mensajes en localStorage
+            const stored = localStorage.getItem('facebook-messages')
+            let existing = stored ? JSON.parse(stored) : { messages: [] }
+            for (const msg of syncData.messages || []) {
+              if (!existing.messages.some((m: any) => m.id === msg.id)) {
+                existing.messages.push(msg)
+              }
+            }
+            localStorage.setItem('facebook-messages', JSON.stringify(existing))
           } else {
             console.log('[Facebook] Sync error:', syncData.error)
           }

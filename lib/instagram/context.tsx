@@ -270,6 +270,16 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
               return [...prev, ...newConvs]
             })
 
+            // Guardar mensajes en localStorage
+            const stored = localStorage.getItem('instagram-messages')
+            let existing = stored ? JSON.parse(stored) : { messages: [] }
+            for (const msg of data.messages || []) {
+              if (!existing.messages.some((m: any) => m.id === msg.id)) {
+                existing.messages.push(msg)
+              }
+            }
+            localStorage.setItem('instagram-messages', JSON.stringify(existing))
+
             if (accessToken) {
               convIds.forEach(convId => fetchContactProfile(convId))
               syncContactsFromConversations()

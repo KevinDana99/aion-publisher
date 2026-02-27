@@ -1,9 +1,3 @@
-import fs from 'fs'
-import path from 'path'
-
-const DATA_DIR = path.join(process.cwd(), 'data')
-const MESSAGES_FILE = path.join(DATA_DIR, 'instagram-messages.json')
-
 interface StoredMessage {
   id: string
   conversationId: string
@@ -18,56 +12,46 @@ interface StoredData {
   lastUpdate: number
 }
 
-const defaultData: StoredData = {
-  messages: [],
-  lastUpdate: 0
-}
+const STORAGE_KEY = 'instagram-messages'
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true })
-  }
-}
-
-function readMessages(): StoredData {
-  ensureDataDir()
-  if (!fs.existsSync(MESSAGES_FILE)) {
-    return defaultData
-  }
+function getStored(): StoredData {
+  if (typeof window === 'undefined') return { messages: [], lastUpdate: 0 }
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (!stored) return { messages: [], lastUpdate: 0 }
   try {
-    const data = fs.readFileSync(MESSAGES_FILE, 'utf-8')
-    return { ...defaultData, ...JSON.parse(data) }
+    return JSON.parse(stored)
   } catch {
-    return defaultData
+    return { messages: [], lastUpdate: 0 }
   }
 }
 
-function writeMessages(data: StoredData): void {
-  ensureDataDir()
-  fs.writeFileSync(MESSAGES_FILE, JSON.stringify(data, null, 2))
+function setStored(data: StoredData): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  }
 }
 
 export function getMessages(): StoredData {
-  return readMessages()
+  return getStored()
 }
 
 export function addMessage(message: StoredMessage): void {
-  const data = readMessages()
+  const data = getStored()
   const existing = data.messages.findIndex(m => m.id === message.id)
   if (existing === -1) {
     data.messages.push(message)
     data.lastUpdate = Date.now()
-    writeMessages(data)
+    setStored(data)
   }
 }
 
 export function getMessagesByConversation(conversationId: string): StoredMessage[] {
-  const data = readMessages()
+  const data = getStored()
   return data.messages
     .filter(m => m.conversationId === conversationId)
     .sort((a, b) => a.timestamp - b.timestamp)
 }
 
 export function clearMessages(): void {
-  writeMessages(defaultData)
+  setStored({ messages: [], lastUpdate: 0 })
 }

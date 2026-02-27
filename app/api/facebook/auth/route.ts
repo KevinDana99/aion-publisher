@@ -4,7 +4,23 @@ import { createFacebookAPI } from '@/lib/facebook/api'
 
 export async function GET() {
   try {
-    const credentials = getCredentials()
+    let credentials = getCredentials()
+    
+    // Si no hay credenciales en memoria, usar variables de entorno
+    if (!credentials) {
+      const envToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+      const envPageId = process.env.FACEBOOK_PAGE_ID
+      const envPageName = process.env.FACEBOOK_PAGE_NAME
+      
+      if (envToken) {
+        credentials = {
+          accessToken: envToken,
+          pageId: envPageId || '',
+          pageName: envPageName || ''
+        }
+      }
+    }
+    
     if (!credentials) {
       return NextResponse.json({ connected: false })
     }
@@ -26,6 +42,11 @@ export async function POST(request: Request) {
     let { accessToken, pageId, pageName, expiresAt } = body
 
     if (!accessToken) {
+      // Usar token de variable de entorno si no se proporciona
+      accessToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+    }
+
+    if (!accessToken) {
       return NextResponse.json({ error: 'Missing accessToken' }, { status: 400 })
     }
 
@@ -39,7 +60,6 @@ export async function POST(request: Request) {
         console.log('[Facebook Auth] Got page info:', pageId, pageName)
       } catch (e) {
         console.error('[Facebook Auth] Error getting page info:', e)
-        // Usar un default si no se puede obtener
         pageId = pageId || 'unknown'
       }
     }
