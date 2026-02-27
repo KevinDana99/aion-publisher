@@ -49,22 +49,29 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId is required' },
-        { status: 400 }
-      )
-    }
+    const conversationId = searchParams.get('conversationId')
+    const limit = searchParams.get('limit') || '25'
 
     const api = createFacebookAPI(credentials.accessToken)
-    const profile = await api.getUserProfile(userId)
 
-    return NextResponse.json(profile)
-  } catch (error: any) {
-    console.error('Error getting user profile:', error)
+    if (userId) {
+      const profile = await api.getUserProfile(userId)
+      return NextResponse.json(profile)
+    }
+
+    if (conversationId) {
+      const messages = await api.getConversationMessages(conversationId, parseInt(limit))
+      return NextResponse.json({ messages })
+    }
+
     return NextResponse.json(
-      { error: error.message || 'Failed to get user profile' },
+      { error: 'userId or conversationId is required' },
+      { status: 400 }
+    )
+  } catch (error: any) {
+    console.error('Error getting Facebook data:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to get data' },
       { status: 500 }
     )
   }

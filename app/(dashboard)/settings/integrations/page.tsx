@@ -73,6 +73,23 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const isInstagram = integration.id === 'instagram'
   const isFacebook = integration.id === 'facebook'
 
+  const [facebookConnected, setFacebookConnected] = useState(false)
+
+  useEffect(() => {
+    const checkFacebookConfig = async () => {
+      try {
+        const res = await fetch('/api/facebook/auth')
+        const data = await res.json()
+        if (data.connected) {
+          setFacebookConnected(true)
+        }
+      } catch (e) {
+        console.error('Error checking Facebook config:', e)
+      }
+    }
+    checkFacebookConfig()
+  }, [])
+
   const handleInstagramConnect = async () => {
     try {
       const res = await fetch('/api/instagram/config')
@@ -83,7 +100,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
         return
       }
       
-      const redirectUri = 'https://4e43-216-244-247-162.ngrok-free.app/api/auth/callback/instagram'
+      const redirectUri = config.redirectUri
       const scope = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments'
       
       const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`
@@ -108,6 +125,40 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   }
 
   const isInstagramConnected = instagramConnected
+
+  const handleFacebookConnect = async () => {
+    if (!tempConfig.token) {
+      alert('Primero ingresa el Page Access Token')
+      return
+    }
+    try {
+      const res = await fetch('/api/facebook/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accessToken: tempConfig.token,
+          pageId: 'me',
+          pageName: ''
+        })
+      })
+      if (res.ok) {
+        setFacebookConnected(true)
+        window.location.reload()
+      }
+    } catch (e) {
+      console.error('Error connecting Facebook:', e)
+    }
+  }
+
+  const handleFacebookDisconnect = async () => {
+    try {
+      await fetch('/api/facebook/auth', { method: 'DELETE' })
+      setFacebookConnected(false)
+      window.location.reload()
+    } catch (e) {
+      console.error('Error disconnecting:', e)
+    }
+  }
 
   const handleToggle = (enabled: boolean) => {
     updateIntegration(integration.id, { enabled })
@@ -153,7 +204,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
 
   const handleInstagramSaveConfig = async () => {
     try {
-      const redirectUri = 'https://4e43-216-244-247-162.ngrok-free.app/api/auth/callback/instagram'
+      const redirectUri = typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback/instagram` : ''
       
       await fetch('/api/instagram/config', {
         method: 'POST',
@@ -204,6 +255,11 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                 @{instagram.username || 'conectado'}
               </Text>
             )}
+            {isFacebook && integration.enabled && facebookConnected && (
+              <Text size="xs" c="teal" fw={500} mb={5}>
+                Facebook
+              </Text>
+            )}
           </Group>
           <Group justify="space-between">
             <Group gap="sm">
@@ -230,7 +286,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
               </div>
             </Group>
             <Group gap="xs">
-              {isInstagram && integration.enabled && (
+              {isInstagram && integration.enabled && !isFacebook && (
                 <Button 
                   size="xs" 
                   variant={isInstagramConnected ? "outline" : "filled"}
@@ -238,6 +294,16 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                   onClick={isInstagramConnected ? handleInstagramDisconnect : handleInstagramConnect}
                 >
                   {isInstagramConnected ? "Desconectar" : "Conectar"}
+                </Button>
+              )}
+              {isFacebook && integration.enabled && (
+                <Button 
+                  size="xs" 
+                  variant={facebookConnected ? "outline" : "filled"}
+                  color={facebookConnected ? "red" : "blue"}
+                  onClick={facebookConnected ? handleFacebookDisconnect : handleFacebookConnect}
+                >
+                  {facebookConnected ? "Desconectar" : "Conectar"}
                 </Button>
               )}
               {integration.enabled && isConnected && !isInstagram && !isFacebook && (
