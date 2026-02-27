@@ -34,16 +34,27 @@ export class FacebookAPI {
   }
 
   async getUserProfile(psid: string): Promise<FacebookUser> {
-    const data = await this.request<any>(`/${psid}`, {
-      fields: 'first_name,last_name,profile_pic'
-    })
+    try {
+      const data = await this.request<any>(`/${psid}`, {
+        fields: 'name,profile_pic'
+      })
 
-    return {
-      id: data.id,
-      firstName: data.first_name || '',
-      lastName: data.last_name || '',
-      profilePic: data.profile_pic || '',
-      name: `${data.first_name || ''} ${data.last_name || ''}`.trim()
+      return {
+        id: data.id,
+        firstName: data.name?.split(' ')[0] || '',
+        lastName: data.name?.split(' ').slice(1).join(' ') || '',
+        profilePic: data.profile_pic || '',
+        name: data.name || ''
+      }
+    } catch (e) {
+      console.error('Error getting user profile:', e)
+      return {
+        id: psid,
+        firstName: '',
+        lastName: '',
+        profilePic: '',
+        name: ''
+      }
     }
   }
 
