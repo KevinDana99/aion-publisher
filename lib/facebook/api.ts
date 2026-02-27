@@ -86,7 +86,11 @@ export class FacebookAPI {
   }
 
   async sendMessage(psid: string, message: string): Promise<{ message_id: string }> {
-    const response = await fetch(`${FACEBOOK_API_BASE}/me/messages`, {
+    console.log('[Facebook API] Sending message to PSID:', psid)
+    console.log('[Facebook API] Message:', message)
+    console.log('[Facebook API] AccessToken exists:', !!this.accessToken)
+    
+    const response = await fetch(`${FACEBOOK_API_BASE}/me/messages?access_token=${this.accessToken}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,13 +98,13 @@ export class FacebookAPI {
       body: JSON.stringify({
         recipient: { id: psid },
         message: { text: message },
-        messaging_type: 'RESPONSE',
-        access_token: this.accessToken
+        messaging_type: 'RESPONSE'
       })
     })
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
+      console.error('[Facebook API] Send error:', error)
       throw new Error(`Failed to send message: ${JSON.stringify(error)}`)
     }
 

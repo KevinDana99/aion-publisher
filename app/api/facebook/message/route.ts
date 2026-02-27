@@ -6,6 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     const credentials = getCredentials()
     
+    console.log('[Facebook Message] Credentials:', credentials ? 'exists' : 'none')
+    
     if (!credentials?.accessToken) {
       return NextResponse.json(
         { error: 'Facebook not connected. Complete OAuth first.' },
@@ -15,6 +17,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { recipientId, message } = body
+    
+    console.log('[Facebook Message] Sending to recipientId:', recipientId)
+    console.log('[Facebook Message] Message:', message)
 
     if (!recipientId || !message) {
       return NextResponse.json(

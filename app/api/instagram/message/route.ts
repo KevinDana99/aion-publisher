@@ -6,6 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     const credentials = getCredentials()
     
+    console.log('[Instagram Message] Credentials:', credentials ? 'exists' : 'none')
+    
     if (!credentials?.accessToken) {
       return NextResponse.json(
         { error: 'Instagram not connected. Complete OAuth first.' },
@@ -15,6 +17,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { recipientId, message } = body
+    
+    console.log('[Instagram Message] Sending to recipientId:', recipientId)
+    console.log('[Instagram Message] Message:', message)
 
     if (!recipientId || !message) {
       return NextResponse.json(
@@ -28,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, messageId: result.message_id })
   } catch (error: any) {
-    console.error('Error sending message:', error)
+    console.error('[Instagram Message] Error:', error.message)
     return NextResponse.json(
       { error: error.message || 'Failed to send message' },
       { status: 500 }

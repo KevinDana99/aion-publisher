@@ -180,17 +180,29 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
         isFromMe: true
       }
 
+      // Guardar con recipientId
       setMessages(prev => ({
         ...prev,
         [recipientId]: [...(prev[recipientId] || []), tempMessage].sort((a, b) => a.timestamp - b.timestamp)
       }))
+
+      // También buscar la conversación por recipientId y guardar ahí
+      const conv = conversations.find(c => 
+        c.participants?.some(p => p.id === recipientId)
+      )
+      if (conv) {
+        setMessages(prev => ({
+          ...prev,
+          [conv.id]: [...(prev[conv.id] || []), tempMessage].sort((a, b) => a.timestamp - b.timestamp)
+        }))
+      }
 
       return true
     } catch (error) {
       console.error('Error sending message:', error)
       return false
     }
-  }, [])
+  }, [conversations])
 
   const fetchContactProfile = useCallback(async (psid: string) => {
     if (contacts[psid] || !accessToken) {
@@ -336,7 +348,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     }
 
     syncMessages()
-    const interval = setInterval(syncMessages, 10000)
+    const interval = setInterval(syncMessages, 300)
 
     if (accessToken) {
       syncContactsFromConversations()

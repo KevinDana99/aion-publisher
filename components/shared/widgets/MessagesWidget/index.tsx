@@ -38,6 +38,7 @@ interface Message {
 
 interface Conversation {
   id: string
+  recipientId?: string
   contactName: string
   contactAvatar: string | null
   platform: 'instagram' | 'facebook' | 'whatsapp'
@@ -129,8 +130,11 @@ export default function MessagesWidget() {
       const fbConvs = facebook.conversations.map(conv => {
         const contact = facebook.contacts[conv.id]
         const msgs = facebook.messages[conv.id] || []
+        const pageId = facebook.pageId || '548959081641341'
+        const recipient = conv.participants?.find(p => p.id !== pageId)
         return {
           id: conv.id,
+          recipientId: recipient?.id || conv.participants?.[0]?.id,
           contactName: contact?.name || conv.participants[0]?.name || conv.id.slice(0, 8),
           contactAvatar: contact?.profilePic || contact?.firstName?.slice(0, 2).toUpperCase() || conv.participants[0]?.firstName?.slice(0, 2).toUpperCase() || conv.id.slice(0, 2).toUpperCase(),
           platform: 'facebook' as const,
@@ -150,9 +154,11 @@ export default function MessagesWidget() {
         const hasIncoming = msgs.some(m => !m.isFromMe)
         if (!hasIncoming) return null
         const contact = facebook.contacts[convId]
+        const senderId = msgs.find(m => !m.isFromMe)?.senderId
         return {
           id: convId,
-          contactName: contact?.name || convId.slice(0, 8),
+          recipientId: senderId,
+          contactName: contact?.name || senderId?.slice(0, 8) || convId.slice(0, 8),
           contactAvatar: contact?.profilePic || contact?.firstName?.slice(0, 2).toUpperCase() || convId.slice(0, 2).toUpperCase(),
           platform: 'facebook' as const,
           messages: msgs.map(m => ({
@@ -205,7 +211,9 @@ export default function MessagesWidget() {
     if (selectedConversation.platform === 'instagram') {
       success = await instagram.sendMessage(selectedConversation.id, newMessage)
     } else if (selectedConversation.platform === 'facebook') {
-      success = await facebook.sendMessage(selectedConversation.id, newMessage)
+      const recipientId = selectedConversation.recipientId || selectedConversation.id
+      console.log('[MessagesWidget] Sending FB message to recipientId:', recipientId)
+      success = await facebook.sendMessage(recipientId, newMessage)
     }
     
     if (success) {
