@@ -348,7 +348,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     }
 
     syncMessages()
-    const interval = setInterval(syncMessages, 300)
+    const interval = setInterval(syncMessages, 500)
 
     if (accessToken) {
       syncContactsFromConversations()
