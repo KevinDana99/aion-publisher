@@ -8,6 +8,10 @@ export function getVerifyToken(): string {
   return verifyToken
 }
 
+export function hasVerifyToken(): boolean {
+  return verifyToken.length > 0
+}
+
 export function getAppId(): string {
   return process.env.FACEBOOK_APP_ID || ''
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { facebookWebhookService } from '@/lib/facebook/service'
+import { getVerifyToken, setVerifyToken } from '@/lib/facebook/app-config'
 import type { FacebookWebhookPayload } from '@/lib/facebook/types'
 
 export async function GET(request: NextRequest) {
@@ -8,11 +9,14 @@ export async function GET(request: NextRequest) {
     const mode = searchParams.get('hub.mode')
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
+    const clientToken = searchParams.get('verify_token')
 
-    const verifyToken = process.env.FACEBOOK_VERIFY_TOKEN || 'facebook_verify_token'
-    facebookWebhookService.setVerifyToken(verifyToken)
+    const storedToken = getVerifyToken()
+    const tokenToVerify = clientToken || storedToken
+    
+    facebookWebhookService.setVerifyToken(tokenToVerify)
 
-    console.log('[Facebook Webhook] Verifying with token:', verifyToken, 'Got token:', token)
+    console.log('[Facebook Webhook] Verifying. Client token:', clientToken ? 'yes' : 'no', 'Stored token:', storedToken ? 'yes' : 'no', 'Got token from Meta:', token)
 
     if (!facebookWebhookService.verifyWebhookMode(mode || '', token || '')) {
       return NextResponse.json(

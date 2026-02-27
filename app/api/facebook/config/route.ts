@@ -1,11 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAppId, getVerifyToken, getRedirectUri } from '@/lib/facebook/app-config'
-
-let verifyToken = ''
-
-export function setVerifyToken(token: string) {
-  verifyToken = token
-}
+import { getAppId, getVerifyToken, getRedirectUri, setVerifyToken as setAppVerifyToken } from '@/lib/facebook/app-config'
 
 export async function GET() {
   const appId = getAppId()
@@ -25,7 +19,7 @@ export async function POST(request: Request) {
     const { verifyToken: token } = body
     
     if (token) {
-      setVerifyToken(token)
+      setAppVerifyToken(token)
     }
     
     return NextResponse.json({ success: true })

@@ -9,11 +9,12 @@ export async function GET(request: NextRequest) {
     const mode = searchParams.get('hub.mode')
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
+    const clientToken = searchParams.get('verify_token')
 
-    const verifyToken = process.env.INSTAGRAM_VERIFY_TOKEN || 'instagram_verify_token'
+    const verifyToken = clientToken || getVerifyToken()
     instagramWebhookService.setVerifyToken(verifyToken)
 
-    console.log('[Instagram Webhook] Verifying with token:', verifyToken, 'Got token:', token)
+    console.log('[Instagram Webhook] Verifying. Client token:', clientToken ? 'yes' : 'no', 'Got token from Meta:', token)
 
     if (!instagramWebhookService.verifyWebhookMode(mode || '', token || '')) {
       return NextResponse.json(
