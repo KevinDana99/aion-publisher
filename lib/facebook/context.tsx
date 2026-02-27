@@ -357,13 +357,8 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     }
 
     syncMessages()
-    const interval = setInterval(syncMessages, 500)
-
-    if (accessToken) {
-      syncContactsFromConversations()
-    }
-
-    return () => clearInterval(interval)
+    // No polling needed - webhooks handle real-time updates
+    return () => {}
   }, [accessToken, contacts, fetchContactProfile, syncContactsFromConversations])
 
   return (
