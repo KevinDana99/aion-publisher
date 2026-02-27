@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
     const challenge = searchParams.get('hub.challenge')
 
     const verifyToken = getVerifyToken() || 'instagram_verify_token'
+    instagramWebhookService.setVerifyToken(verifyToken)
+
+    console.log('[Instagram Webhook] Verifying with token:', verifyToken, 'Got token:', token)
 
     if (!instagramWebhookService.verifyWebhookMode(mode || '', token || '')) {
       return NextResponse.json(

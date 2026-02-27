@@ -1,10 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Container, Stack, Title, Group, Paper, Text, Switch, ThemeIcon, Divider, Badge, SimpleGrid, TextInput, PasswordInput, Modal, Button, Anchor, Box } from '@mantine/core'
-import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse, IoCalendar, IoLogoGithub, IoLogIn, IoCloseCircle } from 'react-icons/io5'
+import { Container, Stack, Title, Group, Paper, Text, Switch, ThemeIcon, Divider, Badge, SimpleGrid, TextInput, PasswordInput, Modal, Button, Anchor, Box, ActionIcon } from '@mantine/core'
+import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse, IoCalendar, IoLogoGithub, IoLogIn, IoCloseCircle, IoRefresh } from 'react-icons/io5'
 import { useSettings, Integration } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
+
+function generateRandomToken(length: number = 32): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ''
+  const bytes = new Uint8Array(length)
+  crypto.getRandomValues(bytes)
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length]
+  }
+  return result
+}
 
 const iconMap: Record<string, React.ReactNode> = {
   IoLogoInstagram: <IoLogoInstagram size={20} />,
@@ -60,6 +71,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const isCalendly = integration.id === 'calendly'
   const isGithub = integration.id === 'github'
   const isInstagram = integration.id === 'instagram'
+  const isFacebook = integration.id === 'facebook'
 
   const handleInstagramConnect = async () => {
     try {
@@ -109,6 +121,26 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     setModalOpen(false)
   }
 
+  const handleFacebookSaveConfig = async () => {
+    try {
+      await fetch('/api/facebook/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appId: tempConfig.apiKey,
+          appSecret: tempConfig.apiSecret,
+          verifyToken: tempConfig.webhookUrl,
+          redirectUri: ''
+        })
+      })
+      
+      updateIntegration(integration.id, tempConfig)
+      setModalOpen(false)
+    } catch (error) {
+      console.error('Error saving Facebook config:', error)
+    }
+  }
+
   const handleOpenConfig = () => {
     setTempConfig({
       token: integration.token || '',
@@ -142,13 +174,17 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     }
   }
 
+  const isFacebookConnected = typeof window !== 'undefined' && localStorage.getItem('facebook-chat-state') !== null
+
   const isConnected = isCalendly 
     ? integration.token && integration.webhookUrl
     : isGithub 
       ? integration.token
       : isInstagram
         ? instagramConnected
-        : (integration.token || integration.apiKey)
+        : isFacebook
+          ? (integration.token || integration.apiKey)
+          : (integration.token || integration.apiKey)
 
   return (
     <>
@@ -185,7 +221,9 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                   {integration.enabled 
                     ? isInstagram 
                       ? (isInstagramConnected ? 'Conectado' : 'Habilitado - Sin configurar')
-                      : (isConnected ? 'Conectado' : 'Habilitado - Sin configurar')
+                      : isFacebook
+                        ? (isFacebookConnected ? 'Conectado' : 'Habilitado - Sin configurar')
+                        : (isConnected ? 'Conectado' : 'Habilitado - Sin configurar')
                     : 'Deshabilitado'
                   }
                 </Text>
@@ -202,7 +240,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                   {isInstagramConnected ? "Desconectar" : "Conectar"}
                 </Button>
               )}
-              {integration.enabled && isConnected && !isInstagram && (
+              {integration.enabled && isConnected && !isInstagram && !isFacebook && (
                 <Badge color="teal" variant="light" size="sm">
                   <Group gap={4}>
                     <IoCheckmarkCircle size={12} />
@@ -212,7 +250,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
               )}
               {integration.enabled && (
                 <Anchor size="sm" onClick={handleOpenConfig}>
-                  Configurar
+                  {isFacebook ? 'Configurar' : 'Configurar'}
                 </Anchor>
               )}
               <Switch
@@ -330,12 +368,21 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                 description="Tu Instagram App Secret de Meta for Developers"
               />
 
-              <PasswordInput
+              <TextInput
                 label="Verify Token"
                 placeholder="mi_token_secreto_123"
                 value={tempConfig.webhookUrl}
+                rightSection={
+                  <ActionIcon 
+                    variant="subtle" 
+                    onClick={() => setTempConfig(prev => ({ ...prev, webhookUrl: generateRandomToken(32) }))}
+                    title="Generar token aleatorio"
+                  >
+                    <IoRefresh size={16} />
+                  </ActionIcon>
+                }
                 onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                description="Token que usarás en Meta for Developers (crea uno random)"
+                description="Token que usarás en Meta for Developers"
               />
 
               <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-blue-0)' }}>
@@ -363,6 +410,70 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                     Cancelar
                   </Button>
                   <Button leftSection={<IoSave size={16} />} onClick={handleInstagramSaveConfig}>
+                    Guardar
+                  </Button>
+                </Group>
+              </Group>
+            </>
+          ) : isFacebook ? (
+            <>
+              <Text size="sm" c="dimmed">
+                Configura tu app de Facebook Messenger y conecta tu página para recibir mensajes.
+              </Text>
+
+              <Divider />
+
+              <TextInput
+                label="App ID"
+                placeholder="1591223445959501"
+                value={tempConfig.apiKey}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                description="Tu Facebook App ID de Meta for Developers"
+              />
+
+              <PasswordInput
+                label="App Secret"
+                placeholder="91b5c75fd740e36fa2405fdf3b2c3fe9"
+                value={tempConfig.apiSecret}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, apiSecret: e.target.value }))}
+                description="Tu Facebook App Secret de Meta for Developers"
+              />
+
+              <TextInput
+                label="Verify Token"
+                placeholder="mi_token_secreto_123"
+                value={tempConfig.webhookUrl}
+                rightSection={
+                  <ActionIcon 
+                    variant="subtle" 
+                    onClick={() => setTempConfig(prev => ({ ...prev, webhookUrl: generateRandomToken(32) }))}
+                    title="Generar token aleatorio"
+                  >
+                    <IoRefresh size={16} />
+                  </ActionIcon>
+                }
+                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
+                description="Token que usarás en Meta for Developers"
+              />
+
+              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-blue-0)' }}>
+                <Text size="xs" c="dimmed">
+                  <strong>Tu Webhook URL:</strong><br />
+                  <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/facebook</code>
+                </Text>
+              </Paper>
+
+              <Divider />
+
+              <Group justify="space-between">
+                <Text size="xs" c="dimmed">
+                  Guardar configuración
+                </Text>
+                <Group>
+                  <Button variant="subtle" onClick={() => setModalOpen(false)}>
+                    Cancelar
+                  </Button>
+<Button leftSection={<IoSave size={16} />} onClick={handleFacebookSaveConfig}>
                     Guardar
                   </Button>
                 </Group>
@@ -407,9 +518,9 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             </>
           )}
 
-          {!isInstagram && <Divider />}
+          {!isInstagram && !isFacebook && <Divider />}
 
-          {!isInstagram && (
+          {!isInstagram && !isFacebook && (
             <Group justify="space-between">
               <Anchor size="sm" href="#" onClick={(e) => e.preventDefault()}>
                 ¿Cómo obtener las credenciales?

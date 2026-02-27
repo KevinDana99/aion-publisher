@@ -26,6 +26,7 @@ import {
 } from 'react-icons/io5'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
+import { useFacebook } from '@/lib/facebook/context'
 
 interface Message {
   id: string
@@ -65,6 +66,7 @@ export default function MessagesWidget() {
   const theme = useMantineTheme()
   const isDark = colorScheme === 'dark'
   const instagram = useInstagram()
+  const facebook = useFacebook()
 
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
@@ -76,54 +78,102 @@ export default function MessagesWidget() {
   })
 
   const conversations: Conversation[] = useMemo(() => {
-    if (!instagram.isConnected && instagram.conversations.length === 0 && Object.keys(instagram.messages).length === 0) return []
+    const allConvs: Conversation[] = []
     
-    const convs = instagram.conversations.map(conv => {
-      const contact = instagram.contacts[conv.id]
-      const msgs = instagram.messages[conv.id] || []
-      return {
-        id: conv.id,
-        contactName: contact?.username || conv.participants[0]?.username || conv.id.slice(0, 8),
-        contactAvatar: contact?.profilePicture || contact?.username?.slice(0, 2).toUpperCase() || conv.participants[0]?.username?.slice(0, 2).toUpperCase() || conv.id.slice(0, 2).toUpperCase(),
-        platform: 'instagram' as const,
-        messages: msgs.map(m => ({
-          id: m.id,
-          senderId: m.senderId,
-          text: m.text,
-          timestamp: new Date(m.timestamp),
-          isFromUser: m.isFromMe
-        })),
-        lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
-        unread: 0
-      }
-    })
+    if (instagram.isConnected || instagram.conversations.length > 0 || Object.keys(instagram.messages).length > 0) {
+      const igConvs = instagram.conversations.map(conv => {
+        const contact = instagram.contacts[conv.id]
+        const msgs = instagram.messages[conv.id] || []
+        return {
+          id: conv.id,
+          contactName: contact?.username || conv.participants[0]?.username || conv.id.slice(0, 8),
+          contactAvatar: contact?.profilePicture || contact?.username?.slice(0, 2).toUpperCase() || conv.participants[0]?.username?.slice(0, 2).toUpperCase() || conv.id.slice(0, 2).toUpperCase(),
+          platform: 'instagram' as const,
+          messages: msgs.map(m => ({
+            id: m.id,
+            senderId: m.senderId,
+            text: m.text,
+            timestamp: new Date(m.timestamp),
+            isFromUser: m.isFromMe
+          })),
+          lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
+          unread: 0
+        }
+      })
 
-    const fromMessages = Object.entries(instagram.messages).map(([convId, msgs]) => {
-      const hasIncoming = msgs.some(m => !m.isFromMe)
-      if (!hasIncoming) return null
-      const contact = instagram.contacts[convId]
-      return {
-        id: convId,
-        contactName: contact?.username || convId.slice(0, 8),
-        contactAvatar: contact?.profilePicture || contact?.username?.slice(0, 2).toUpperCase() || convId.slice(0, 2).toUpperCase(),
-        platform: 'instagram' as const,
-        messages: msgs.map(m => ({
-          id: m.id,
-          senderId: m.senderId,
-          text: m.text,
-          timestamp: new Date(m.timestamp),
-          isFromUser: m.isFromMe
-        })),
-        lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
-        unread: 0
-      }
-    }).filter(Boolean) as Conversation[]
+      const igFromMessages = Object.entries(instagram.messages).map(([convId, msgs]) => {
+        const hasIncoming = msgs.some(m => !m.isFromMe)
+        if (!hasIncoming) return null
+        const contact = instagram.contacts[convId]
+        return {
+          id: convId,
+          contactName: contact?.username || convId.slice(0, 8),
+          contactAvatar: contact?.profilePicture || contact?.username?.slice(0, 2).toUpperCase() || convId.slice(0, 2).toUpperCase(),
+          platform: 'instagram' as const,
+          messages: msgs.map(m => ({
+            id: m.id,
+            senderId: m.senderId,
+            text: m.text,
+            timestamp: new Date(m.timestamp),
+            isFromUser: m.isFromMe
+          })),
+          lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
+          unread: 0
+        }
+      }).filter(Boolean) as Conversation[]
 
-    const all = [...convs, ...fromMessages]
-    const unique = Array.from(new Map(all.map(c => [c.id, c])).values())
+      allConvs.push(...igConvs, ...igFromMessages)
+    }
+    
+    if (facebook.isConnected || facebook.conversations.length > 0 || Object.keys(facebook.messages).length > 0) {
+      const fbConvs = facebook.conversations.map(conv => {
+        const contact = facebook.contacts[conv.id]
+        const msgs = facebook.messages[conv.id] || []
+        return {
+          id: conv.id,
+          contactName: contact?.name || conv.participants[0]?.name || conv.id.slice(0, 8),
+          contactAvatar: contact?.profilePic || contact?.firstName?.slice(0, 2).toUpperCase() || conv.participants[0]?.firstName?.slice(0, 2).toUpperCase() || conv.id.slice(0, 2).toUpperCase(),
+          platform: 'facebook' as const,
+          messages: msgs.map(m => ({
+            id: m.id,
+            senderId: m.senderId,
+            text: m.text,
+            timestamp: new Date(m.timestamp),
+            isFromUser: m.isFromMe
+          })),
+          lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
+          unread: 0
+        }
+      })
+
+      const fbFromMessages = Object.entries(facebook.messages).map(([convId, msgs]) => {
+        const hasIncoming = msgs.some(m => !m.isFromMe)
+        if (!hasIncoming) return null
+        const contact = facebook.contacts[convId]
+        return {
+          id: convId,
+          contactName: contact?.name || convId.slice(0, 8),
+          contactAvatar: contact?.profilePic || contact?.firstName?.slice(0, 2).toUpperCase() || convId.slice(0, 2).toUpperCase(),
+          platform: 'facebook' as const,
+          messages: msgs.map(m => ({
+            id: m.id,
+            senderId: m.senderId,
+            text: m.text,
+            timestamp: new Date(m.timestamp),
+            isFromUser: m.isFromMe
+          })),
+          lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
+          unread: 0
+        }
+      }).filter(Boolean) as Conversation[]
+
+      allConvs.push(...fbConvs, ...fbFromMessages)
+    }
+
+    const unique = Array.from(new Map(allConvs.map(c => [c.id + c.platform, c])).values())
     
     return unique
-  }, [instagram.isConnected, instagram.conversations, instagram.messages, instagram.contacts])
+  }, [instagram.isConnected, instagram.conversations, instagram.messages, instagram.contacts, facebook.isConnected, facebook.conversations, facebook.messages, facebook.contacts])
 
   const selectedConversation = useMemo(() => {
     if (!selectedConversationId) return conversations[0] || null
@@ -151,7 +201,13 @@ export default function MessagesWidget() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return
     
-    const success = await instagram.sendMessage(selectedConversation.id, newMessage)
+    let success = false
+    if (selectedConversation.platform === 'instagram') {
+      success = await instagram.sendMessage(selectedConversation.id, newMessage)
+    } else if (selectedConversation.platform === 'facebook') {
+      success = await facebook.sendMessage(selectedConversation.id, newMessage)
+    }
+    
     if (success) {
       setNewMessage('')
     }

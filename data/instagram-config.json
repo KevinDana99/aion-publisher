@@ -1,6 +1,6 @@
 {
-  "clientId": "2725488631131917",
+  "clientId": "2725488631131917 ",
   "clientSecret": "91b5c75fd740e36fa2405fdf3b2c3fe9",
-  "verifyToken": "MC4CAQAwBQYDK2VwBCIEIDiqkpSslGcsd6NRRb2BfIJYmjKN33+bgkM4+NAtfx2x",
+  "verifyToken": "vBKlGamsb45VQUiXDhLW3HfVIC43pEHV",
   "redirectUri": "https://4e43-216-244-247-162.ngrok-free.app/api/auth/callback/instagram"
 }

@@ -10,6 +10,7 @@ import theme from '@/global/theme'
 import { SettingsProvider } from '@/contexts/SettingsContext'
 import { UserProvider } from '@/contexts/UserContext'
 import { InstagramProvider } from '@/lib/instagram/context'
+import { FacebookProvider } from '@/lib/facebook/context'
 import Header from '@/components/layout/Header'
 import Sidebar from '@/components/layout/Sidebar'
 
@@ -33,7 +34,9 @@ export default function RootLayout({
         <MantineProvider theme={theme} defaultColorScheme='auto'>
           <UserProvider>
             <InstagramProvider>
-              <SettingsProvider>{children}</SettingsProvider>
+              <FacebookProvider>
+                <SettingsProvider>{children}</SettingsProvider>
+              </FacebookProvider>
             </InstagramProvider>
           </UserProvider>
         </MantineProvider>
