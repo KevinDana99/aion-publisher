@@ -5,7 +5,7 @@ export function setVerifyToken(token: string) {
 }
 
 export function getVerifyToken(): string {
-  return verifyToken || process.env.INSTAGRAM_VERIFY_TOKEN || ''
+  return verifyToken
 }
 
 export function getClientId(): string {
