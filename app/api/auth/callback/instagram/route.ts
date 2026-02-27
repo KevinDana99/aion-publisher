@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { saveCredentials } from '@/lib/instagram/credentials'
 import { getClientId, getClientSecret } from '@/lib/instagram/app-config'
 
-export const runtime = 'nodejs'
-
 export async function GET(request: NextRequest) {
   try {
     const { pathname, protocol, host } = request.nextUrl

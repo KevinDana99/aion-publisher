@@ -1,40 +1,24 @@
 import { NextResponse } from 'next/server'
-import { getAppConfig, saveAppConfig } from '@/lib/instagram/app-config'
+import { getClientId, getClientSecret, getVerifyToken, getRedirectUri } from '@/lib/instagram/app-config'
 
 export async function GET() {
-  try {
-    const config = getAppConfig()
-    return NextResponse.json({
-      clientId: config.clientId,
-      clientSecret: config.clientSecret ? '***' : '',
-      verifyToken: config.verifyToken ? '***' : '',
-      redirectUri: config.redirectUri
-    })
-  } catch (error) {
-    console.error('Error getting config:', error)
-    return NextResponse.json({ error: 'Failed to get config' }, { status: 500 })
-  }
+  const clientId = getClientId()
+  const clientSecret = getClientSecret()
+  const verifyToken = getVerifyToken()
+  const redirectUri = getRedirectUri()
+  
+  return NextResponse.json({
+    clientId: clientId || '',
+    clientSecret: clientSecret ? '***' : '',
+    verifyToken: verifyToken ? '***' : '',
+    redirectUri: redirectUri || ''
+  })
 }
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    const { clientId, clientSecret, verifyToken, redirectUri } = body
-
-    const config = saveAppConfig({
-      clientId: clientId || '',
-      clientSecret: clientSecret || '',
-      verifyToken: verifyToken || '',
-      redirectUri: redirectUri || ''
-    })
-
-    return NextResponse.json({
-      success: true,
-      clientId: config.clientId,
-      redirectUri: config.redirectUri
-    })
-  } catch (error) {
-    console.error('Error saving config:', error)
-    return NextResponse.json({ error: 'Failed to save config' }, { status: 500 })
-  }
+export async function POST() {
+  return NextResponse.json({
+    error: 'Config is now read-only. Set environment variables in Vercel.',
+    clientId: getClientId() || '',
+    redirectUri: getRedirectUri() || ''
+  }, { status: 400 })
 }
