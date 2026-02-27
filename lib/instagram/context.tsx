@@ -50,40 +50,27 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadState = async () => {
-      let stored = localStorage.getItem(STORAGE_KEY)
-      let parsed = stored ? JSON.parse(stored) : {}
-
-      if (!parsed.accessToken) {
-        try {
-          const res = await fetch('/api/instagram/auth')
-          const data = await res.json()
-          
-          if (data.connected) {
-            setUserId(data.userId || '')
-            setUsername(data.username || '')
-            parsed = { ...parsed, userId: data.userId, username: data.username }
-          }
-        } catch (e) {
-          console.error('Error fetching Instagram credentials', e)
+      try {
+        const res = await fetch('/api/instagram/auth')
+        const data = await res.json()
+        
+        if (data.connected) {
+          setUserId(data.userId || '')
+          setUsername(data.username || '')
+          setAccessToken(data.accessToken || '')
+          setIsConnected(true)
         }
+      } catch (e) {
+        console.error('Error fetching Instagram credentials', e)
       }
-
-      setAccessToken(parsed.accessToken || '')
-      setUserId(parsed.userId || '')
-      setUsername(parsed.username || '')
-      setConversations(parsed.conversations || [])
-      setMessages(parsed.messages || {})
-      setContacts(parsed.contacts || {})
     }
-
+    
     loadState()
   }, [])
 
   useEffect(() => {
-    const state = { accessToken, userId, username, conversations, messages, contacts }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
     setIsConnected(!!accessToken && !!userId)
-  }, [accessToken, userId, username, conversations, messages, contacts])
+  }, [accessToken, userId])
 
   const connect = useCallback((token: string, uid: string, user: string) => {
     setAccessToken(token)
@@ -91,14 +78,19 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
     setUsername(user)
   }, [])
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
+    try {
+      await fetch('/api/instagram/auth', { method: 'DELETE' })
+    } catch (e) {
+      console.error('Error disconnecting:', e)
+    }
     setAccessToken('')
     setUserId('')
     setUsername('')
     setConversations([])
     setMessages({})
     setContacts({})
-    localStorage.removeItem(STORAGE_KEY)
+    setIsConnected(false)
   }, [])
 
   const addMessage = useCallback((conversationId: string, message: InstagramStoredMessage) => {

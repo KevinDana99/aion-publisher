@@ -116,9 +116,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const handleInstagramDisconnect = async () => {
     try {
       await fetch('/api/instagram/auth', { method: 'DELETE' })
-      localStorage.setItem('instagram_connected', 'false')
       setInstagramConnected(false)
-      window.location.reload()
     } catch (e) {
       console.error('Error disconnecting:', e)
     }
@@ -144,7 +142,6 @@ function IntegrationCard({ integration }: { integration: Integration }) {
       })
       if (res.ok) {
         setFacebookConnected(true)
-        window.location.reload()
       }
     } catch (e) {
       console.error('Error connecting Facebook:', e)
@@ -155,7 +152,6 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     try {
       await fetch('/api/facebook/auth', { method: 'DELETE' })
       setFacebookConnected(false)
-      window.location.reload()
     } catch (e) {
       console.error('Error disconnecting:', e)
     }
