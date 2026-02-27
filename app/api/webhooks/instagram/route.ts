@@ -102,11 +102,13 @@ export async function POST(request: NextRequest) {
     // Guardar mensajes en el storage
     for (const msg of messages) {
       try {
+        console.log('[Instagram Webhook] Saving message:', JSON.stringify(msg))
         await fetch('/api/webhooks/instagram/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(msg)
         })
+        console.log('[Instagram Webhook] Message saved successfully')
       } catch (e) {
         console.error('[Instagram Webhook] Error saving message:', e)
       }

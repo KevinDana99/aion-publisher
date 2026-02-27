@@ -208,19 +208,23 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const syncMessages = async () => {
       try {
+        console.log('[Instagram Context] Syncing messages...')
         const res = await fetch('/api/webhooks/instagram/messages')
         const data = await res.json()
+        console.log('[Instagram Context] Got messages data:', JSON.stringify(data))
         
-        if (data.messages && Array.isArray(data.messages)) {
+        const messagesArray = data.messages || []
+        
+        if (messagesArray.length > 0) {
           const grouped: Record<string, InstagramStoredMessage[]> = {}
           const convIds = new Set<string>()
 
-          for (const msg of data.messages) {
+          for (const msg of messagesArray) {
             const convId = msg.conversationId || msg.senderId
             if (!grouped[convId]) {
               grouped[convId] = []
             }
-            if (!grouped[convId].some(m => m.id === msg.id)) {
+            if (!grouped[convId].some((m: InstagramStoredMessage) => m.id === msg.id)) {
               grouped[convId].push(msg)
               convIds.add(convId)
             }
@@ -231,9 +235,9 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
             let hasNew = false
             for (const convId in grouped) {
               const existing = prev[convId] || []
-              const newMsgs = grouped[convId].filter(m => !existing.some(e => e.id === m.id))
+              const newMsgs = grouped[convId].filter((m: InstagramStoredMessage) => !existing.some((e: InstagramStoredMessage) => e.id === m.id))
               if (newMsgs.length > 0) {
-                updated[convId] = [...existing, ...newMsgs].sort((a, b) => a.timestamp - b.timestamp)
+                updated[convId] = [...existing, ...newMsgs].sort((a: InstagramStoredMessage, b: InstagramStoredMessage) => a.timestamp - b.timestamp)
                 hasNew = true
               }
             }
@@ -245,38 +249,16 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
               const existingIds = new Set(prev.map(c => c.id))
               const newConvs = Array.from(convIds)
                 .filter(id => !existingIds.has(id))
-                .map(id => {
-                  const contact = contacts[id]
-                  return {
-                    id,
-                    participants: contact ? [contact] : [{ username: id, id, accountType: 'PERSONAL' }],
-                    lastMessage: grouped[id]?.[grouped[id].length - 1] ? {
-                      id: grouped[id][grouped[id].length - 1].id,
-                      text: grouped[id][grouped[id].length - 1].text,
-                      from: { id: grouped[id][grouped[id].length - 1].senderId },
-                      to: { id },
-                      timestamp: grouped[id][grouped[id].length - 1].timestamp
-                    } : null
-                  }
-                })
-              return [...prev, ...newConvs]
+                .map(id => ({
+                  id,
+                  participants: [{ id, username: id.slice(0, 8), accountType: '' }],
+                  lastMessage: null
+                }))
+              return newConvs.length > 0 ? [...prev, ...newConvs] : prev
             })
-
-            // Guardar mensajes en localStorage
-            const stored = localStorage.getItem('instagram-messages')
-            let existing = stored ? JSON.parse(stored) : { messages: [] }
-            for (const msg of data.messages || []) {
-              if (!existing.messages.some((m: any) => m.id === msg.id)) {
-                existing.messages.push(msg)
-              }
-            }
-            localStorage.setItem('instagram-messages', JSON.stringify(existing))
-
-            if (accessToken) {
-              convIds.forEach(convId => fetchContactProfile(convId))
-              syncContactsFromConversations()
-            }
           }
+          
+          console.log('[Instagram Context] Updated messages for', Object.keys(grouped).length, 'conversations')
         }
       } catch (e) {
         console.error('Error syncing messages:', e)
@@ -284,8 +266,11 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
     }
 
     syncMessages()
-    // No polling needed - webhooks handle real-time updates
-    return () => {}
+    
+    // Poll for new messages every 5 seconds
+    const interval = setInterval(syncMessages, 5000)
+    
+    return () => clearInterval(interval)
   }, [accessToken, contacts, fetchContactProfile, syncContactsFromConversations])
 
   return (
