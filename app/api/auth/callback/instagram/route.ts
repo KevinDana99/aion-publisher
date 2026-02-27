@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { setInstagramCredentials } from '@/lib/credentials/tokens'
-import { getClientId, getClientSecret } from '@/lib/instagram/app-config'
+import { getInstagramAppConfig } from '@/lib/instagram/app-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,8 +24,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/settings/integrations?error=missing_code`)
     }
 
-    const clientId = getClientId()
-    const clientSecret = getClientSecret()
+    const config = await getInstagramAppConfig()
+    const clientId = config.clientId
+    const clientSecret = config.clientSecret
 
     if (!clientId || !clientSecret) {
       console.error('[Instagram OAuth] Client ID or Secret not configured')

@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
-import { getClientId, getRedirectUri } from '@/lib/instagram/app-config'
-import { setInstagramVerifyToken } from '@/lib/credentials/tokens'
+import { setInstagramAppConfig, getInstagramAppConfig } from '@/lib/instagram/app-config'
 
 export async function GET() {
-  const clientId = getClientId()
-  const redirectUri = getRedirectUri()
+  const config = await getInstagramAppConfig()
+  const redirectUri = typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback/instagram` : ''
   
   return NextResponse.json({
-    clientId: clientId || '',
+    clientId: config.clientId || '',
+    clientSecret: config.clientSecret || '',
+    verifyToken: config.verifyToken || '',
     redirectUri: redirectUri || ''
   })
 }
@@ -15,11 +16,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { verifyToken: token } = body
+    const { clientId, clientSecret, verifyToken, redirectUri } = body
     
-    if (token) {
-      await setInstagramVerifyToken(token)
-    }
+    await setInstagramAppConfig({
+      clientId: clientId || '',
+      clientSecret: clientSecret || '',
+      verifyToken: verifyToken || '',
+      redirectUri: redirectUri || ''
+    })
     
     return NextResponse.json({ success: true })
   } catch (error) {

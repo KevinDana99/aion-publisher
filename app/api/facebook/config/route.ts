@@ -1,25 +1,28 @@
 import { NextResponse } from 'next/server'
-import { getAppId, getRedirectUri } from '@/lib/facebook/app-config'
-import { setFacebookVerifyToken } from '@/lib/credentials/tokens'
+import { setFacebookAppConfig, getFacebookAppConfig } from '@/lib/facebook/app-config'
 
 export async function GET() {
-  const appId = getAppId()
-  const redirectUri = getRedirectUri()
+  const config = await getFacebookAppConfig()
   
   return NextResponse.json({
-    appId: appId || '',
-    redirectUri: redirectUri || ''
+    appId: config.appId || '',
+    appSecret: config.appSecret || '',
+    verifyToken: config.verifyToken || '',
+    pageAccessToken: config.pageAccessToken || ''
   })
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { verifyToken: token } = body
+    const { appId, appSecret, verifyToken, pageAccessToken } = body
     
-    if (token) {
-      await setFacebookVerifyToken(token)
-    }
+    await setFacebookAppConfig({
+      appId: appId || '',
+      appSecret: appSecret || '',
+      verifyToken: verifyToken || '',
+      pageAccessToken: pageAccessToken || ''
+    })
     
     return NextResponse.json({ success: true })
   } catch (error) {

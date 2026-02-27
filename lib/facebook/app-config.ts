@@ -1,15 +1,39 @@
-let verifyToken = ''
+import { Redis } from '@upstash/redis'
 
-export function setVerifyToken(token: string) {
-  verifyToken = token
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || '',
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || ''
+})
+
+const KEYS = {
+  facebookAppConfig: 'app_config:facebook'
 }
 
-export function getVerifyToken(): string {
-  return verifyToken
+export interface FacebookAppConfigData {
+  appId: string
+  appSecret: string
+  verifyToken: string
+  pageAccessToken: string
 }
 
-export function hasVerifyToken(): boolean {
-  return verifyToken.length > 0
+export async function getFacebookAppConfig(): Promise<FacebookAppConfigData> {
+  const config = await redis.get(KEYS.facebookAppConfig)
+  return (config as FacebookAppConfigData) || { appId: '', appSecret: '', verifyToken: '', pageAccessToken: '' }
+}
+
+export async function setFacebookAppConfig(config: FacebookAppConfigData): Promise<void> {
+  await redis.set(KEYS.facebookAppConfig, config)
+}
+
+export async function getVerifyToken(): Promise<string> {
+  const config = await getFacebookAppConfig()
+  return config.verifyToken || ''
+}
+
+export async function setVerifyToken(token: string): Promise<void> {
+  const config = await getFacebookAppConfig()
+  config.verifyToken = token
+  await setFacebookAppConfig(config)
 }
 
 export function getAppId(): string {

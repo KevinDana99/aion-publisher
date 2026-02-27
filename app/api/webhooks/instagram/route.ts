@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
 
     const storedToken = await getInstagramVerifyToken()
     
+    console.log('[Instagram Webhook] Verifying. Token from Redis:', storedToken ? 'yes' : 'no', 'Token from Meta:', token ? 'yes' : 'no')
+    
     if (!storedToken) {
       console.log('[Instagram Webhook] No verify token configured')
       return NextResponse.json(
@@ -22,15 +24,15 @@ export async function GET(request: NextRequest) {
     
     instagramWebhookService.setVerifyToken(storedToken)
 
-    console.log('[Instagram Webhook] Verifying with Redis token')
-
     if (!instagramWebhookService.verifyWebhookMode(mode || '', token || '')) {
+      console.log('[Instagram Webhook] Verification FAILED')
       return NextResponse.json(
         { error: 'Verification failed' },
         { status: 403 }
       )
     }
 
+    console.log('[Instagram Webhook] Verification SUCCESS')
     return new NextResponse(challenge, {
       status: 200,
       headers: {
