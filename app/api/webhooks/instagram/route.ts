@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       if (event.type === 'messages' && event.data.messageId && event.data.message) {
         const messageId = event.data.messageId
         const text = event.data.message
-        const timestamp = event.timestamp * 1000
+        const timestamp = event.timestamp
         const conversationId = event.userId
 
         addMessage({
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       if (event.type === 'message_echoes' && event.data.messageId && event.data.message) {
         const messageId = event.data.messageId
         const text = event.data.message
-        const timestamp = event.timestamp * 1000
+        const timestamp = event.timestamp
         const recipientId = event.data.recipientId || event.userId
 
         if (recipientId) {

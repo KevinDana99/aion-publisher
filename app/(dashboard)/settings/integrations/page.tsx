@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Container, Stack, Title, Group, Paper, Text, Switch, ThemeIcon, Divider, Badge, SimpleGrid, TextInput, PasswordInput, Modal, Button, Anchor } from '@mantine/core'
-import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse, IoCalendar, IoLogoGithub, IoLogIn } from 'react-icons/io5'
+import { Container, Stack, Title, Group, Paper, Text, Switch, ThemeIcon, Divider, Badge, SimpleGrid, TextInput, PasswordInput, Modal, Button, Anchor, Box } from '@mantine/core'
+import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse, IoCalendar, IoLogoGithub, IoLogIn, IoCloseCircle } from 'react-icons/io5'
 import { useSettings, Integration } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
 
@@ -24,12 +24,23 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const instagram = useInstagram()
   const [modalOpen, setModalOpen] = useState(false)
   const [instagramAppConfigured, setInstagramAppConfigured] = useState(false)
+  const [instagramConnected, setInstagramConnected] = useState(false)
   const [tempConfig, setTempConfig] = useState({
     token: integration.token || '',
     apiKey: integration.apiKey || '',
     apiSecret: integration.apiSecret || '',
     webhookUrl: integration.webhookUrl || ''
   })
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('instagram_connected') === 'true') {
+      localStorage.setItem('instagram_connected', 'true')
+      window.history.replaceState({}, '', '/settings/integrations')
+    }
+    
+    setInstagramConnected(localStorage.getItem('instagram_connected') === 'true')
+  }, [])
 
   useEffect(() => {
     const checkInstagramConfig = async () => {
@@ -76,13 +87,15 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const handleInstagramDisconnect = async () => {
     try {
       await fetch('/api/instagram/auth', { method: 'DELETE' })
+      localStorage.setItem('instagram_connected', 'false')
+      setInstagramConnected(false)
       window.location.reload()
     } catch (e) {
       console.error('Error disconnecting:', e)
     }
   }
 
-  const isInstagramConnected = isInstagram && instagram.isConnected
+  const isInstagramConnected = instagramConnected
 
   const handleToggle = (enabled: boolean) => {
     updateIntegration(integration.id, { enabled })
@@ -134,7 +147,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     : isGithub 
       ? integration.token
       : isInstagram
-        ? isInstagramConnected
+        ? instagramConnected
         : (integration.token || integration.apiKey)
 
   return (
@@ -148,73 +161,68 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             : 'var(--mantine-color-body)'
         }}
       >
-        <Group justify="space-between">
-          <Group gap="sm">
-            <ThemeIcon 
-              color={integration.enabled ? 'teal' : 'gray'} 
-              variant="light" 
-              size="lg" 
-              radius="md"
-            >
-              {iconMap[integration.icon] || <IoSettings size={20} />}
-            </ThemeIcon>
-            <div>
-              <Text fw={500}>{integration.name}</Text>
-              <Text size="xs" c="dimmed">
-                {integration.enabled 
-                  ? isConnected 
-                    ? 'Conectado' 
-                    : 'Habilitado - Sin configurar'
-                  : 'Deshabilitado'
-                }
-              </Text>
-            </div>
-          </Group>
-          <Group gap="xs">
-            {integration.enabled && isConnected && (
-              <Badge color="teal" variant="light" size="sm">
-                <Group gap={4}>
-                  <IoCheckmarkCircle size={12} />
-                  <span>OK</span>
-                </Group>
-              </Badge>
-            )}
-            {integration.enabled && (
-              <Anchor size="sm" onClick={handleOpenConfig}>
-                Configurar
-              </Anchor>
-            )}
-            {isInstagram && integration.enabled && !isInstagramConnected && (
-              <Button 
-                size="xs" 
-                leftSection={<IoLogIn size={14} />}
-                onClick={handleInstagramConnect}
-              >
-                Conectar
-              </Button>
-            )}
+        <Box>
+          <Group justify="flex-end">
             {isInstagram && integration.enabled && isInstagramConnected && (
-              <Button 
-                size="xs" 
-                variant="outline"
-                color="red"
-                onClick={handleInstagramDisconnect}
-              >
-                Desconectar
-              </Button>
-            )}
-            {isInstagram && integration.enabled && isInstagramConnected && instagram.username && (
-              <Text size="xs" c="dimmed">
-                @{instagram.username}
+              <Text size="xs" c="teal" fw={500} mb={5}>
+                @{instagram.username || 'conectado'}
               </Text>
             )}
-            <Switch
-              checked={integration.enabled}
-              onChange={(e) => handleToggle(e.currentTarget.checked)}
-              size="md"
-            />
           </Group>
-        </Group>
+          <Group justify="space-between">
+            <Group gap="sm">
+              <ThemeIcon 
+                color={integration.enabled ? 'teal' : 'gray'} 
+                variant="light" 
+                size="lg" 
+                radius="md"
+              >
+                {iconMap[integration.icon] || <IoSettings size={20} />}
+              </ThemeIcon>
+              <div>
+                <Text fw={500}>{integration.name}</Text>
+                <Text size="xs" c="dimmed">
+                  {integration.enabled 
+                    ? isInstagram 
+                      ? (isInstagramConnected ? 'Conectado' : 'Habilitado - Sin configurar')
+                      : (isConnected ? 'Conectado' : 'Habilitado - Sin configurar')
+                    : 'Deshabilitado'
+                  }
+                </Text>
+              </div>
+            </Group>
+            <Group gap="xs">
+              {isInstagram && integration.enabled && (
+                <Button 
+                  size="xs" 
+                  variant={isInstagramConnected ? "outline" : "filled"}
+                  color={isInstagramConnected ? "red" : "blue"}
+                  onClick={isInstagramConnected ? handleInstagramDisconnect : handleInstagramConnect}
+                >
+                  {isInstagramConnected ? "Desconectar" : "Conectar"}
+                </Button>
+              )}
+              {integration.enabled && isConnected && !isInstagram && (
+                <Badge color="teal" variant="light" size="sm">
+                  <Group gap={4}>
+                    <IoCheckmarkCircle size={12} />
+                    <span>OK</span>
+                  </Group>
+                </Badge>
+              )}
+              {integration.enabled && (
+                <Anchor size="sm" onClick={handleOpenConfig}>
+                  Configurar
+                </Anchor>
+              )}
+              <Switch
+                checked={integration.enabled}
+                onChange={(e) => handleToggle(e.currentTarget.checked)}
+                size="md"
+              />
+            </Group>
+          </Group>
+        </Box>
       </Paper>
 
       <Modal

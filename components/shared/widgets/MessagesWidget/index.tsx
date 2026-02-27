@@ -275,7 +275,9 @@ export default function MessagesWidget() {
             </Box>
             <ScrollArea flex={1} p='md'>
               <Stack gap='sm'>
-                {selectedConversation.messages.map(msg => (
+                {selectedConversation.messages
+                  .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+                  .map(msg => (
                   <Box key={msg.id} style={{ display: 'flex', justifyContent: msg.isFromUser ? 'flex-end' : 'flex-start' }}>
                     <Paper p='sm' radius='lg' style={{ maxWidth: '70%', backgroundColor: msg.isFromUser ? chatBubbleUser : chatBubbleContact, color: msg.isFromUser ? chatTextUser : chatTextContact }}>
                       <Text size='sm'>{msg.text}</Text>
