@@ -276,7 +276,19 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (e) {
-        console.error('Error syncing messages:', e)
+        console.error('Error syncing from webhook:', e)
+      }
+
+      if (accessToken) {
+        try {
+          const syncRes = await fetch('/api/facebook/sync')
+          const syncData = await syncRes.json()
+          if (syncData.success) {
+            console.log('[Facebook] Synced from API:', syncData.messages, 'messages')
+          }
+        } catch (e) {
+          console.error('Error syncing from API:', e)
+        }
       }
     }
 

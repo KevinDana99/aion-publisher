@@ -127,8 +127,9 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const isInstagramConnected = instagramConnected
 
   const handleFacebookConnect = async () => {
-    if (!tempConfig.token) {
-      alert('Primero ingresa el Page Access Token')
+    const token = integration.token || tempConfig.token
+    if (!token) {
+      alert('Primero guarda el Page Access Token en Configurar')
       return
     }
     try {
@@ -136,7 +137,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          accessToken: tempConfig.token,
+          accessToken: token,
           pageId: 'me',
           pageName: ''
         })
@@ -488,6 +489,14 @@ function IntegrationCard({ integration }: { integration: Integration }) {
               </Text>
 
               <Divider />
+
+              <PasswordInput
+                label="Page Access Token"
+                placeholder="EAAC..."
+                value={tempConfig.token}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, token: e.target.value }))}
+                description="Token de tu página de Facebook (obtenelo en Meta for Developers > Messenger > Token Generation)"
+              />
 
               <TextInput
                 label="App ID"
