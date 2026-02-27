@@ -78,20 +78,8 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         console.error('Error fetching Facebook credentials', e)
       }
-      
-      // Fallback a localStorage
-      let stored = localStorage.getItem(STORAGE_KEY)
-      let parsed = stored ? JSON.parse(stored) : {}
-
-      setAccessToken(parsed.accessToken || '')
-      setPageId(parsed.pageId || '')
-      setPageName(parsed.pageName || '')
-      setConversations(parsed.conversations || [])
-      setMessages(parsed.messages || {})
-      setContacts(parsed.contacts || {})
-      console.log('[Facebook Context] Loaded from localStorage. pageId:', parsed.pageId)
     }
-
+    
     loadState()
   }, [])
 
@@ -119,10 +107,8 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
   }, [accessToken, pageId])
 
   useEffect(() => {
-    const state = { accessToken, pageId, pageName, conversations, messages, contacts }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    setIsConnected(!!accessToken && !!pageId)
-  }, [accessToken, pageId, pageName, conversations, messages, contacts])
+    // Now using Redis for persistence - no need to save to localStorage
+  }, [accessToken, pageId, pageName])
 
   const connect = useCallback((token: string, pid: string, pname: string) => {
     setAccessToken(token)
@@ -130,14 +116,19 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     setPageName(pname)
   }, [])
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
+    try {
+      await fetch('/api/facebook/auth', { method: 'DELETE' })
+    } catch (e) {
+      console.error('Error disconnecting:', e)
+    }
     setAccessToken('')
     setPageId('')
     setPageName('')
     setConversations([])
     setMessages({})
     setContacts({})
-    localStorage.removeItem(STORAGE_KEY)
+    setIsConnected(false)
   }, [])
 
   const addMessage = useCallback((conversationId: string, message: FacebookStoredMessage) => {
@@ -370,7 +361,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
                   updated[convId] = []
                 }
                 for (const msg of messagesByConversation[convId]) {
-                  if (!updated[convId].some((m: any) => m.id === msg.id)) {
+                  if (!updated[convId].some((m: FacebookStoredMessage) => m.id === msg.id)) {
                     updated[convId].push(msg)
                   }
                 }

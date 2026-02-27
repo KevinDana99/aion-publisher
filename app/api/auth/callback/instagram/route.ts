@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    const { pathname, protocol, host } = request.nextUrl
+    const { protocol, host } = request.nextUrl
     const baseUrl = `${protocol}//${host}`
     const redirectUri = `${baseUrl}/api/auth/callback/instagram`
     
