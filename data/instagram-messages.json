@@ -1,0 +1,277 @@
+{
+  "messages": [
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTI3NjkzMzQ3MTYyMzI0NjozMjY5MDU0MDY3NTY2MzE1MjU2NTQ4MzQ2NzI3NDQ1Mjk5MgZDZD",
+      "conversationId": "1481295863504818",
+      "senderId": "business",
+      "text": "Probando",
+      "timestamp": 1772157761206000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTIxMDI2MzMwMTYyMzU5NzozMjY5MDU0MjY1Nzc4MjgxMTE4MzYxMDc0ODYyMDI0Mjk0NAZDZD",
+      "conversationId": "2944632805739651",
+      "senderId": "business",
+      "text": "Casi jajaj",
+      "timestamp": 1772157869200000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTIxMDI2MzMwMTYyMzU5NzozMjY5MDU0MjcyNjcyNDY5NDgwNzI1NjkyMDIyMzY0NTY5NgZDZD",
+      "conversationId": "2944632805739651",
+      "senderId": "business",
+      "text": "Chetoo",
+      "timestamp": 1772157872516000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTIxMDI2MzMwMTYyMzU5NzozMjY5MDU0Mjk0MjAxOTk4Mzc1MjE5ODQzODU2MjgyNDE5MgZDZD",
+      "conversationId": "2944632805739651",
+      "senderId": "business",
+      "text": "Tienen que llegar a una web los mensajes",
+      "timestamp": 1772157884113000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTIxMDI2MzMwMTYyMzU5NzozMjY5MDU0MzQxNDc0NzQ4MTQ1MjIyMDI5NzM5MTM3NDMzNgZDZD",
+      "conversationId": "2944632805739651",
+      "senderId": "business",
+      "text": "De todas las redes osea insta face , WhatsApp, tiktok, etc",
+      "timestamp": 1772157909832000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTIxMDI2MzMwMTYyMzU5NzozMjY5MDU0Mzc1MTcxODI1MDYyMzg1NzA0MDI4MTMwNTA4OAZDZD",
+      "conversationId": "2944632805739651",
+      "senderId": "business",
+      "text": "Recién voy por la de insta parece que funca chiee",
+      "timestamp": 1772157927995000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU0NTY0OTA4MzI3MzY4NDE2OTUxMTU3MzM4OTMxMgZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "Que onda prima",
+      "timestamp": 1772158030809000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU0NTcwMTMyNTMxOTg5Nzg4NjQyNjA5ODgyNzI2NAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "Hablame a ver",
+      "timestamp": 1772158034257000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDcyNjM0Mjc5MzkzOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU2NTY4NDE5ODI4MzgzMjcyMjE2MjQzNzg0OTA4OAZDZD",
+      "conversationId": "1232695662392208",
+      "senderId": "business",
+      "text": "que onda kev",
+      "timestamp": 1772159117224000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU2NTY4NDE5ODI4MzgzMjcyMjE2MjQzNzg0OTA4OAZDZD",
+      "conversationId": "1827662244587322",
+      "senderId": "1827662244587322",
+      "text": "que onda kev",
+      "timestamp": 1772159117954000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU2NjUwMzE2MDc0NTM4NTg3MDY1OTIwMjA1NjE5MgZDZD",
+      "conversationId": "1827662244587322",
+      "senderId": "business",
+      "text": "Todo bien?",
+      "timestamp": 1772159161375000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDcyNjM0Mjc5MzkzOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU2NjUwMzE2MDc0NTM4NTg3MDY1OTIwMjA1NjE5MgZDZD",
+      "conversationId": "1232695662392208",
+      "senderId": "1232695662392208",
+      "text": "Todo bien?",
+      "timestamp": 1772159161550000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDcyNjM0Mjc5MzkzOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU2Njk0NjU4OTMzNDgxMzg1MTg1ODMyNzU2ODM4NAZDZD",
+      "conversationId": "1232695662392208",
+      "senderId": "business",
+      "text": "todo tranquilo vos?",
+      "timestamp": 1772159185542000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU2Njk0NjU4OTMzNDgxMzg1MTg1ODMyNzU2ODM4NAZDZD",
+      "conversationId": "1827662244587322",
+      "senderId": "1827662244587322",
+      "text": "todo tranquilo vos?",
+      "timestamp": 1772159185628000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU2NzI3MDg1OTY2ODI2NDY5MjE2NDYwNjI5NjA2NAZDZD",
+      "conversationId": "1827662244587322",
+      "senderId": "business",
+      "text": "Todo super por aca",
+      "timestamp": 1772159202945000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDcyNjM0Mjc5MzkzOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU2NzI3MDg1OTY2ODI2NDY5MjE2NDYwNjI5NjA2NAZDZD",
+      "conversationId": "1232695662392208",
+      "senderId": "1232695662392208",
+      "text": "Todo super por aca",
+      "timestamp": 1772159203167000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU3MDA0Mzc0NDcwNDE4NzQ0OTk1NDUzMTI3ODg0OAZDZD",
+      "conversationId": "1827662244587322",
+      "senderId": "1827662244587322",
+      "text": "ok<",
+      "timestamp": 1772159353459000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDcyNjM0Mjc5MzkzOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU3MDA0Mzc0NDcwNDE4NzQ0OTk1NDUzMTI3ODg0OAZDZD",
+      "conversationId": "1232695662392208",
+      "senderId": "business",
+      "text": "ok<",
+      "timestamp": 1772159353876000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDcyNjM0Mjc5MzkzOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU3NTEyNzQzNDc3NTkwNTc3Njk3NjE2NDU1MjcwNAZDZD",
+      "conversationId": "1232695662392208",
+      "senderId": "business",
+      "text": "perro",
+      "timestamp": 1772159628931000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTgxNTUwMTYwNDQzMzA5NDozMjY5MDU3NTEyNzQzNDc3NTkwNTc3Njk3NjE2NDU1MjcwNAZDZD",
+      "conversationId": "1827662244587322",
+      "senderId": "1827662244587322",
+      "text": "perro",
+      "timestamp": 1772159629040000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU3ODk3NTQyNjc3MDI3MzIxMDE2MDY3MzQ1NjEyOAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "1223536779452657",
+      "text": "??",
+      "timestamp": 1772159837639000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1ODk0MDAzNTk5NTQ1MjY1ODozMjY5MDU4NjU2OTEzNzQxNjYyNDE1NjQyMTg1MzgwNjU5MgZDZD",
+      "conversationId": "1421742599008639",
+      "senderId": "1421742599008639",
+      "text": "no tenia datos wacha",
+      "timestamp": 1772160249264000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1ODk0MDAzNTk5NTQ1MjY1ODozMjY5MDU4NjcwNzQ0NzQxNDM0MDAxNTg5Nzk2MDI1MTM5MgZDZD",
+      "conversationId": "1421742599008639",
+      "senderId": "1421742599008639",
+      "text": "andaba pal ogt el Internet ahi",
+      "timestamp": 1772160257198000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1ODk0MDAzNTk5NTQ1MjY1ODozMjY5MDU4ODAzNzk5MzE1MjU4ODE5MDI4NDA0NzcxMjI1NgZDZD",
+      "conversationId": "1421742599008639",
+      "senderId": "business",
+      "text": "Ah bueno tas perdonado jaja",
+      "timestamp": 1772160329111000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU4OTEyNDEzODk5MzE3NDcxMDg3NDgwMDEyODAwMAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "nada eli estaba desarrollando algo con insta y necesitaba ver si me llegaban los mensajes",
+      "timestamp": 1772160387743000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU5MDA4MDAxNjg2MDE0NTAwMjMzMTg1OTA1ODY4OAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "1223536779452657",
+      "text": "Ah okis.. 😂😂",
+      "timestamp": 1772160439611000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU5MjA0ODI0NDk3Njc3NzQ5Mzc1MDg0NTgwMDQ0OAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "emojis check",
+      "timestamp": 1772160546172000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU5MjY3Njg0MDE3NTQzNjQ1MjIwNTU1NjY2MjI3MgZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "aunque se tendria que ver tu foto y nombre",
+      "timestamp": 1772160581153000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU5NDA5NzQ5MzAzODA1NjEyNDg5MTQ4NTE3NTgwOAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "1223536779452657",
+      "text": "Q es algo así como el WhatsApp web..??",
+      "timestamp": 1772160657534000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU5NTM4MjQ3NDUyNTIzMjI0MTUxNTU3MDM5NzE4NAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "parecido en realidad estoy haciendo un crm que va a dejar ver y contestar mensajes multicuenta, onda con todas las plataformas",
+      "timestamp": 1772160726992000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU5NTc0MjA5MDU3Mjc2ODk5NjMyNTE1Mjc4NDM4NAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "face, tiktok, insta, whatsapp",
+      "timestamp": 1772160746521000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDU5NzcwNjMxODE4MDkwNzcxMDUwMTA5OTY2NzQ1NgZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "1223536779452657",
+      "text": "Esra bueno eso!!",
+      "timestamp": 1772160853099000,
+      "isFromMe": false
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDYwMjE0NjQ3ODY2MjE5ODcyNDE4MzU4MTUyMzk2OAZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "si anda si",
+      "timestamp": 1772161093573000,
+      "isFromMe": true
+    },
+    {
+      "id": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDA4MjIxODA1NjcyOjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ1Nzk4NTk4Njg1MTMyNjozMjY5MDYwMjE1OTU0MTE1MjE2NTQ1NTMxNzU2MjI5NDI3MgZDZD",
+      "conversationId": "1223536779452657",
+      "senderId": "business",
+      "text": "jajaja",
+      "timestamp": 1772161094341000,
+      "isFromMe": true
+    }
+  ],
+  "lastUpdate": 1772161094416
+}

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Container, Stack, Title, Group, Paper, Text, Switch, ThemeIcon, Divider, Badge, SimpleGrid, TextInput, PasswordInput, Modal, Button, Anchor } from '@mantine/core'
-import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse, IoCalendar, IoLogoGithub } from 'react-icons/io5'
+import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse, IoCalendar, IoLogoGithub, IoLogIn } from 'react-icons/io5'
 import { useSettings, Integration } from '@/contexts/SettingsContext'
+import { useInstagram } from '@/lib/instagram/context'
 
 const iconMap: Record<string, React.ReactNode> = {
   IoLogoInstagram: <IoLogoInstagram size={20} />,
@@ -20,7 +21,9 @@ const iconMap: Record<string, React.ReactNode> = {
 
 function IntegrationCard({ integration }: { integration: Integration }) {
   const { updateIntegration } = useSettings()
+  const instagram = useInstagram()
   const [modalOpen, setModalOpen] = useState(false)
+  const [instagramAppConfigured, setInstagramAppConfigured] = useState(false)
   const [tempConfig, setTempConfig] = useState({
     token: integration.token || '',
     apiKey: integration.apiKey || '',
@@ -28,8 +31,58 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     webhookUrl: integration.webhookUrl || ''
   })
 
+  useEffect(() => {
+    const checkInstagramConfig = async () => {
+      try {
+        const res = await fetch('/api/instagram/config')
+        const data = await res.json()
+        if (data.clientId) {
+          setInstagramAppConfigured(true)
+        }
+      } catch (e) {
+        console.error('Error checking Instagram config:', e)
+      }
+    }
+    checkInstagramConfig()
+  }, [])
+
   const isCalendly = integration.id === 'calendly'
   const isGithub = integration.id === 'github'
+  const isInstagram = integration.id === 'instagram'
+
+  const handleInstagramConnect = async () => {
+    try {
+      const res = await fetch('/api/instagram/config')
+      const config = await res.json()
+      
+      if (!config.clientId) {
+        alert('Primero guarda la configuración de la app')
+        return
+      }
+      
+      const redirectUri = 'https://4e43-216-244-247-162.ngrok-free.app/api/auth/callback/instagram'
+      const scope = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments'
+      
+      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`
+      
+      console.log('Instagram Auth URL:', authUrl)
+      window.location.href = authUrl
+    } catch (e) {
+      console.error('Error:', e)
+      alert('Error al obtener configuración')
+    }
+  }
+
+  const handleInstagramDisconnect = async () => {
+    try {
+      await fetch('/api/instagram/auth', { method: 'DELETE' })
+      window.location.reload()
+    } catch (e) {
+      console.error('Error disconnecting:', e)
+    }
+  }
+
+  const isInstagramConnected = isInstagram && instagram.isConnected
 
   const handleToggle = (enabled: boolean) => {
     updateIntegration(integration.id, { enabled })
@@ -53,11 +106,36 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     setModalOpen(true)
   }
 
+  const handleInstagramSaveConfig = async () => {
+    try {
+      const redirectUri = 'https://4e43-216-244-247-162.ngrok-free.app/api/auth/callback/instagram'
+      
+      await fetch('/api/instagram/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: tempConfig.apiKey,
+          clientSecret: tempConfig.apiSecret,
+          verifyToken: tempConfig.webhookUrl,
+          redirectUri
+        })
+      })
+      
+      updateIntegration(integration.id, tempConfig)
+      setInstagramAppConfigured(true)
+      setModalOpen(false)
+    } catch (error) {
+      console.error('Error saving Instagram config:', error)
+    }
+  }
+
   const isConnected = isCalendly 
     ? integration.token && integration.webhookUrl
     : isGithub 
       ? integration.token
-      : (integration.token || integration.apiKey)
+      : isInstagram
+        ? isInstagramConnected
+        : (integration.token || integration.apiKey)
 
   return (
     <>
@@ -105,6 +183,30 @@ function IntegrationCard({ integration }: { integration: Integration }) {
               <Anchor size="sm" onClick={handleOpenConfig}>
                 Configurar
               </Anchor>
+            )}
+            {isInstagram && integration.enabled && !isInstagramConnected && (
+              <Button 
+                size="xs" 
+                leftSection={<IoLogIn size={14} />}
+                onClick={handleInstagramConnect}
+              >
+                Conectar
+              </Button>
+            )}
+            {isInstagram && integration.enabled && isInstagramConnected && (
+              <Button 
+                size="xs" 
+                variant="outline"
+                color="red"
+                onClick={handleInstagramDisconnect}
+              >
+                Desconectar
+              </Button>
+            )}
+            {isInstagram && integration.enabled && isInstagramConnected && instagram.username && (
+              <Text size="xs" c="dimmed">
+                @{instagram.username}
+              </Text>
             )}
             <Switch
               checked={integration.enabled}
@@ -191,10 +293,72 @@ function IntegrationCard({ integration }: { integration: Integration }) {
                   <strong>Cómo obtener un Personal Access Token:</strong><br />
                   1. Ve a GitHub.com → Settings → Developer settings<br />
                   2. Personal access tokens → Tokens (classic)<br />
-                  3. Generate new token con scope "repo"<br />
+                  3. Generate new token con scope &quot;repo&quot;<br />
                   4. Copia el token y pégalo aquí
                 </Text>
               </Paper>
+            </>
+          ) : isInstagram ? (
+            <>
+              <Text size="sm" c="dimmed">
+                Configura tu app de Instagram y conecta tu cuenta para recibir mensajes.
+              </Text>
+
+              <Divider />
+
+              <TextInput
+                label="App ID (Client ID)"
+                placeholder="1591223445959501"
+                value={tempConfig.apiKey}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                description="Tu Instagram App ID de Meta for Developers"
+              />
+
+              <PasswordInput
+                label="App Secret (Client Secret)"
+                placeholder="91b5c75fd740e36fa2405fdf3b2c3fe9"
+                value={tempConfig.apiSecret}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, apiSecret: e.target.value }))}
+                description="Tu Instagram App Secret de Meta for Developers"
+              />
+
+              <PasswordInput
+                label="Verify Token"
+                placeholder="mi_token_secreto_123"
+                value={tempConfig.webhookUrl}
+                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
+                description="Token que usarás en Meta for Developers (crea uno random)"
+              />
+
+              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-blue-0)' }}>
+                <Text size="xs" c="dimmed">
+                  <strong>Tu Webhook URL:</strong><br />
+                  <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/instagram</code>
+                </Text>
+              </Paper>
+
+              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-green-0)' }}>
+                <Text size="xs" c="dimmed">
+                  <strong>Redirect URI (configuralo en Meta):</strong><br />
+                  <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/auth/callback/instagram</code>
+                </Text>
+              </Paper>
+
+              <Divider />
+
+              <Group justify="space-between">
+                <Text size="xs" c="dimmed">
+                  Guardar configuración
+                </Text>
+                <Group>
+                  <Button variant="subtle" onClick={() => setModalOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button leftSection={<IoSave size={16} />} onClick={handleInstagramSaveConfig}>
+                    Guardar
+                  </Button>
+                </Group>
+              </Group>
             </>
           ) : (
             <>
@@ -235,21 +399,23 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             </>
           )}
 
-          <Divider />
+          {!isInstagram && <Divider />}
 
-          <Group justify="space-between">
-            <Anchor size="sm" href="#" onClick={(e) => e.preventDefault()}>
-              ¿Cómo obtener las credenciales?
-            </Anchor>
-            <Group>
-              <Button variant="subtle" onClick={() => setModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button leftSection={<IoSave size={16} />} onClick={handleSave}>
-                Guardar
-              </Button>
+          {!isInstagram && (
+            <Group justify="space-between">
+              <Anchor size="sm" href="#" onClick={(e) => e.preventDefault()}>
+                ¿Cómo obtener las credenciales?
+              </Anchor>
+              <Group>
+                <Button variant="subtle" onClick={() => setModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button leftSection={<IoSave size={16} />} onClick={handleSave}>
+                  Guardar
+                </Button>
+              </Group>
             </Group>
-          </Group>
+          )}
         </Stack>
       </Modal>
     </>
