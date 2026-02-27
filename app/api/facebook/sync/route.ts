@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      conversations: conversations.length,
+      conversations: conversations,
       messages: allMessages
     })
   } catch (error: any) {

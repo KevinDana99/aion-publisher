@@ -337,16 +337,46 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
           const syncData = await syncRes.json()
           console.log('[Facebook] Sync response:', syncData)
           if (syncData.success) {
-            console.log('[Facebook] Synced from API:', syncData.messages, 'messages')
-            // Guardar mensajes en localStorage
-            const stored = localStorage.getItem('facebook-messages')
-            let existing = stored ? JSON.parse(stored) : { messages: [] }
+            console.log('[Facebook] Synced from API:', syncData.messages.length, 'messages')
+            
+            // Actualizar conversaciones
+            if (syncData.conversations?.length > 0) {
+              setConversations(prev => {
+                const updated = [...prev]
+                for (const conv of syncData.conversations) {
+                  if (!updated.some(c => c.id === conv.id)) {
+                    updated.push(conv)
+                  }
+                }
+                return updated
+              })
+            }
+            
+            // Convertir array a formato por conversación
+            const messagesByConversation: Record<string, FacebookStoredMessage[]> = {}
             for (const msg of syncData.messages || []) {
-              if (!existing.messages.some((m: any) => m.id === msg.id)) {
-                existing.messages.push(msg)
+              if (!messagesByConversation[msg.conversationId]) {
+                messagesByConversation[msg.conversationId] = []
+              }
+              if (!messagesByConversation[msg.conversationId].some((m: any) => m.id === msg.id)) {
+                messagesByConversation[msg.conversationId].push(msg)
               }
             }
-            localStorage.setItem('facebook-messages', JSON.stringify(existing))
+            // Actualizar estado
+            setMessages(prev => {
+              const updated = { ...prev }
+              for (const convId of Object.keys(messagesByConversation)) {
+                if (!updated[convId]) {
+                  updated[convId] = []
+                }
+                for (const msg of messagesByConversation[convId]) {
+                  if (!updated[convId].some((m: any) => m.id === msg.id)) {
+                    updated[convId].push(msg)
+                  }
+                }
+              }
+              return updated
+            })
           } else {
             console.log('[Facebook] Sync error:', syncData.error)
           }
