@@ -1,24 +1,30 @@
 import { NextResponse } from 'next/server'
-import { getClientId, getClientSecret, getVerifyToken, getRedirectUri } from '@/lib/instagram/app-config'
+import { getClientId, getVerifyToken, getRedirectUri } from '@/lib/instagram/app-config'
 
 export async function GET() {
   const clientId = getClientId()
-  const clientSecret = getClientSecret()
   const verifyToken = getVerifyToken()
   const redirectUri = getRedirectUri()
   
   return NextResponse.json({
     clientId: clientId || '',
-    clientSecret: clientSecret ? '***' : '',
     verifyToken: verifyToken ? '***' : '',
     redirectUri: redirectUri || ''
   })
 }
 
-export async function POST() {
-  return NextResponse.json({
-    error: 'Config is now read-only. Set environment variables in Vercel.',
-    clientId: getClientId() || '',
-    redirectUri: getRedirectUri() || ''
-  }, { status: 400 })
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { verifyToken: token } = body
+    
+    if (token) {
+      const { setVerifyToken } = await import('@/lib/instagram/app-config')
+      setVerifyToken(token)
+    }
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to save config' }, { status: 500 })
+  }
 }

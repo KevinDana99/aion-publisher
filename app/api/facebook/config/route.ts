@@ -1,24 +1,35 @@
 import { NextResponse } from 'next/server'
-import { getAppId, getAppSecret, getVerifyToken, getRedirectUri } from '@/lib/facebook/app-config'
+import { getAppId, getVerifyToken, getRedirectUri } from '@/lib/facebook/app-config'
+
+let verifyToken = ''
+
+export function setVerifyToken(token: string) {
+  verifyToken = token
+}
 
 export async function GET() {
   const appId = getAppId()
-  const appSecret = getAppSecret()
   const verifyToken = getVerifyToken()
   const redirectUri = getRedirectUri()
   
   return NextResponse.json({
     appId: appId || '',
-    appSecret: appSecret ? '***' : '',
     verifyToken: verifyToken ? '***' : '',
     redirectUri: redirectUri || ''
   })
 }
 
-export async function POST() {
-  return NextResponse.json({
-    error: 'Config is now read-only. Set environment variables in Vercel.',
-    appId: getAppId() || '',
-    redirectUri: getRedirectUri() || ''
-  }, { status: 400 })
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { verifyToken: token } = body
+    
+    if (token) {
+      setVerifyToken(token)
+    }
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to save config' }, { status: 500 })
+  }
 }
