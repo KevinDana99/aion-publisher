@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { instagramWebhookService } from '@/lib/instagram/service'
 import { getInstagramVerifyToken } from '@/lib/credentials/tokens'
+import { addMessage } from '@/lib/instagram/storage'
 import type { InstagramWebhookPayload } from '@/lib/instagram/types'
 
 export async function GET(request: NextRequest) {
@@ -109,10 +110,13 @@ export async function POST(request: NextRequest) {
     for (const msg of messages) {
       try {
         console.log('[Instagram Webhook] Saving message:', JSON.stringify(msg))
-        await fetch('/api/webhooks/instagram/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(msg)
+        await addMessage({
+          id: msg.id,
+          conversationId: msg.conversationId,
+          senderId: msg.senderId,
+          text: msg.text,
+          timestamp: msg.timestamp,
+          isFromMe: msg.isFromMe
         })
         console.log('[Instagram Webhook] Message saved successfully')
       } catch (e) {
