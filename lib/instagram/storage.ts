@@ -1,4 +1,13 @@
-interface StoredMessage {
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || '',
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || ''
+})
+
+const STORAGE_KEY = 'instagram_messages'
+
+export interface StoredMessage {
   id: string
   conversationId: string
   senderId: string
@@ -12,46 +21,36 @@ interface StoredData {
   lastUpdate: number
 }
 
-const STORAGE_KEY = 'instagram-messages'
-
-function getStored(): StoredData {
-  if (typeof window === 'undefined') return { messages: [], lastUpdate: 0 }
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (!stored) return { messages: [], lastUpdate: 0 }
-  try {
-    return JSON.parse(stored)
-  } catch {
-    return { messages: [], lastUpdate: 0 }
-  }
+async function getStored(): Promise<StoredData> {
+  const data = await redis.get(STORAGE_KEY)
+  return (data as StoredData) || { messages: [], lastUpdate: 0 }
 }
 
-function setStored(data: StoredData): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  }
+async function setStored(data: StoredData): Promise<void> {
+  await redis.set(STORAGE_KEY, data)
 }
 
-export function getMessages(): StoredData {
-  return getStored()
+export async function getMessages(): Promise<StoredData> {
+  return await getStored()
 }
 
-export function addMessage(message: StoredMessage): void {
-  const data = getStored()
+export async function addMessage(message: StoredMessage): Promise<void> {
+  const data = await getStored()
   const existing = data.messages.findIndex(m => m.id === message.id)
   if (existing === -1) {
     data.messages.push(message)
     data.lastUpdate = Date.now()
-    setStored(data)
+    await setStored(data)
   }
 }
 
-export function getMessagesByConversation(conversationId: string): StoredMessage[] {
-  const data = getStored()
+export async function getMessagesByConversation(conversationId: string): Promise<StoredMessage[]> {
+  const data = await getStored()
   return data.messages
     .filter(m => m.conversationId === conversationId)
     .sort((a, b) => a.timestamp - b.timestamp)
 }
 
-export function clearMessages(): void {
-  setStored({ messages: [], lastUpdate: 0 })
+export async function clearMessages(): Promise<void> {
+  await setStored({ messages: [], lastUpdate: 0 })
 }
