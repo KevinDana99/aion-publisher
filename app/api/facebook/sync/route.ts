@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCredentials } from '@/lib/facebook/credentials'
 import { createFacebookAPI } from '@/lib/facebook/api'
-import { addMessage } from '@/lib/facebook/storage'
 
 export async function GET(request: NextRequest) {
   try {
-    const credentials = getCredentials()
+    let credentials = getCredentials()
     
-    console.log('[Facebook Sync] Credentials:', credentials)
+    // Si no hay credenciales, usar variables de entorno
+    if (!credentials?.accessToken) {
+      const envToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+      if (envToken) {
+        credentials = {
+          accessToken: envToken,
+          pageId: process.env.FACEBOOK_PAGE_ID || '',
+          pageName: process.env.FACEBOOK_PAGE_NAME || ''
+        }
+      }
+    }
+    
+    console.log('[Facebook Sync] Credentials:', credentials ? 'exists' : 'none')
     
     if (!credentials?.accessToken) {
       return NextResponse.json(
@@ -54,10 +65,6 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('[Facebook Sync] Total messages fetched:', allMessages.length)
-
-    for (const msg of allMessages) {
-      addMessage(msg)
-    }
 
     return NextResponse.json({ 
       success: true, 
