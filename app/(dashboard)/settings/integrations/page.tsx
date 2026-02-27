@@ -202,16 +202,19 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const handleInstagramSaveConfig = async () => {
     try {
       const redirectUri = typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback/instagram` : ''
+      const dataToSend = {
+        clientId: tempConfig.apiKey,
+        clientSecret: tempConfig.apiSecret,
+        verifyToken: tempConfig.webhookUrl,
+        redirectUri
+      }
+      
+      console.log('[Instagram Config] Sending to server:', JSON.stringify(dataToSend))
       
       await fetch('/api/instagram/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId: tempConfig.apiKey,
-          clientSecret: tempConfig.apiSecret,
-          verifyToken: tempConfig.webhookUrl,
-          redirectUri
-        })
+        body: JSON.stringify(dataToSend)
       })
       
       updateIntegration(integration.id, tempConfig)

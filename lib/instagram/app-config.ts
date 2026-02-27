@@ -25,12 +25,16 @@ export interface FacebookAppConfig {
 }
 
 export async function getInstagramAppConfig(): Promise<InstagramAppConfig> {
+  console.log('[Instagram App Config] Reading from Redis, key:', KEYS.instagramAppConfig)
   const config = await redis.get(KEYS.instagramAppConfig)
+  console.log('[Instagram App Config] Read result:', JSON.stringify(config))
   return (config as InstagramAppConfig) || { clientId: '', clientSecret: '', verifyToken: '', redirectUri: '' }
 }
 
 export async function setInstagramAppConfig(config: InstagramAppConfig): Promise<void> {
+  console.log('[Instagram App Config] Writing to Redis, key:', KEYS.instagramAppConfig, 'value:', JSON.stringify(config))
   await redis.set(KEYS.instagramAppConfig, config)
+  console.log('[Instagram App Config] Write complete')
 }
 
 export async function getFacebookAppConfig(): Promise<FacebookAppConfig> {
