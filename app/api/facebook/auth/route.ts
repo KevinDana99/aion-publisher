@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getCredentials, saveCredentials, clearCredentials } from '@/lib/facebook/credentials'
+import { createFacebookAPI } from '@/lib/facebook/api'
 
 export async function GET() {
   try {
@@ -22,14 +23,29 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { accessToken, pageId, pageName, expiresAt } = body
+    let { accessToken, pageId, pageName, expiresAt } = body
 
-    if (!accessToken || !pageId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    if (!accessToken) {
+      return NextResponse.json({ error: 'Missing accessToken' }, { status: 400 })
     }
 
-    saveCredentials({ accessToken, pageId, pageName, expiresAt })
-    return NextResponse.json({ success: true })
+    // Si pageId es 'me', obtener el ID real de la página
+    if (pageId === 'me' || !pageId) {
+      try {
+        const api = createFacebookAPI(accessToken)
+        const pageInfo = await api.getPageInfo('me')
+        pageId = pageInfo.id
+        pageName = pageInfo.name
+        console.log('[Facebook Auth] Got page info:', pageId, pageName)
+      } catch (e) {
+        console.error('[Facebook Auth] Error getting page info:', e)
+        // Usar un default si no se puede obtener
+        pageId = pageId || 'unknown'
+      }
+    }
+
+    saveCredentials({ accessToken, pageId, pageName: pageName || '', expiresAt })
+    return NextResponse.json({ success: true, pageId, pageName })
   } catch (error) {
     console.error('Error saving credentials:', error)
     return NextResponse.json({ error: 'Failed to save credentials' }, { status: 500 })

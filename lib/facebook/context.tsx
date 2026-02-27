@@ -50,23 +50,38 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadState = async () => {
+      console.log('[Facebook Context] Loading state...')
+      
+      // Siempre obtener credenciales del servidor primero
+      try {
+        const res = await fetch('/api/facebook/auth')
+        const data = await res.json()
+        console.log('[Facebook Context] Auth response:', data)
+        
+        if (data.connected) {
+          setAccessToken(data.accessToken || '')
+          setPageId(data.pageId || '')
+          setPageName(data.pageName || '')
+          console.log('[Facebook Context] Loaded from server. pageId:', data.pageId)
+          
+          // Guardar en localStorage
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            accessToken: data.accessToken,
+            pageId: data.pageId,
+            pageName: data.pageName,
+            conversations: [],
+            messages: {},
+            contacts: {}
+          }))
+          return
+        }
+      } catch (e) {
+        console.error('Error fetching Facebook credentials', e)
+      }
+      
+      // Fallback a localStorage
       let stored = localStorage.getItem(STORAGE_KEY)
       let parsed = stored ? JSON.parse(stored) : {}
-
-      if (!parsed.accessToken) {
-        try {
-          const res = await fetch('/api/facebook/auth')
-          const data = await res.json()
-          
-          if (data.connected) {
-            setPageId(data.pageId || '')
-            setPageName(data.pageName || '')
-            parsed = { ...parsed, pageId: data.pageId, pageName: data.pageName }
-          }
-        } catch (e) {
-          console.error('Error fetching Facebook credentials', e)
-        }
-      }
 
       setAccessToken(parsed.accessToken || '')
       setPageId(parsed.pageId || '')
@@ -74,10 +89,34 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
       setConversations(parsed.conversations || [])
       setMessages(parsed.messages || {})
       setContacts(parsed.contacts || {})
+      console.log('[Facebook Context] Loaded from localStorage. pageId:', parsed.pageId)
     }
 
     loadState()
   }, [])
+
+  // Sync cuando se carga el accessToken
+  useEffect(() => {
+    if (accessToken && pageId) {
+      console.log('[Facebook Context] Token loaded, triggering sync...')
+      const doSync = async () => {
+        try {
+          console.log('[Facebook] Starting sync from API...')
+          const syncRes = await fetch('/api/facebook/sync')
+          const syncData = await syncRes.json()
+          console.log('[Facebook] Sync response:', syncData)
+          if (syncData.success) {
+            console.log('[Facebook] Synced from API:', syncData.messages, 'messages')
+          } else {
+            console.log('[Facebook] Sync error:', syncData.error)
+          }
+        } catch (e) {
+          console.error('[Facebook] Error syncing from API:', e)
+        }
+      }
+      doSync()
+    }
+  }, [accessToken, pageId])
 
   useEffect(() => {
     const state = { accessToken, pageId, pageName, conversations, messages, contacts }
@@ -281,19 +320,23 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
 
       if (accessToken) {
         try {
+          console.log('[Facebook] Starting sync from API...')
           const syncRes = await fetch('/api/facebook/sync')
           const syncData = await syncRes.json()
+          console.log('[Facebook] Sync response:', syncData)
           if (syncData.success) {
             console.log('[Facebook] Synced from API:', syncData.messages, 'messages')
+          } else {
+            console.log('[Facebook] Sync error:', syncData.error)
           }
         } catch (e) {
-          console.error('Error syncing from API:', e)
+          console.error('[Facebook] Error syncing from API:', e)
         }
       }
     }
 
     syncMessages()
-    const interval = setInterval(syncMessages, 5000)
+    const interval = setInterval(syncMessages, 10000)
 
     if (accessToken) {
       syncContactsFromConversations()

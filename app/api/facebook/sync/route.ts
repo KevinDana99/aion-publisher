@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   try {
     const credentials = getCredentials()
     
+    console.log('[Facebook Sync] Credentials:', credentials)
+    
     if (!credentials?.accessToken) {
       return NextResponse.json(
         { error: 'Facebook not connected. Please connect first.' },
@@ -15,10 +17,23 @@ export async function GET(request: NextRequest) {
     }
 
     const api = createFacebookAPI(credentials.accessToken)
-    console.log('[Facebook Sync] Fetching conversations for page:', credentials.pageId)
     
-    const conversations = await api.getConversations(credentials.pageId)
+    // Obtener page ID correcto usando 'me'
+    let pageIdToUse = credentials.pageId
+    try {
+      console.log('[Facebook Sync] Getting page info with me...')
+      const pageInfo = await api.getPageInfo('me')
+      console.log('[Facebook Sync] Page info:', pageInfo)
+      pageIdToUse = pageInfo.id
+    } catch (e) {
+      console.log('[Facebook Sync] Error getting page info:', e)
+    }
+    
+    console.log('[Facebook Sync] Fetching conversations for page:', pageIdToUse)
+    
+    const conversations = await api.getConversations(pageIdToUse)
     console.log('[Facebook Sync] Got', conversations.length, 'conversations')
+    console.log('[Facebook Sync] Conversations:', JSON.stringify(conversations))
 
     const allMessages: any[] = []
 
@@ -33,7 +48,7 @@ export async function GET(request: NextRequest) {
           senderId: msg.from?.id || conv.id,
           text: msg.message || '',
           timestamp: new Date(msg.created_time).getTime(),
-          isFromMe: msg.from?.id === credentials.pageId
+          isFromMe: msg.from?.id === pageIdToUse
         })
       }
     }

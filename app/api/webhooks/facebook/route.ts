@@ -51,11 +51,14 @@ export async function POST(request: NextRequest) {
     const payload = body as FacebookWebhookPayload
 
     if (payload.object !== 'page') {
+      console.log('[Facebook Webhook] Invalid object:', payload.object)
       return NextResponse.json(
         { error: 'Invalid payload object' },
         { status: 400 }
       )
     }
+
+    console.log('[Facebook Webhook] Entries:', payload.entry?.length || 0)
 
     const events = facebookWebhookService.processWebhookPayload(payload)
 
