@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server'
-import { getCredentials, saveCredentials, clearCredentials } from '@/lib/instagram/credentials'
+import { getInstagramCredentials, setInstagramCredentials, clearInstagramCredentials } from '@/lib/credentials/tokens'
 
 export async function GET() {
   try {
-    const credentials = getCredentials()
+    const credentials = await getInstagramCredentials()
     if (!credentials) {
       return NextResponse.json({ connected: false })
     }
     return NextResponse.json({
       connected: true,
       userId: credentials.userId,
-      username: credentials.username,
+      username: credentials.pageName,
       accessToken: credentials.accessToken
     })
   } catch (error) {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    saveCredentials({ accessToken, userId, username, expiresAt })
+    await setInstagramCredentials({ accessToken, pageId: userId, pageName: username || '', expiresAt })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error saving credentials:', error)
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   try {
-    clearCredentials()
+    await clearInstagramCredentials()
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error clearing credentials:', error)

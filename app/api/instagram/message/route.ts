@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCredentials } from '@/lib/instagram/credentials'
+import { getInstagramCredentials } from '@/lib/credentials/tokens'
 import { createInstagramAPI } from '@/lib/instagram/api'
 
 export async function POST(request: NextRequest) {
   try {
-    const credentials = getCredentials()
+    const credentials = await getInstagramCredentials()
     
     console.log('[Instagram Message] Credentials:', credentials ? 'exists' : 'none')
     
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const credentials = getCredentials()
+    const credentials = await getInstagramCredentials()
     
     if (!credentials?.accessToken) {
       return NextResponse.json(

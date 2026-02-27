@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCredentials } from '@/lib/facebook/credentials'
+import { getFacebookCredentials } from '@/lib/credentials/tokens'
 import { createFacebookAPI } from '@/lib/facebook/api'
 
 export async function GET(request: NextRequest) {
   try {
-    let credentials = getCredentials()
+    let credentials = await getFacebookCredentials()
     
     // Si no hay credenciales, usar variables de entorno
     if (!credentials?.accessToken) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { saveCredentials } from '@/lib/instagram/credentials'
+import { setInstagramCredentials } from '@/lib/credentials/tokens'
 import { getClientId, getClientSecret } from '@/lib/instagram/app-config'
 
 export const dynamic = 'force-dynamic'
@@ -89,10 +89,10 @@ export async function GET(request: NextRequest) {
       accountType,
     })
 
-    saveCredentials({
+    await setInstagramCredentials({
       accessToken,
-      userId,
-      username,
+      pageId: userId,
+      pageName: username,
       expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : undefined
     })
 

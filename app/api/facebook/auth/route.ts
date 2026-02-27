@@ -1,25 +1,10 @@
 import { NextResponse } from 'next/server'
-import { getCredentials, saveCredentials, clearCredentials } from '@/lib/facebook/credentials'
 import { createFacebookAPI } from '@/lib/facebook/api'
+import { getFacebookCredentials, setFacebookCredentials, clearFacebookCredentials } from '@/lib/credentials/tokens'
 
 export async function GET() {
   try {
-    let credentials = getCredentials()
-    
-    // Si no hay credenciales en memoria, usar variables de entorno
-    if (!credentials) {
-      const envToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
-      const envPageId = process.env.FACEBOOK_PAGE_ID
-      const envPageName = process.env.FACEBOOK_PAGE_NAME
-      
-      if (envToken) {
-        credentials = {
-          accessToken: envToken,
-          pageId: envPageId || '',
-          pageName: envPageName || ''
-        }
-      }
-    }
+    const credentials = await getFacebookCredentials()
     
     if (!credentials) {
       return NextResponse.json({ connected: false })
@@ -42,7 +27,6 @@ export async function POST(request: Request) {
     let { accessToken, pageId, pageName, expiresAt } = body
 
     if (!accessToken) {
-      // Usar token de variable de entorno si no se proporciona
       accessToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
     }
 
@@ -50,7 +34,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing accessToken' }, { status: 400 })
     }
 
-    // Si pageId es 'me', obtener el ID real de la página
     if (pageId === 'me' || !pageId) {
       try {
         const api = createFacebookAPI(accessToken)
@@ -64,7 +47,7 @@ export async function POST(request: Request) {
       }
     }
 
-    saveCredentials({ accessToken, pageId, pageName: pageName || '', expiresAt })
+    await setFacebookCredentials({ accessToken, pageId, pageName: pageName || '', expiresAt })
     return NextResponse.json({ success: true, pageId, pageName })
   } catch (error) {
     console.error('Error saving credentials:', error)
@@ -74,7 +57,7 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   try {
-    clearCredentials()
+    await clearFacebookCredentials()
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error clearing credentials:', error)
