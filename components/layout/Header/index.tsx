@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import {
   ActionIcon,
   Group,
@@ -17,7 +18,12 @@ export default function Header() {
   const computedColorScheme = useComputedColorScheme('light', {
     getInitialValueInEffect: true
   })
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const toggleColorScheme = () => {
     setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')
@@ -39,12 +45,14 @@ export default function Header() {
         height: 60,
         padding: '0 1rem',
         backdropFilter: 'blur(12px)',
-        background:
-          computedColorScheme === 'dark'
+        background: !mounted 
+          ? 'rgba(255, 255, 255, 0.8)'
+          : computedColorScheme === 'dark'
             ? 'rgba(26, 27, 30, 0.8)'
             : 'rgba(255, 255, 255, 0.8)',
-        borderBottom:
-          computedColorScheme === 'dark'
+        borderBottom: !mounted
+          ? '1px solid rgba(0, 0, 0, 0.1)'
+          : computedColorScheme === 'dark'
             ? '1px solid rgba(255, 255, 255, 0.1)'
             : '1px solid rgba(0, 0, 0, 0.1)'
       }}
@@ -61,8 +69,9 @@ export default function Header() {
             size='lg'
             radius='md'
             aria-label='Toggle color scheme'
+            style={{ visibility: mounted ? 'visible' : 'hidden' }}
           >
-            {computedColorScheme === 'dark' ? (
+            {mounted && computedColorScheme === 'dark' ? (
               <IoSunnyOutline size={20} />
             ) : (
               <IoMoonOutline size={20} />
