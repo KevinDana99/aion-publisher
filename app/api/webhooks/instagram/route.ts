@@ -113,7 +113,8 @@ export async function POST(request: NextRequest) {
           senderId: msg.senderId,
           text: msg.text,
           timestamp: msg.timestamp,
-          isFromMe: msg.isFromMe
+          isFromMe: msg.isFromMe,
+          attachments: msg.attachments
         })
         console.log('[Instagram Webhook] Message saved successfully')
       } catch (e) {
