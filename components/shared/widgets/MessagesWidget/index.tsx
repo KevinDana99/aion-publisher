@@ -609,17 +609,16 @@ export default function MessagesWidget() {
                                       borderRadius: 8,
                                       overflow: 'hidden',
                                       width: '100%',
-                                      maxWidth: 250,
-                                      height: 'auto',
+                                      maxWidth: 300,
                                       position: 'relative'
                                     }}
                                   >
                                     <Image
                                       src={attachment.payload.url}
                                       alt='imagen'
-                                      width={250}
-                                      height={250}
-                                      style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
+                                      width={300}
+                                      height={300}
+                                      style={{ objectFit: 'contain', width: '100%', height: 'auto' }}
                                     />
                                   </Box>
                                 )}
