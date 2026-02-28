@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { facebookWebhookService } from '@/lib/facebook/service'
 import { getFacebookVerifyToken } from '@/lib/credentials/tokens'
+import { addMessage } from '@/lib/facebook/storage'
 import type { FacebookWebhookPayload } from '@/lib/facebook/types'
 
 export async function GET(request: NextRequest) {
@@ -86,7 +87,10 @@ export async function POST(request: NextRequest) {
           text: event.data.message || '',
           timestamp: event.timestamp,
           isFromMe: false,
-          attachments: event.data.attachments
+          attachments: event.data.attachments?.map(a => ({
+            type: a.type,
+            payload: { url: a.url }
+          }))
         })
 
         console.log(`[Facebook Webhook] Message: ${event.data.messageId} from ${event.userId}`)
@@ -94,6 +98,27 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[Facebook Webhook] ✅ Processed ${events.length} event(s)`)
+
+    // Guardar mensajes en Redis
+    for (const msg of messages) {
+      try {
+        console.log('[Facebook Webhook] Saving message:', JSON.stringify(msg))
+        await addMessage({
+          id: msg.id,
+          conversationId: msg.conversationId,
+          senderId: msg.senderId,
+          text: msg.text,
+          timestamp: msg.timestamp,
+          isFromMe: msg.isFromMe,
+          attachments: msg.attachments
+        })
+        console.log('[Facebook Webhook] Message saved successfully')
+      } catch (e) {
+        console.error('[Facebook Webhook] Error saving message:', e)
+      }
+    }
+
+    console.log(`[Facebook Webhook] ✅ Processed ${events.length} event(s), saved ${messages.length} message(s)`)
 
     return NextResponse.json({ success: true, messages }, { status: 200 })
   } catch (error) {
