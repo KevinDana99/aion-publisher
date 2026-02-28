@@ -732,9 +732,9 @@ export default function MessagesWidget() {
           onClose={() => setImagePreview(null)}
           centered
           withCloseButton
-          size={700}
+          size='auto'
           styles={{ 
-            body: { background: 'transparent', padding: 0, width: 700, height: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+            body: { background: 'transparent', padding: 0, minHeight: 500, height: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' },
             content: { background: 'transparent', boxShadow: 'none' }
           }}
         >
