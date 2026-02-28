@@ -208,10 +208,8 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const syncMessages = async () => {
       try {
-        console.log('[Instagram Context] Syncing messages...')
         const res = await fetch('/api/webhooks/instagram/messages')
         const data = await res.json()
-        console.log('[Instagram Context] Got messages data:', JSON.stringify(data))
         
         const messagesArray = data.messages || []
         
@@ -257,8 +255,6 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
               return newConvs.length > 0 ? [...prev, ...newConvs] : prev
             })
           }
-          
-          console.log('[Instagram Context] Updated messages for', Object.keys(grouped).length, 'conversations')
         }
       } catch (e) {
         console.error('Error syncing messages:', e)
@@ -266,8 +262,6 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
     }
 
     syncMessages()
-    
-    // Poll for new messages every 5 seconds
     const interval = setInterval(syncMessages, 5000)
     
     return () => clearInterval(interval)

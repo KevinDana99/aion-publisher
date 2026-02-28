@@ -11,19 +11,15 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
 
-    console.log('[Instagram Webhook] GET received. Mode:', mode, 'Token from Meta:', token ? 'yes' : 'no')
-    
     let storedToken = ''
     try {
       const config = await getInstagramAppConfig()
       storedToken = config.verifyToken
-      console.log('[Instagram Webhook] Token from Redis (app_config):', storedToken ? 'FOUND: ' + storedToken : 'NOT FOUND')
     } catch (e) {
       console.error('[Instagram Webhook] Error getting token from Redis:', e)
     }
     
     if (!storedToken) {
-      console.log('[Instagram Webhook] No verify token configured')
       return NextResponse.json(
         { error: 'Verify token not configured' },
         { status: 403 }
@@ -33,14 +29,12 @@ export async function GET(request: NextRequest) {
     instagramWebhookService.setVerifyToken(storedToken)
 
     if (!instagramWebhookService.verifyWebhookMode(mode || '', token || '')) {
-      console.log('[Instagram Webhook] Verification FAILED. Expected:', storedToken, 'Got:', token)
       return NextResponse.json(
         { error: 'Verification failed' },
         { status: 403 }
       )
     }
 
-    console.log('[Instagram Webhook] Verification SUCCESS')
     return new NextResponse(challenge, {
       status: 200,
       headers: {
