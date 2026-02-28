@@ -553,7 +553,7 @@ export default function MessagesWidget() {
                         <Text
                           size='sm'
                           tt='capitalize'
-                          c={isEnabled ? (isDark ? 'gray' : 'dark') : 'dimmed'}
+                          c={isEnabled ? (!mounted || isDark ? 'gray' : 'dark') : 'dimmed'}
                         >
                           {platform}
                         </Text>
@@ -698,7 +698,7 @@ export default function MessagesWidget() {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          background: isDark ? 'var(--mantine-color-dark-7)' : 'white'
+          background: !mounted || isDark ? 'var(--mantine-color-dark-7)' : 'white'
         }}
       >
         {selectedConversation ? (
