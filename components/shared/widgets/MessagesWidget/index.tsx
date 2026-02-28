@@ -361,49 +361,7 @@ export default function MessagesWidget() {
     setPlatformFilters((prev) => ({ ...prev, [platform]: !prev[platform] }))
   }
 
-  const handleGetFile = async (url: string) => {
-    try {
-      const req = await fetch(url)
-      const disposition = req.headers.get('Content-Disposition')
-      const filename =
-        disposition && disposition.includes('filename=')
-          ? disposition.split('filename=')[1].split(';')[0].replace(/['"]/g, '')
-          : ''
-      const blob = await req.blob()
-      const blobUrl = URL.createObjectURL(blob)
-      return {
-        url: blobUrl ?? '',
-        type: req.headers.get('Content-Type')?.split('/')[1] ?? '',
-        name: filename ?? ''
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        console.error(err.message)
-        throw Error(err.message)
-      }
-    }
-  }
-  type FileType = {
-    url: string | null
-    type: string | null
-    name: string | null
-  }
-
   const FileMessage = ({ url }: { url: string }) => {
-    const [file, setFile] = useState<FileType>({
-      url: null,
-      type: null,
-      name: null
-    })
-    useEffect(() => {
-      const callFn = async () => {
-        const tempFile = await handleGetFile(url)
-        console.log({ file: tempFile, fileState: file })
-        if (tempFile) setFile(tempFile)
-      }
-      callFn()
-    }, [])
-
     return (
       <Link
         href={url}
