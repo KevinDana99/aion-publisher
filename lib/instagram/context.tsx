@@ -1,7 +1,18 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
-import type { InstagramConversation, InstagramStoredMessage, InstagramUser } from './types'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback
+} from 'react'
+import type {
+  InstagramConversation,
+  InstagramStoredMessage,
+  InstagramUser
+} from './types'
 
 interface InstagramContextType {
   isConnected: boolean
@@ -43,8 +54,12 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState('')
   const [userId, setUserId] = useState('')
   const [username, setUsername] = useState('')
-  const [conversations, setConversations] = useState<InstagramConversation[]>([])
-  const [messages, setMessages] = useState<Record<string, InstagramStoredMessage[]>>({})
+  const [conversations, setConversations] = useState<InstagramConversation[]>(
+    []
+  )
+  const [messages, setMessages] = useState<
+    Record<string, InstagramStoredMessage[]>
+  >({})
   const [contacts, setContacts] = useState<Record<string, InstagramUser>>({})
   const [isConnected, setIsConnected] = useState(false)
 
@@ -53,7 +68,7 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
       try {
         const res = await fetch('/api/instagram/auth')
         const data = await res.json()
-        
+
         if (data.connected) {
           setUserId(data.userId || '')
           setUsername(data.username || '')
@@ -64,7 +79,7 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
         console.error('Error fetching Instagram credentials', e)
       }
     }
-    
+
     loadState()
   }, [])
 
@@ -93,83 +108,97 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
     setIsConnected(false)
   }, [])
 
-  const addMessage = useCallback((conversationId: string, message: InstagramStoredMessage) => {
-    setMessages(prev => {
-      const existing = prev[conversationId] || []
-      if (existing.some(m => m.id === message.id)) return prev
-      return {
-        ...prev,
-        [conversationId]: [...existing, message]
-      }
-    })
-  }, [])
-
-  const getMessages = useCallback((conversationId: string): InstagramStoredMessage[] => {
-    return messages[conversationId] || []
-  }, [messages])
-
-  const sendMessage = useCallback(async (recipientId: string, message: string): Promise<boolean> => {
-    try {
-      const res = await fetch('/api/instagram/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientId, message })
+  const addMessage = useCallback(
+    (conversationId: string, message: InstagramStoredMessage) => {
+      setMessages((prev) => {
+        const existing = prev[conversationId] || []
+        if (existing.some((m) => m.id === message.id)) return prev
+        return {
+          ...prev,
+          [conversationId]: [...existing, message]
+        }
       })
+    },
+    []
+  )
 
-      if (!res.ok) {
-        const error = await res.json()
-        console.error('Failed to send message:', error)
+  const getMessages = useCallback(
+    (conversationId: string): InstagramStoredMessage[] => {
+      return messages[conversationId] || []
+    },
+    [messages]
+  )
+
+  const sendMessage = useCallback(
+    async (recipientId: string, message: string): Promise<boolean> => {
+      try {
+        const res = await fetch('/api/instagram/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipientId, message })
+        })
+
+        if (!res.ok) {
+          const error = await res.json()
+          console.error('Failed to send message:', error)
+          return false
+        }
+
+        const result = await res.json()
+
+        const tempMessage: InstagramStoredMessage = {
+          id: result.messageId || `temp_${Date.now()}`,
+          conversationId: recipientId,
+          senderId: 'business',
+          text: message,
+          timestamp: Date.now(),
+          isFromMe: true
+        }
+
+        setMessages((prev) => ({
+          ...prev,
+          [recipientId]: [...(prev[recipientId] || []), tempMessage].sort(
+            (a, b) => a.timestamp - b.timestamp
+          )
+        }))
+
+        return true
+      } catch (error) {
+        console.error('Error sending message:', error)
         return false
       }
+    },
+    []
+  )
 
-      const result = await res.json()
-      
-      const tempMessage: InstagramStoredMessage = {
-        id: result.messageId || `temp_${Date.now()}`,
-        conversationId: recipientId,
-        senderId: 'business',
-        text: message,
-        timestamp: Date.now(),
-        isFromMe: true
+  const fetchContactProfile = useCallback(
+    async (userId: string) => {
+      if (contacts[userId] || !accessToken) {
+        return
       }
 
-      setMessages(prev => ({
-        ...prev,
-        [recipientId]: [...(prev[recipientId] || []), tempMessage].sort((a, b) => a.timestamp - b.timestamp)
-      }))
-
-      return true
-    } catch (error) {
-      console.error('Error sending message:', error)
-      return false
-    }
-  }, [])
-
-  const fetchContactProfile = useCallback(async (userId: string) => {
-    if (contacts[userId] || !accessToken) {
-      return
-    }
-
-    try {
-      const res = await fetch(`/api/instagram/message?userId=${userId}`)
-      if (res.ok) {
-        const profile = await res.json()
-        setContacts(prev => ({
-          ...prev,
-          [userId]: {
-            id: profile.id,
-            username: profile.username || userId,
-            accountType: profile.account_type || 'PERSONAL',
-            mediaCount: profile.media_count,
-            profilePicture: profile.profile_picture_url,
-            name: profile.name
-          }
-        }))
+      try {
+        const res = await fetch(`/api/instagram/message?userId=${userId}`)
+        if (res.ok) {
+          const profile = await res.json()
+          setContacts((prev) => ({
+            ...prev,
+            [userId]: {
+              id: profile.id,
+              username: profile.username || userId,
+              accountType: profile.account_type || 'PERSONAL',
+              mediaCount: profile.media_count,
+              profilePicture: profile.profile_picture_url,
+              name: profile.name
+            }
+          }))
+        }
+      } catch (e) {
+        console.error('Error fetching contact profile:', e)
       }
-    } catch (e) {
-      console.error('Error fetching contact profile:', e)
-    }
-  }, [accessToken, contacts])
+    },
+    [accessToken, contacts]
+  )
 
   const syncContactsFromConversations = useCallback(async () => {
     if (!accessToken) return
@@ -180,7 +209,7 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
         const data = await res.json()
         if (data.conversations && Array.isArray(data.conversations)) {
           const newContacts: Record<string, InstagramUser> = {}
-          
+
           for (const conv of data.conversations) {
             for (const participant of conv.participants || []) {
               if (participant.id && !contacts[participant.id]) {
@@ -196,7 +225,7 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
           }
 
           if (Object.keys(newContacts).length > 0) {
-            setContacts(prev => ({ ...prev, ...newContacts }))
+            setContacts((prev) => ({ ...prev, ...newContacts }))
           }
         }
       }
@@ -210,12 +239,15 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
       try {
         const res = await fetch('/api/webhooks/instagram/messages')
         const data = await res.json()
-        
+
         const messagesArray = data.messages || []
-        
+
         if (messagesArray.length > 0) {
-          console.log('[Instagram Context] Raw messages from API:', JSON.stringify(messagesArray.slice(0, 2)))
-          
+          console.log(
+            '[Instagram Context] Raw messages from API:',
+            JSON.stringify(messagesArray.slice(0, 2))
+          )
+
           const grouped: Record<string, InstagramStoredMessage[]> = {}
           const convIds = new Set<string>()
 
@@ -224,20 +256,30 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
             if (!grouped[convId]) {
               grouped[convId] = []
             }
-            if (!grouped[convId].some((m: InstagramStoredMessage) => m.id === msg.id)) {
+            if (
+              !grouped[convId].some(
+                (m: InstagramStoredMessage) => m.id === msg.id
+              )
+            ) {
               grouped[convId].push(msg)
               convIds.add(convId)
             }
           }
-          
-          setMessages(prev => {
+
+          setMessages((prev) => {
             const updated = { ...prev }
             let hasNew = false
             for (const convId in grouped) {
               const existing = prev[convId] || []
-              const newMsgs = grouped[convId].filter((m: InstagramStoredMessage) => !existing.some((e: InstagramStoredMessage) => e.id === m.id))
+              const newMsgs = grouped[convId].filter(
+                (m: InstagramStoredMessage) =>
+                  !existing.some((e: InstagramStoredMessage) => e.id === m.id)
+              )
               if (newMsgs.length > 0) {
-                updated[convId] = [...existing, ...newMsgs].sort((a: InstagramStoredMessage, b: InstagramStoredMessage) => a.timestamp - b.timestamp)
+                updated[convId] = [...existing, ...newMsgs].sort(
+                  (a: InstagramStoredMessage, b: InstagramStoredMessage) =>
+                    a.timestamp - b.timestamp
+                )
                 hasNew = true
               }
             }
@@ -245,13 +287,15 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
           })
 
           if (convIds.size > 0) {
-            setConversations(prev => {
-              const existingIds = new Set(prev.map(c => c.id))
+            setConversations((prev) => {
+              const existingIds = new Set(prev.map((c) => c.id))
               const newConvs = Array.from(convIds)
-                .filter(id => !existingIds.has(id))
-                .map(id => ({
+                .filter((id) => !existingIds.has(id))
+                .map((id) => ({
                   id,
-                  participants: [{ id, username: id.slice(0, 8), accountType: '' }],
+                  participants: [
+                    { id, username: id.slice(0, 8), accountType: '' }
+                  ],
                   lastMessage: null
                 }))
               return newConvs.length > 0 ? [...prev, ...newConvs] : prev
@@ -264,27 +308,34 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
     }
 
     syncMessages()
-    const interval = setInterval(syncMessages, 5000)
-    
+    const interval = setInterval(syncMessages, 2000)
+
     return () => clearInterval(interval)
-  }, [accessToken, contacts, fetchContactProfile, syncContactsFromConversations])
+  }, [
+    accessToken,
+    contacts,
+    fetchContactProfile,
+    syncContactsFromConversations
+  ])
 
   return (
-    <InstagramContext.Provider value={{
-      isConnected,
-      accessToken,
-      userId,
-      username,
-      conversations,
-      messages,
-      contacts,
-      connect,
-      disconnect,
-      setConversations,
-      addMessage,
-      getMessages,
-      sendMessage
-    }}>
+    <InstagramContext.Provider
+      value={{
+        isConnected,
+        accessToken,
+        userId,
+        username,
+        conversations,
+        messages,
+        contacts,
+        connect,
+        disconnect,
+        setConversations,
+        addMessage,
+        getMessages,
+        sendMessage
+      }}
+    >
       {children}
     </InstagramContext.Provider>
   )
