@@ -733,15 +733,18 @@ export default function MessagesWidget() {
           centered
           withCloseButton
           size='auto'
-          styles={{ body: { background: 'transparent', padding: 0 } }}
+          styles={{ 
+            body: { background: 'transparent', padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+            content: { background: 'transparent', boxShadow: 'none' }
+          }}
         >
           {imagePreview && (
-            <Box style={{ position: 'relative' }}>
+            <Box style={{ position: 'relative', minHeight: 400, minWidth: 300 }}>
               <Image
                 src={imagePreview}
                 alt='imagen preview'
-                width={800}
-                style={{ maxWidth: '80vw', maxHeight: '80vh', objectFit: 'contain' }}
+                fill
+                style={{ objectFit: 'contain', maxWidth: '80vw', maxHeight: '80vh' }}
               />
             </Box>
           )}
