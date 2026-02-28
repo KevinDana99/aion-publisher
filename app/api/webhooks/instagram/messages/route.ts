@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     }
     
     const data = await getMessages()
+    console.log('[Instagram Messages GET] Response:', JSON.stringify(data))
     return NextResponse.json(data)
   } catch (error) {
     console.error('Error getting messages:', error)
