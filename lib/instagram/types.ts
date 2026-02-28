@@ -87,6 +87,10 @@ export interface InstagramProcessedEvent {
     storyId?: string
     reaction?: string
     recipientId?: string
+    attachments?: {
+      type: 'image' | 'audio' | 'video' | 'file'
+      url: string
+    }[]
   }
 }
 
@@ -128,6 +132,10 @@ export interface InstagramStoredMessage {
   text: string
   timestamp: number
   isFromMe: boolean
+  attachments?: {
+    type: 'image' | 'audio' | 'video' | 'file'
+    url: string
+  }[]
 }
 
 export interface InstagramChatState {

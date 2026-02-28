@@ -87,7 +87,11 @@ export class InstagramWebhookService {
       timestamp: entryTime,
       data: {
         messageId: msgData.mid,
-        message: msgData.text
+        message: msgData.text,
+        attachments: msgData.attachments?.map(a => ({
+          type: a.type as 'image' | 'audio' | 'video' | 'file',
+          url: a.payload?.url || ''
+        })).filter(a => a.url)
       }
     }
   }

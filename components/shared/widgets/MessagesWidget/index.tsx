@@ -22,7 +22,9 @@ import {
   IoLogoInstagram,
   IoLogoFacebook,
   IoLogoWhatsapp,
-  IoFilter
+  IoFilter,
+  IoMusicalNotes,
+  IoImage
 } from 'react-icons/io5'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
@@ -34,6 +36,10 @@ interface Message {
   text: string
   timestamp: Date
   isFromUser: boolean
+  attachments?: {
+    type: 'image' | 'audio' | 'video' | 'file'
+    url: string
+  }[]
 }
 
 interface Conversation {
@@ -95,7 +101,8 @@ export default function MessagesWidget() {
             senderId: m.senderId,
             text: m.text,
             timestamp: new Date(m.timestamp),
-            isFromUser: m.isFromMe
+            isFromUser: m.isFromMe,
+            attachments: m.attachments
           })),
           lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
           unread: 0
@@ -116,7 +123,8 @@ export default function MessagesWidget() {
             senderId: m.senderId,
             text: m.text,
             timestamp: new Date(m.timestamp),
-            isFromUser: m.isFromMe
+            isFromUser: m.isFromMe,
+            attachments: m.attachments
           })),
           lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
           unread: 0
@@ -143,7 +151,8 @@ export default function MessagesWidget() {
             senderId: m.senderId,
             text: m.text,
             timestamp: new Date(m.timestamp),
-            isFromUser: m.isFromMe
+            isFromUser: m.isFromMe,
+            attachments: m.attachments
           })),
           lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
           unread: 0
@@ -166,7 +175,8 @@ export default function MessagesWidget() {
             senderId: m.senderId,
             text: m.text,
             timestamp: new Date(m.timestamp),
-            isFromUser: m.isFromMe
+            isFromUser: m.isFromMe,
+            attachments: m.attachments
           })),
           lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].text : '',
           unread: 0
@@ -344,7 +354,39 @@ export default function MessagesWidget() {
                   .map(msg => (
                   <Box key={msg.id} style={{ display: 'flex', justifyContent: msg.isFromUser ? 'flex-end' : 'flex-start' }}>
                     <Paper p='sm' radius='lg' style={{ maxWidth: '70%', backgroundColor: msg.isFromUser ? chatBubbleUser : chatBubbleContact, color: msg.isFromUser ? chatTextUser : chatTextContact }}>
-                      <Text size='sm'>{msg.text}</Text>
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <Box mb='xs'>
+                          {msg.attachments.map((attachment, idx) => (
+                            <Box key={idx} mb='xs'>
+                              {attachment.type === 'image' && (
+                                <Box style={{ borderRadius: 8, overflow: 'hidden' }}>
+                                  <img src={attachment.url} alt="imagen" style={{ maxWidth: '100%', maxHeight: 300, display: 'block' }} />
+                                </Box>
+                              )}
+                              {attachment.type === 'audio' && (
+                                <Box style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: '8px 12px' }}>
+                                  <Group gap='xs'>
+                                    <IoMusicalNotes size={20} />
+                                    <audio controls src={attachment.url} style={{ height: 32, maxWidth: 200 }} />
+                                  </Group>
+                                </Box>
+                              )}
+                              {attachment.type === 'video' && (
+                                <video controls src={attachment.url} style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 8 }} />
+                              )}
+                              {attachment.type === 'file' && (
+                                <a href={attachment.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                                  <Group gap='xs'>
+                                    <IoImage size={16} />
+                                    <Text size='sm'>Archivo</Text>
+                                  </Group>
+                                </a>
+                              )}
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+                      {msg.text && <Text size='sm'>{msg.text}</Text>}
                       <Text size='xs' c={msg.isFromUser ? (isDark ? 'gray-4' : 'gray-3') : 'dimmed'} ta='right' mt={4}>{formatTime(msg.timestamp)}</Text>
                     </Paper>
                   </Box>

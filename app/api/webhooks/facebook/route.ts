@@ -78,14 +78,15 @@ export async function POST(request: NextRequest) {
     for (const event of events) {
       console.log('[Facebook Webhook] Event:', JSON.stringify(event))
 
-      if (event.type === 'messages' && event.data.messageId && event.data.message) {
+      if (event.type === 'messages' && event.data.messageId) {
         messages.push({
           id: event.data.messageId,
           conversationId: event.userId,
           senderId: event.userId,
-          text: event.data.message,
+          text: event.data.message || '',
           timestamp: event.timestamp,
-          isFromMe: false
+          isFromMe: false,
+          attachments: event.data.attachments
         })
 
         console.log(`[Facebook Webhook] Message: ${event.data.messageId} from ${event.userId}`)

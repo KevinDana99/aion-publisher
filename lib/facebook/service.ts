@@ -12,6 +12,10 @@ export interface FacebookProcessedEvent {
     messageId?: string
     message?: string
     recipientId?: string
+    attachments?: {
+      type: 'image' | 'audio' | 'video' | 'file'
+      url: string
+    }[]
   }
 }
 
@@ -76,7 +80,11 @@ export class FacebookWebhookService {
       data: {
         messageId: msgData.mid,
         message: msgData.text,
-        recipientId: recipient.id
+        recipientId: recipient.id,
+        attachments: msgData.attachments?.map(a => ({
+          type: a.type as 'image' | 'audio' | 'video' | 'file',
+          url: a.payload?.url || ''
+        })).filter(a => a.url)
       }
     }
   }
