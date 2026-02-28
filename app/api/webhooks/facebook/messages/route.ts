@@ -7,11 +7,11 @@ export async function GET(request: Request) {
 
   try {
     if (conversationId) {
-      const messages = getMessagesByConversation(conversationId)
+      const messages = await getMessagesByConversation(conversationId)
       return NextResponse.json({ messages })
     }
     
-    const data = getMessages()
+    const data = await getMessages()
     console.log('[Facebook Messages GET] Response:', JSON.stringify(data))
     return NextResponse.json(data)
   } catch (error) {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    addMessage({
+    await addMessage({
       id,
       conversationId,
       senderId,
