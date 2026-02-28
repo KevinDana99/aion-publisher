@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     console.log('========================================')
-    console.log('📱 INSTAGRAM WEBHOOK RECIBIDO')
+    console.log('📱 INSTAGRAM WEBHOOK - PAYLOAD COMPLETO')
     console.log('========================================')
     console.log(JSON.stringify(body, null, 2))
     console.log('========================================')

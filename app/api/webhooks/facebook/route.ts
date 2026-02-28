@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     console.log('========================================')
-    console.log('📘 FACEBOOK WEBHOOK RECIBIDO')
+    console.log('📘 FACEBOOK WEBHOOK - PAYLOAD COMPLETO')
     console.log('========================================')
     console.log(JSON.stringify(body, null, 2))
     console.log('========================================')
