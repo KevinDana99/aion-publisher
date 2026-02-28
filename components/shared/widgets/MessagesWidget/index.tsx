@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   Box,
   Paper,
@@ -30,12 +30,14 @@ import {
   IoAttach,
   IoMic,
   IoStop,
-  IoClose
+  IoClose,
+  IoDocument
 } from 'react-icons/io5'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
 import { useFacebook } from '@/lib/facebook/context'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface Message {
   id: string
@@ -357,6 +359,64 @@ export default function MessagesWidget() {
 
   const handleTogglePlatform = (platform: string) => {
     setPlatformFilters((prev) => ({ ...prev, [platform]: !prev[platform] }))
+  }
+
+  const handleGetFile = async (url: string) => {
+    try {
+      const req = await fetch(url)
+      const disposition = req.headers.get('Content-Disposition')
+      const filename =
+        disposition && disposition.includes('filename=')
+          ? disposition.split('filename=')[1].split(';')[0].replace(/['"]/g, '')
+          : ''
+      const blob = await req.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      return {
+        url: blobUrl ?? '',
+        type: req.headers.get('Content-Type')?.split('/')[1] ?? '',
+        name: filename ?? ''
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error(err.message)
+        throw Error(err.message)
+      }
+    }
+  }
+  type FileType = {
+    url: string | null
+    type: string | null
+    name: string | null
+  }
+
+  const FileMessage = ({ url }: { url: string }) => {
+    const [file, setFile] = useState<FileType>({
+      url: null,
+      type: null,
+      name: null
+    })
+    useEffect(() => {
+      const callFn = async () => {
+        const tempFile = await handleGetFile(url)
+        if (tempFile) setFile(tempFile)
+      }
+      callFn()
+    }, [url])
+    return (
+      <Link
+        href={(file?.url && file.url) ?? ''}
+        download={`${file?.name}.${file?.type}`}
+        style={{
+          color: 'inherit',
+          textDecoration: 'underline'
+        }}
+      >
+        <Group gap='xs'>
+          <IoDocument size={16} />
+          <Text size='sm'>{`${file?.name}.${file?.type}`}</Text>
+        </Group>
+      </Link>
+    )
   }
 
   const handleSendMessage = async () => {
@@ -753,10 +813,7 @@ export default function MessagesWidget() {
                                         src={attachment.payload.url}
                                         style={{
                                           height: 32,
-                                          maxWidth: 200,
-                                          filter: isDark
-                                            ? 'brightness(0) invert(1)'
-                                            : 'none'
+                                          maxWidth: 200
                                         }}
                                       />
                                     </Box>
@@ -773,20 +830,7 @@ export default function MessagesWidget() {
                                     />
                                   )}
                                   {attachment.type === 'file' && (
-                                    <a
-                                      href={attachment.payload.url}
-                                      target='_blank'
-                                      rel='noopener noreferrer'
-                                      style={{
-                                        color: 'inherit',
-                                        textDecoration: 'underline'
-                                      }}
-                                    >
-                                      <Group gap='xs'>
-                                        <IoImage size={16} />
-                                        <Text size='sm'>Archivo</Text>
-                                      </Group>
-                                    </a>
+                                    <FileMessage url={attachment.payload.url} />
                                   )}
                                 </Box>
                               ))}
@@ -818,13 +862,22 @@ export default function MessagesWidget() {
                 {!isRecording && !audioBlob && (
                   <>
                     <Tooltip label='Próximamente' position='top' withArrow>
-                      <ActionIcon variant='subtle' disabled style={{ pointerEvents: 'none', opacity: 0.5 }}>
+                      <ActionIcon
+                        variant='subtle'
+                        disabled
+                        style={{ pointerEvents: 'none', opacity: 0.5 }}
+                      >
                         <IoAttach size={20} />
                       </ActionIcon>
                     </Tooltip>
-                    
+
                     <Tooltip label='Próximamente' position='top' withArrow>
-                      <ActionIcon variant='subtle' color='red' disabled style={{ pointerEvents: 'none', opacity: 0.5 }}>
+                      <ActionIcon
+                        variant='subtle'
+                        color='red'
+                        disabled
+                        style={{ pointerEvents: 'none', opacity: 0.5 }}
+                      >
                         <IoMic size={20} />
                       </ActionIcon>
                     </Tooltip>
