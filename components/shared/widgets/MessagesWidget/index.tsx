@@ -15,7 +15,8 @@ import {
   Switch,
   Divider,
   useMantineColorScheme,
-  useMantineTheme
+  useMantineTheme,
+  Modal
 } from '@mantine/core'
 import {
   IoSend,
@@ -90,6 +91,8 @@ export default function MessagesWidget() {
     facebook: true,
     whatsapp: true
   })
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const conversations: Conversation[] = useMemo(() => {
     const allConvs: Conversation[] = []
@@ -608,16 +611,16 @@ export default function MessagesWidget() {
                                     style={{
                                       borderRadius: 8,
                                       overflow: 'hidden',
-                                      width: '100%',
-                                      maxWidth: 300,
-                                      position: 'relative'
+                                      width: 200,
+                                      position: 'relative',
+                                      cursor: 'pointer'
                                     }}
+                                    onClick={() => setImagePreview(attachment.payload.url)}
                                   >
                                     <Image
                                       src={attachment.payload.url}
                                       alt='imagen'
-                                      width={300}
-                                      height={300}
+                                      width={200}
                                       style={{ objectFit: 'contain', width: '100%', height: 'auto' }}
                                     />
                                   </Box>
@@ -723,6 +726,26 @@ export default function MessagesWidget() {
             <Text c='dimmed'>Selecciona una conversación</Text>
           </Box>
         )}
+
+        <Modal
+          opened={!!imagePreview}
+          onClose={() => setImagePreview(null)}
+          centered
+          withCloseButton
+          size='auto'
+          styles={{ body: { background: 'transparent', padding: 0 } }}
+        >
+          {imagePreview && (
+            <Box style={{ position: 'relative' }}>
+              <Image
+                src={imagePreview}
+                alt='imagen preview'
+                width={800}
+                style={{ maxWidth: '80vw', maxHeight: '80vh', objectFit: 'contain' }}
+              />
+            </Box>
+          )}
+        </Modal>
       </Box>
     </Box>
   )
