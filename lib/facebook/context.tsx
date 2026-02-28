@@ -452,7 +452,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     }
 
     syncMessages()
-    const interval = setInterval(syncMessages, 5000)
+    const interval = setInterval(syncMessages, 2000)
     return () => clearInterval(interval)
   }, [
     accessToken,
