@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
-import { getMessages, addMessage, getMessagesByConversation } from '@/lib/instagram/storage'
+import {
+  getMessages,
+  addMessage,
+  getMessagesByConversation
+} from '@/lib/instagram/storage'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,23 +14,36 @@ export async function GET(request: Request) {
       const messages = await getMessagesByConversation(conversationId)
       return NextResponse.json({ messages })
     }
-    
+
     const data = await getMessages()
-    console.log('[Instagram Messages GET] Response:', JSON.stringify(data))
     return NextResponse.json(data)
   } catch (error) {
     console.error('Error getting messages:', error)
-    return NextResponse.json({ error: 'Failed to get messages' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to get messages' },
+      { status: 500 }
+    )
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { id, conversationId, senderId, text, timestamp, isFromMe, attachments } = body
+    const {
+      id,
+      conversationId,
+      senderId,
+      text,
+      timestamp,
+      isFromMe,
+      attachments
+    } = body
 
     if (!id || !conversationId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      )
     }
 
     await addMessage({
@@ -39,11 +56,19 @@ export async function POST(request: Request) {
       attachments
     })
 
-    console.log('[Instagram Messages API] Message saved:', { id, conversationId, hasAttachments: !!attachments, attachments })
+    console.log('[Instagram Messages API] Message saved:', {
+      id,
+      conversationId,
+      hasAttachments: !!attachments,
+      attachments
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error saving message:', error)
-    return NextResponse.json({ error: 'Failed to save message' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to save message' },
+      { status: 500 }
+    )
   }
 }

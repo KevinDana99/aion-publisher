@@ -1,7 +1,18 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
-import type { FacebookConversation, FacebookStoredMessage, FacebookUser } from './types'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback
+} from 'react'
+import type {
+  FacebookConversation,
+  FacebookStoredMessage,
+  FacebookUser
+} from './types'
 
 interface FacebookContextType {
   isConnected: boolean
@@ -44,42 +55,50 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
   const [pageId, setPageId] = useState('')
   const [pageName, setPageName] = useState('')
   const [conversations, setConversations] = useState<FacebookConversation[]>([])
-  const [messages, setMessages] = useState<Record<string, FacebookStoredMessage[]>>({})
+  const [messages, setMessages] = useState<
+    Record<string, FacebookStoredMessage[]>
+  >({})
   const [contacts, setContacts] = useState<Record<string, FacebookUser>>({})
   const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
     const loadState = async () => {
       console.log('[Facebook Context] Loading state...')
-      
+
       // Siempre obtener credenciales del servidor primero
       try {
         const res = await fetch('/api/facebook/auth')
         const data = await res.json()
         console.log('[Facebook Context] Auth response:', data)
-        
+
         if (data.connected) {
           setAccessToken(data.accessToken || '')
           setPageId(data.pageId || '')
           setPageName(data.pageName || '')
-          console.log('[Facebook Context] Loaded from server. pageId:', data.pageId)
-          
+          console.log(
+            '[Facebook Context] Loaded from server. pageId:',
+            data.pageId
+          )
+
           // Guardar en localStorage
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            accessToken: data.accessToken,
-            pageId: data.pageId,
-            pageName: data.pageName,
-            conversations: [],
-            messages: {},
-            contacts: {}
-          }))
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              accessToken: data.accessToken,
+              pageId: data.pageId,
+              pageName: data.pageName,
+              conversations: [],
+              messages: {},
+              contacts: {}
+            })
+          )
           return
         }
       } catch (e) {
         console.error('Error fetching Facebook credentials', e)
       }
     }
-    
+
     loadState()
   }, [])
 
@@ -94,7 +113,11 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
           const syncData = await syncRes.json()
           console.log('[Facebook] Sync response:', syncData)
           if (syncData.success) {
-            console.log('[Facebook] Synced from API:', syncData.messages, 'messages')
+            console.log(
+              '[Facebook] Synced from API:',
+              syncData.messages,
+              'messages'
+            )
           } else {
             console.log('[Facebook] Sync error:', syncData.error)
           }
@@ -131,94 +154,112 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     setIsConnected(false)
   }, [])
 
-  const addMessage = useCallback((conversationId: string, message: FacebookStoredMessage) => {
-    setMessages(prev => {
-      const existing = prev[conversationId] || []
-      if (existing.some(m => m.id === message.id)) return prev
-      return {
-        ...prev,
-        [conversationId]: [...existing, message]
-      }
-    })
-  }, [])
-
-  const getMessages = useCallback((conversationId: string): FacebookStoredMessage[] => {
-    return messages[conversationId] || []
-  }, [messages])
-
-  const sendMessage = useCallback(async (recipientId: string, message: string): Promise<boolean> => {
-    try {
-      const res = await fetch('/api/facebook/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientId, message })
+  const addMessage = useCallback(
+    (conversationId: string, message: FacebookStoredMessage) => {
+      setMessages((prev) => {
+        const existing = prev[conversationId] || []
+        if (existing.some((m) => m.id === message.id)) return prev
+        return {
+          ...prev,
+          [conversationId]: [...existing, message]
+        }
       })
+    },
+    []
+  )
 
-      if (!res.ok) {
-        const error = await res.json()
-        console.error('Failed to send message:', error)
+  const getMessages = useCallback(
+    (conversationId: string): FacebookStoredMessage[] => {
+      return messages[conversationId] || []
+    },
+    [messages]
+  )
+
+  const sendMessage = useCallback(
+    async (recipientId: string, message: string): Promise<boolean> => {
+      try {
+        const res = await fetch('/api/facebook/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipientId, message })
+        })
+
+        if (!res.ok) {
+          const error = await res.json()
+          console.error('Failed to send message:', error)
+          return false
+        }
+
+        const result = await res.json()
+
+        const tempMessage: FacebookStoredMessage = {
+          id: result.messageId || `temp_${Date.now()}`,
+          conversationId: recipientId,
+          senderId: 'business',
+          text: message,
+          timestamp: Date.now(),
+          isFromMe: true
+        }
+
+        // Guardar con recipientId
+        setMessages((prev) => ({
+          ...prev,
+          [recipientId]: [...(prev[recipientId] || []), tempMessage].sort(
+            (a, b) => a.timestamp - b.timestamp
+          )
+        }))
+
+        // También buscar la conversación por recipientId y guardar ahí
+        const conv = conversations.find((c) =>
+          c.participants?.some((p) => p.id === recipientId)
+        )
+        if (conv) {
+          setMessages((prev) => ({
+            ...prev,
+            [conv.id]: [...(prev[conv.id] || []), tempMessage].sort(
+              (a, b) => a.timestamp - b.timestamp
+            )
+          }))
+        }
+
+        return true
+      } catch (error) {
+        console.error('Error sending message:', error)
         return false
       }
+    },
+    [conversations]
+  )
 
-      const result = await res.json()
-      
-      const tempMessage: FacebookStoredMessage = {
-        id: result.messageId || `temp_${Date.now()}`,
-        conversationId: recipientId,
-        senderId: 'business',
-        text: message,
-        timestamp: Date.now(),
-        isFromMe: true
+  const fetchContactProfile = useCallback(
+    async (psid: string) => {
+      if (contacts[psid] || !accessToken) {
+        return
       }
 
-      // Guardar con recipientId
-      setMessages(prev => ({
-        ...prev,
-        [recipientId]: [...(prev[recipientId] || []), tempMessage].sort((a, b) => a.timestamp - b.timestamp)
-      }))
-
-      // También buscar la conversación por recipientId y guardar ahí
-      const conv = conversations.find(c => 
-        c.participants?.some(p => p.id === recipientId)
-      )
-      if (conv) {
-        setMessages(prev => ({
-          ...prev,
-          [conv.id]: [...(prev[conv.id] || []), tempMessage].sort((a, b) => a.timestamp - b.timestamp)
-        }))
+      try {
+        const res = await fetch(`/api/facebook/message?userId=${psid}`)
+        if (res.ok) {
+          const profile = await res.json()
+          setContacts((prev) => ({
+            ...prev,
+            [psid]: {
+              id: profile.id,
+              firstName: profile.first_name || '',
+              lastName: profile.last_name || '',
+              profilePic: profile.profile_pic || '',
+              name:
+                `${profile.first_name || ''} ${profile.last_name || ''}`.trim() ||
+                psid
+            }
+          }))
+        }
+      } catch (e) {
+        console.error('Error fetching contact profile:', e)
       }
-
-      return true
-    } catch (error) {
-      console.error('Error sending message:', error)
-      return false
-    }
-  }, [conversations])
-
-  const fetchContactProfile = useCallback(async (psid: string) => {
-    if (contacts[psid] || !accessToken) {
-      return
-    }
-
-    try {
-      const res = await fetch(`/api/facebook/message?userId=${psid}`)
-      if (res.ok) {
-        const profile = await res.json()
-        setContacts(prev => ({
-          ...prev,
-          [psid]: {
-            id: profile.id,
-            firstName: profile.first_name || '',
-            lastName: profile.last_name || '',
-            profilePic: profile.profile_pic || '',
-            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || psid
-          }
-        }))
-      }
-    } catch (e) {
-      console.error('Error fetching contact profile:', e)
-    }
-  }, [accessToken, contacts])
+    },
+    [accessToken, contacts]
+  )
 
   const syncContactsFromConversations = useCallback(async () => {
     if (!accessToken) return
@@ -229,7 +270,7 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
         const data = await res.json()
         if (data.conversations && Array.isArray(data.conversations)) {
           const newContacts: Record<string, FacebookUser> = {}
-          
+
           for (const conv of data.conversations) {
             for (const participant of conv.participants || []) {
               if (participant.id && !contacts[participant.id]) {
@@ -238,14 +279,16 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
                   firstName: participant.first_name || '',
                   lastName: participant.last_name || '',
                   profilePic: participant.profile_pic || '',
-                  name: `${participant.first_name || ''} ${participant.last_name || ''}`.trim() || participant.id
+                  name:
+                    `${participant.first_name || ''} ${participant.last_name || ''}`.trim() ||
+                    participant.id
                 }
               }
             }
           }
 
           if (Object.keys(newContacts).length > 0) {
-            setContacts(prev => ({ ...prev, ...newContacts }))
+            setContacts((prev) => ({ ...prev, ...newContacts }))
           }
         }
       }
@@ -259,10 +302,13 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
       try {
         const res = await fetch('/api/webhooks/facebook/messages')
         const data = await res.json()
-        
+
         if (data.messages && Array.isArray(data.messages)) {
-          console.log('[Facebook Context] Raw messages from API:', JSON.stringify(data.messages.slice(0, 2)))
-          
+          console.log(
+            '[Facebook Context] Raw messages from API:',
+            JSON.stringify(data.messages.slice(0, 2))
+          )
+
           const grouped: Record<string, FacebookStoredMessage[]> = {}
           const convIds = new Set<string>()
 
@@ -271,20 +317,24 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
             if (!grouped[convId]) {
               grouped[convId] = []
             }
-            if (!grouped[convId].some(m => m.id === msg.id)) {
+            if (!grouped[convId].some((m) => m.id === msg.id)) {
               grouped[convId].push(msg)
               convIds.add(convId)
             }
           }
-          
-          setMessages(prev => {
+
+          setMessages((prev) => {
             const updated = { ...prev }
             let hasNew = false
             for (const convId in grouped) {
               const existing = prev[convId] || []
-              const newMsgs = grouped[convId].filter(m => !existing.some(e => e.id === m.id))
+              const newMsgs = grouped[convId].filter(
+                (m) => !existing.some((e) => e.id === m.id)
+              )
               if (newMsgs.length > 0) {
-                updated[convId] = [...existing, ...newMsgs].sort((a, b) => a.timestamp - b.timestamp)
+                updated[convId] = [...existing, ...newMsgs].sort(
+                  (a, b) => a.timestamp - b.timestamp
+                )
                 hasNew = true
               }
             }
@@ -292,29 +342,36 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
           })
 
           if (convIds.size > 0) {
-            setConversations(prev => {
-              const existingIds = new Set(prev.map(c => c.id))
+            setConversations((prev) => {
+              const existingIds = new Set(prev.map((c) => c.id))
               const newConvs = Array.from(convIds)
-                .filter(id => !existingIds.has(id))
-                .map(id => {
+                .filter((id) => !existingIds.has(id))
+                .map((id) => {
                   const contact = contacts[id]
                   return {
                     id,
-                    participants: contact ? [contact] : [{ firstName: id, lastName: '', profilePic: '', id }],
-                    lastMessage: grouped[id]?.[grouped[id].length - 1] ? {
-                      id: grouped[id][grouped[id].length - 1].id,
-                      text: grouped[id][grouped[id].length - 1].text,
-                      from: { id: grouped[id][grouped[id].length - 1].senderId },
-                      to: { id },
-                      timestamp: grouped[id][grouped[id].length - 1].timestamp
-                    } : null
+                    participants: contact
+                      ? [contact]
+                      : [{ firstName: id, lastName: '', profilePic: '', id }],
+                    lastMessage: grouped[id]?.[grouped[id].length - 1]
+                      ? {
+                          id: grouped[id][grouped[id].length - 1].id,
+                          text: grouped[id][grouped[id].length - 1].text,
+                          from: {
+                            id: grouped[id][grouped[id].length - 1].senderId
+                          },
+                          to: { id },
+                          timestamp:
+                            grouped[id][grouped[id].length - 1].timestamp
+                        }
+                      : null
                   }
                 })
               return [...prev, ...newConvs]
             })
 
             if (accessToken) {
-              convIds.forEach(convId => fetchContactProfile(convId))
+              convIds.forEach((convId) => fetchContactProfile(convId))
               syncContactsFromConversations()
             }
           }
@@ -330,40 +387,55 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
           const syncData = await syncRes.json()
           console.log('[Facebook] Sync response:', syncData)
           if (syncData.success) {
-            console.log('[Facebook] Synced from API:', syncData.messages.length, 'messages')
-            
+            console.log(
+              '[Facebook] Synced from API:',
+              syncData.messages.length,
+              'messages'
+            )
+
             // Actualizar conversaciones
             if (syncData.conversations?.length > 0) {
-              setConversations(prev => {
+              setConversations((prev) => {
                 const updated = [...prev]
                 for (const conv of syncData.conversations) {
-                  if (!updated.some(c => c.id === conv.id)) {
+                  if (!updated.some((c) => c.id === conv.id)) {
                     updated.push(conv)
                   }
                 }
                 return updated
               })
             }
-            
+
             // Convertir array a formato por conversación
-            const messagesByConversation: Record<string, FacebookStoredMessage[]> = {}
+            const messagesByConversation: Record<
+              string,
+              FacebookStoredMessage[]
+            > = {}
             for (const msg of syncData.messages || []) {
               if (!messagesByConversation[msg.conversationId]) {
                 messagesByConversation[msg.conversationId] = []
               }
-              if (!messagesByConversation[msg.conversationId].some((m: any) => m.id === msg.id)) {
+              if (
+                !messagesByConversation[msg.conversationId].some(
+                  (m: any) => m.id === msg.id
+                )
+              ) {
                 messagesByConversation[msg.conversationId].push(msg)
               }
             }
             // Actualizar estado
-            setMessages(prev => {
+            setMessages((prev) => {
               const updated = { ...prev }
               for (const convId of Object.keys(messagesByConversation)) {
                 if (!updated[convId]) {
                   updated[convId] = []
                 }
                 for (const msg of messagesByConversation[convId]) {
-                  if (!updated[convId].some((m: FacebookStoredMessage) => m.id === msg.id)) {
+                  if (
+                    !updated[convId].some(
+                      (m: FacebookStoredMessage) => m.id === msg.id
+                    )
+                  ) {
                     updated[convId].push(msg)
                   }
                 }
@@ -380,26 +452,33 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
     }
 
     syncMessages()
-    // No polling needed - webhooks handle real-time updates
-    return () => {}
-  }, [accessToken, contacts, fetchContactProfile, syncContactsFromConversations])
+    const interval = setInterval(syncMessages, 5000)
+    return () => clearInterval(interval)
+  }, [
+    accessToken,
+    contacts,
+    fetchContactProfile,
+    syncContactsFromConversations
+  ])
 
   return (
-    <FacebookContext.Provider value={{
-      isConnected,
-      accessToken,
-      pageId,
-      pageName,
-      conversations,
-      messages,
-      contacts,
-      connect,
-      disconnect,
-      setConversations,
-      addMessage,
-      getMessages,
-      sendMessage
-    }}>
+    <FacebookContext.Provider
+      value={{
+        isConnected,
+        accessToken,
+        pageId,
+        pageName,
+        conversations,
+        messages,
+        contacts,
+        connect,
+        disconnect,
+        setConversations,
+        addMessage,
+        getMessages,
+        sendMessage
+      }}
+    >
       {children}
     </FacebookContext.Provider>
   )

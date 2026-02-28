@@ -56,6 +56,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  //return NextResponse.json({ success: true, messages: 'ok' }, { status: 200 })
+  console.log('llego nuevo mensaje')
   try {
     const body = await request.json()
     console.log({ body })
