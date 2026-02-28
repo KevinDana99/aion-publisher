@@ -16,7 +16,8 @@ import {
   Divider,
   useMantineColorScheme,
   useMantineTheme,
-  Modal
+  Modal,
+  Tooltip
 } from '@mantine/core'
 import {
   IoSend,
@@ -805,27 +806,17 @@ export default function MessagesWidget() {
               <Group gap='sm'>
                 {!isRecording && !audioBlob && (
                   <>
-                    <input
-                      type='file'
-                      id='file-attachment'
-                      onChange={handleFileSelect}
-                      style={{ display: 'none' }}
-                      accept='image/*,.pdf,.doc,.docx,.txt'
-                      disabled
-                    />
-                    <label htmlFor='file-attachment' style={{ cursor: 'not-allowed', opacity: 0.5 }}>
-                      <ActionIcon variant='subtle' component='span' disabled>
+                    <Tooltip label='Próximamente' position='top'>
+                      <ActionIcon variant='subtle' disabled>
                         <IoAttach size={20} />
                       </ActionIcon>
-                    </label>
+                    </Tooltip>
                     
-                    <ActionIcon
-                      variant='subtle'
-                      color='red'
-                      disabled
-                    >
-                      <IoMic size={20} />
-                    </ActionIcon>
+                    <Tooltip label='Próximamente' position='top'>
+                      <ActionIcon variant='subtle' color='red' disabled>
+                        <IoMic size={20} />
+                      </ActionIcon>
+                    </Tooltip>
                   </>
                 )}
 
