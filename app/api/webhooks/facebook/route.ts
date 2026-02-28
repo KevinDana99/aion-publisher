@@ -15,8 +15,10 @@ export async function GET(request: NextRequest) {
     
     console.log('[Facebook Webhook] Verifying. Token from Redis:', storedToken ? 'yes' : 'no', 'Token from Meta:', token ? 'yes' : 'no')
     console.log('[Facebook Webhook] Token comparison - Redis:', storedToken, '| Meta:', token)
+    console.log('[Facebook Webhook] Mode:', mode, '| Challenge:', challenge)
     
     if (!storedToken) {
+      console.log('[Facebook Webhook] No verify token configured - returning 403')
       console.log('[Facebook Webhook] No verify token configured')
       return NextResponse.json(
         { error: 'Verify token not configured' },
