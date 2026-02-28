@@ -37,6 +37,8 @@ export class FacebookWebhookService {
   processWebhookPayload(payload: FacebookWebhookPayload): FacebookProcessedEvent[] {
     const events: FacebookProcessedEvent[] = []
 
+    console.log('[Facebook Webhook] Full payload received:', JSON.stringify(payload))
+
     if (payload.object !== 'page') {
       console.log('[Facebook Webhook] Invalid object type:', payload.object)
       return events
@@ -47,6 +49,7 @@ export class FacebookWebhookService {
         for (const messaging of entry.messaging) {
           const event = this.processMessagingEvent(messaging, entry.time)
           if (event) {
+            console.log('[Facebook Webhook] Event:', JSON.stringify(event))
             events.push(event)
           }
         }
@@ -71,6 +74,27 @@ export class FacebookWebhookService {
     if (!msgData || !msgData.mid) {
       console.log('[Facebook Webhook] No message data found')
       return null
+    }
+
+    const isEcho = msgData.is_echo === true
+
+    console.log('[Facebook Webhook] Message data:', { mid: msgData.mid, text: msgData.text, is_echo: msgData.is_echo, isEcho, attachments: msgData.attachments })
+
+    if (isEcho) {
+      return {
+        type: 'message_echoes',
+        userId: sender.id,
+        timestamp: entryTime,
+        data: {
+          messageId: msgData.mid,
+          message: msgData.text,
+          recipientId: recipient.id,
+          attachments: msgData.attachments?.map(a => ({
+            type: a.type as 'image' | 'audio' | 'video' | 'file',
+            url: a.payload?.url || ''
+          })).filter(a => a.url)
+        }
+      }
     }
 
     return {

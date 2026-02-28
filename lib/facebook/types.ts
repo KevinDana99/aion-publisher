@@ -27,6 +27,7 @@ export interface FacebookWebhookMessage {
   quick_reply?: {
     payload: string
   }
+  is_echo?: boolean
 }
 
 export interface FacebookAttachment {
