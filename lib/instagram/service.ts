@@ -66,7 +66,7 @@ export class InstagramWebhookService {
 
     const isEcho = msgData.is_echo === true
 
-    console.log('[Instagram Webhook] Message data:', { mid: msgData.mid, text: msgData.text, is_echo: msgData.is_echo, isEcho })
+    console.log('[Instagram Webhook] Message data:', { mid: msgData.mid, text: msgData.text, is_echo: msgData.is_echo, isEcho, attachments: msgData.attachments })
 
     if (isEcho) {
       return {
