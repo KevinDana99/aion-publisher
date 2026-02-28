@@ -1,10 +1,48 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Container, Stack, Title, Group, Paper, Text, Switch, ThemeIcon, Divider, Badge, SimpleGrid, TextInput, PasswordInput, Modal, Button, Anchor, Box, ActionIcon } from '@mantine/core'
-import { IoLogoInstagram, IoLogoFacebook, IoLogoTiktok, IoLogoTwitter, IoLogoLinkedin, IoLogoYoutube, IoLogoPinterest, IoLogoWhatsapp, IoCheckmarkCircle, IoSettings, IoSave, IoPulse, IoCalendar, IoLogoGithub, IoLogIn, IoCloseCircle, IoRefresh } from 'react-icons/io5'
+import {
+  Container,
+  Stack,
+  Title,
+  Group,
+  Paper,
+  Text,
+  Switch,
+  ThemeIcon,
+  Divider,
+  Badge,
+  SimpleGrid,
+  TextInput,
+  PasswordInput,
+  Modal,
+  Button,
+  Anchor,
+  Box,
+  ActionIcon
+} from '@mantine/core'
+import {
+  IoLogoInstagram,
+  IoLogoFacebook,
+  IoLogoTiktok,
+  IoLogoTwitter,
+  IoLogoLinkedin,
+  IoLogoYoutube,
+  IoLogoPinterest,
+  IoLogoWhatsapp,
+  IoCheckmarkCircle,
+  IoSettings,
+  IoSave,
+  IoPulse,
+  IoCalendar,
+  IoLogoGithub,
+  IoLogIn,
+  IoCloseCircle,
+  IoRefresh
+} from 'react-icons/io5'
 import { useSettings, Integration } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
+import { useFacebook } from '@/lib/facebook'
 
 function generateRandomToken(length: number = 32): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -33,6 +71,7 @@ const iconMap: Record<string, React.ReactNode> = {
 function IntegrationCard({ integration }: { integration: Integration }) {
   const { updateIntegration } = useSettings()
   const instagram = useInstagram()
+  const facebook = useFacebook()
   const [modalOpen, setModalOpen] = useState(false)
   const [instagramAppConfigured, setInstagramAppConfigured] = useState(false)
   const [instagramConnected, setInstagramConnected] = useState(false)
@@ -49,8 +88,10 @@ function IntegrationCard({ integration }: { integration: Integration }) {
       localStorage.setItem('instagram_connected', 'true')
       window.history.replaceState({}, '', '/settings/integrations')
     }
-    
-    setInstagramConnected(localStorage.getItem('instagram_connected') === 'true')
+
+    setInstagramConnected(
+      localStorage.getItem('instagram_connected') === 'true'
+    )
   }, [])
 
   useEffect(() => {
@@ -94,17 +135,18 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     try {
       const res = await fetch('/api/instagram/config')
       const config = await res.json()
-      
+
       if (!config.clientId) {
         alert('Primero guarda la configuración de la app')
         return
       }
-      
+
       const redirectUri = config.redirectUri
-      const scope = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments'
-      
+      const scope =
+        'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments'
+
       const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`
-      
+
       console.log('Instagram Auth URL:', authUrl)
       window.location.href = authUrl
     } catch (e) {
@@ -159,7 +201,12 @@ function IntegrationCard({ integration }: { integration: Integration }) {
 
   const handleToggle = (enabled: boolean) => {
     updateIntegration(integration.id, { enabled })
-    if (enabled && !integration.token && !integration.apiKey && !integration.webhookUrl) {
+    if (
+      enabled &&
+      !integration.token &&
+      !integration.apiKey &&
+      !integration.webhookUrl
+    ) {
       setModalOpen(true)
     }
   }
@@ -181,7 +228,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           redirectUri: ''
         })
       })
-      
+
       updateIntegration(integration.id, tempConfig)
       setModalOpen(false)
     } catch (error) {
@@ -201,8 +248,11 @@ function IntegrationCard({ integration }: { integration: Integration }) {
 
   const handleInstagramSaveConfig = async () => {
     try {
-      const redirectUri = typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback/instagram` : ''
-      
+      const redirectUri =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/api/auth/callback/instagram`
+          : ''
+
       await fetch('/api/instagram/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -213,7 +263,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           redirectUri
         })
       })
-      
+
       updateIntegration(integration.id, tempConfig)
       setInstagramAppConfigured(true)
       setModalOpen(false)
@@ -222,104 +272,122 @@ function IntegrationCard({ integration }: { integration: Integration }) {
     }
   }
 
-  const isFacebookConnected = typeof window !== 'undefined' && localStorage.getItem('facebook-chat-state') !== null
+  const isFacebookConnected =
+    typeof window !== 'undefined' &&
+    localStorage.getItem('facebook-chat-state') !== null
 
-  const isConnected = isCalendly 
+  const isConnected = isCalendly
     ? integration.token && integration.webhookUrl
-    : isGithub 
+    : isGithub
       ? integration.token
       : isInstagram
         ? instagramConnected
         : isFacebook
-          ? (integration.token || integration.apiKey)
-          : (integration.token || integration.apiKey)
+          ? integration.token || integration.apiKey
+          : integration.token || integration.apiKey
 
   return (
     <>
-      <Paper 
-        p="md" 
-        radius="md" 
-        style={{ 
-          background: integration.enabled 
-            ? 'light-dark(var(--mantine-color-teal-0), var(--mantine-color-dark-5))' 
+      <Paper
+        p='md'
+        radius='md'
+        style={{
+          background: integration.enabled
+            ? 'light-dark(var(--mantine-color-teal-0), var(--mantine-color-dark-5))'
             : 'var(--mantine-color-body)'
         }}
       >
         <Box>
-          <Group justify="flex-end">
+          <Group justify='flex-end'>
             {isInstagram && integration.enabled && isInstagramConnected && (
-              <Text size="xs" c="teal" fw={500} mb={5}>
-                @{instagram.username || 'conectado'}
+              <Text size='xs' c='teal' fw={500} mb={5}>
+                @{instagram.username}
               </Text>
             )}
             {isFacebook && integration.enabled && facebookConnected && (
-              <Text size="xs" c="teal" fw={500} mb={5}>
-                Facebook
+              <Text size='xs' c='teal' fw={500} mb={5}>
+                @{facebook.pageName}
               </Text>
             )}
           </Group>
-          <Group justify="space-between">
-            <Group gap="sm">
-              <ThemeIcon 
-                color={integration.enabled ? 'teal' : 'gray'} 
-                variant="light" 
-                size="lg" 
-                radius="md"
+          <Group justify='space-between'>
+            <Group gap='sm'>
+              <ThemeIcon
+                color={integration.enabled ? 'teal' : 'gray'}
+                variant='light'
+                size='lg'
+                radius='md'
               >
                 {iconMap[integration.icon] || <IoSettings size={20} />}
               </ThemeIcon>
               <div>
                 <Text fw={500}>{integration.name}</Text>
-                <Text size="xs" c="dimmed">
-                  {integration.enabled 
-                    ? isInstagram 
-                      ? (isInstagramConnected ? 'Conectado' : 'Habilitado - Sin configurar')
+                <Text size='xs' c='dimmed'>
+                  {integration.enabled
+                    ? isInstagram
+                      ? isInstagramConnected
+                        ? 'Conectado'
+                        : 'Habilitado - Sin configurar'
                       : isFacebook
-                        ? (isFacebookConnected ? 'Conectado' : 'Habilitado - Sin configurar')
-                        : (isConnected ? 'Conectado' : 'Habilitado - Sin configurar')
-                    : 'Deshabilitado'
-                  }
+                        ? isFacebookConnected
+                          ? 'Conectado'
+                          : 'Habilitado - Sin configurar'
+                        : isConnected
+                          ? 'Conectado'
+                          : 'Habilitado - Sin configurar'
+                    : 'Deshabilitado'}
                 </Text>
               </div>
             </Group>
-            <Group gap="xs">
+            <Group gap='xs'>
               {isInstagram && integration.enabled && !isFacebook && (
-                <Button 
-                  size="xs" 
-                  variant={isInstagramConnected ? "outline" : "filled"}
-                  color={isInstagramConnected ? "red" : "blue"}
-                  onClick={isInstagramConnected ? handleInstagramDisconnect : handleInstagramConnect}
+                <Button
+                  size='xs'
+                  variant={isInstagramConnected ? 'outline' : 'filled'}
+                  color={isInstagramConnected ? 'red' : 'blue'}
+                  onClick={
+                    isInstagramConnected
+                      ? handleInstagramDisconnect
+                      : handleInstagramConnect
+                  }
                 >
-                  {isInstagramConnected ? "Desconectar" : "Conectar"}
+                  {isInstagramConnected ? 'Desconectar' : 'Conectar'}
                 </Button>
               )}
               {isFacebook && integration.enabled && (
-                <Button 
-                  size="xs" 
-                  variant={facebookConnected ? "outline" : "filled"}
-                  color={facebookConnected ? "red" : "blue"}
-                  onClick={facebookConnected ? handleFacebookDisconnect : handleFacebookConnect}
+                <Button
+                  size='xs'
+                  variant={facebookConnected ? 'outline' : 'filled'}
+                  color={facebookConnected ? 'red' : 'blue'}
+                  onClick={
+                    facebookConnected
+                      ? handleFacebookDisconnect
+                      : handleFacebookConnect
+                  }
                 >
-                  {facebookConnected ? "Desconectar" : "Conectar"}
+                  {facebookConnected ? 'Desconectar' : 'Conectar'}
                 </Button>
               )}
-              {integration.enabled && isConnected && !isInstagram && !isFacebook && (
-                <Badge color="teal" variant="light" size="sm">
-                  <Group gap={4}>
-                    <IoCheckmarkCircle size={12} />
-                    <span>OK</span>
-                  </Group>
-                </Badge>
-              )}
+              {integration.enabled &&
+                isConnected &&
+                !isInstagram &&
+                !isFacebook && (
+                  <Badge color='teal' variant='light' size='sm'>
+                    <Group gap={4}>
+                      <IoCheckmarkCircle size={12} />
+                      <span>OK</span>
+                    </Group>
+                  </Badge>
+                )}
               {integration.enabled && (
-                <Anchor size="sm" onClick={handleOpenConfig}>
+                <Anchor size='sm' onClick={handleOpenConfig}>
                   {isFacebook ? 'Configurar' : 'Configurar'}
                 </Anchor>
               )}
               <Switch
                 checked={integration.enabled}
                 onChange={(e) => handleToggle(e.currentTarget.checked)}
-                size="md"
+                size='md'
               />
             </Group>
           </Group>
@@ -330,149 +398,221 @@ function IntegrationCard({ integration }: { integration: Integration }) {
         opened={modalOpen}
         onClose={() => setModalOpen(false)}
         title={
-          <Group gap="sm">
-            <ThemeIcon color="blue" variant="light" size="lg" radius="md">
+          <Group gap='sm'>
+            <ThemeIcon color='blue' variant='light' size='lg' radius='md'>
               {iconMap[integration.icon] || <IoSettings size={20} />}
             </ThemeIcon>
             <Text fw={600}>Configurar {integration.name}</Text>
           </Group>
         }
-        size="md"
+        size='md'
       >
-        <Stack gap="md">
+        <Stack gap='md'>
           {isCalendly ? (
             <>
-              <Text size="sm" c="dimmed">
-                Configura tu integración con Calendly para sincronizar reuniones automáticamente.
+              <Text size='sm' c='dimmed'>
+                Configura tu integración con Calendly para sincronizar reuniones
+                automáticamente.
               </Text>
 
               <Divider />
 
               <PasswordInput
-                label="Token de Acceso (OAuth)"
-                placeholder="Ingresa tu token de acceso de Calendly"
+                label='Token de Acceso (OAuth)'
+                placeholder='Ingresa tu token de acceso de Calendly'
                 value={tempConfig.token}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, token: e.target.value }))}
-                description="Token OAuth de Calendly para acceder a la API"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({ ...prev, token: e.target.value }))
+                }
+                description='Token OAuth de Calendly para acceder a la API'
               />
 
               <TextInput
-                label="URL de Calendly"
-                placeholder="https://calendly.com/tu-usuario"
+                label='URL de Calendly'
+                placeholder='https://calendly.com/tu-usuario'
                 value={tempConfig.webhookUrl}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                description="Tu URL pública de Calendly para generar enlaces de reunión"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({
+                    ...prev,
+                    webhookUrl: e.target.value
+                  }))
+                }
+                description='Tu URL pública de Calendly para generar enlaces de reunión'
               />
 
-              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-gray-0)' }}>
-                <Text size="xs" c="dimmed">
-                  <strong>Cómo obtener tu token de Calendly:</strong><br />
-                  1. Ve a calendly.com/integrations/api_webhooks<br />
-                  2. Copia tu API Token o genera uno nuevo en "Integrations"<br />
+              <Paper
+                p='sm'
+                radius='md'
+                style={{ background: 'var(--mantine-color-gray-0)' }}
+              >
+                <Text size='xs' c='dimmed'>
+                  <strong>Cómo obtener tu token de Calendly:</strong>
+                  <br />
+                  1. Ve a calendly.com/integrations/api_webhooks
+                  <br />
+                  2. Copia tu API Token o genera uno nuevo en "Integrations"
+                  <br />
                   3. Pega el token aquí y guarda la configuración
                 </Text>
               </Paper>
             </>
           ) : isGithub ? (
             <>
-              <Text size="sm" c="dimmed">
-                Conecta tu cuenta de GitHub para sincronizar tus repositorios y proyectos.
+              <Text size='sm' c='dimmed'>
+                Conecta tu cuenta de GitHub para sincronizar tus repositorios y
+                proyectos.
               </Text>
 
               <Divider />
 
               <PasswordInput
-                label="Personal Access Token"
-                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                label='Personal Access Token'
+                placeholder='ghp_xxxxxxxxxxxxxxxxxxxx'
                 value={tempConfig.token}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, token: e.target.value }))}
-                description="Token de acceso personal con permisos de repo"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({ ...prev, token: e.target.value }))
+                }
+                description='Token de acceso personal con permisos de repo'
               />
 
               <TextInput
-                label="Organización (opcional)"
-                placeholder="nombre-de-tu-organizacion"
+                label='Organización (opcional)'
+                placeholder='nombre-de-tu-organizacion'
                 value={tempConfig.webhookUrl}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                description="Nombre de la organización para filtrar repositorios"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({
+                    ...prev,
+                    webhookUrl: e.target.value
+                  }))
+                }
+                description='Nombre de la organización para filtrar repositorios'
               />
 
-              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-gray-0)' }}>
-                <Text size="xs" c="dimmed">
-                  <strong>Cómo obtener un Personal Access Token:</strong><br />
-                  1. Ve a GitHub.com → Settings → Developer settings<br />
-                  2. Personal access tokens → Tokens (classic)<br />
-                  3. Generate new token con scope &quot;repo&quot;<br />
+              <Paper
+                p='sm'
+                radius='md'
+                style={{ background: 'var(--mantine-color-gray-0)' }}
+              >
+                <Text size='xs' c='dimmed'>
+                  <strong>Cómo obtener un Personal Access Token:</strong>
+                  <br />
+                  1. Ve a GitHub.com → Settings → Developer settings
+                  <br />
+                  2. Personal access tokens → Tokens (classic)
+                  <br />
+                  3. Generate new token con scope &quot;repo&quot;
+                  <br />
                   4. Copia el token y pégalo aquí
                 </Text>
               </Paper>
             </>
           ) : isInstagram ? (
             <>
-              <Text size="sm" c="dimmed">
-                Configura tu app de Instagram y conecta tu cuenta para recibir mensajes.
+              <Text size='sm' c='dimmed'>
+                Configura tu app de Instagram y conecta tu cuenta para recibir
+                mensajes.
               </Text>
 
               <Divider />
 
               <TextInput
-                label="App ID (Client ID)"
-                placeholder="1591223445959501"
+                label='App ID (Client ID)'
+                placeholder='1591223445959501'
                 value={tempConfig.apiKey}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                description="Tu Instagram App ID de Meta for Developers"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({ ...prev, apiKey: e.target.value }))
+                }
+                description='Tu Instagram App ID de Meta for Developers'
               />
 
               <PasswordInput
-                label="App Secret (Client Secret)"
-                placeholder="91b5c75fd740e36fa2405fdf3b2c3fe9"
+                label='App Secret (Client Secret)'
+                placeholder='91b5c75fd740e36fa2405fdf3b2c3fe9'
                 value={tempConfig.apiSecret}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, apiSecret: e.target.value }))}
-                description="Tu Instagram App Secret de Meta for Developers"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({
+                    ...prev,
+                    apiSecret: e.target.value
+                  }))
+                }
+                description='Tu Instagram App Secret de Meta for Developers'
               />
 
               <TextInput
-                label="Verify Token"
-                placeholder="mi_token_secreto_123"
+                label='Verify Token'
+                placeholder='mi_token_secreto_123'
                 value={tempConfig.webhookUrl}
                 rightSection={
-                  <ActionIcon 
-                    variant="subtle" 
-                    onClick={() => setTempConfig(prev => ({ ...prev, webhookUrl: generateRandomToken(32) }))}
-                    title="Generar token aleatorio"
+                  <ActionIcon
+                    variant='subtle'
+                    onClick={() =>
+                      setTempConfig((prev) => ({
+                        ...prev,
+                        webhookUrl: generateRandomToken(32)
+                      }))
+                    }
+                    title='Generar token aleatorio'
                   >
                     <IoRefresh size={16} />
                   </ActionIcon>
                 }
-                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                description="Token que usarás en Meta for Developers"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({
+                    ...prev,
+                    webhookUrl: e.target.value
+                  }))
+                }
+                description='Token que usarás en Meta for Developers'
               />
 
-              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-blue-0)' }}>
-                <Text size="xs" c="dimmed">
-                  <strong>Tu Webhook URL:</strong><br />
-                  <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/instagram</code>
+              <Paper
+                p='sm'
+                radius='md'
+                style={{ background: 'var(--mantine-color-blue-0)' }}
+              >
+                <Text size='xs' c='dimmed'>
+                  <strong>Tu Webhook URL:</strong>
+                  <br />
+                  <code>
+                    {typeof window !== 'undefined'
+                      ? window.location.origin
+                      : ''}
+                    /api/webhooks/instagram
+                  </code>
                 </Text>
               </Paper>
 
-              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-green-0)' }}>
-                <Text size="xs" c="dimmed">
-                  <strong>Redirect URI (configuralo en Meta):</strong><br />
-                  <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/auth/callback/instagram</code>
+              <Paper
+                p='sm'
+                radius='md'
+                style={{ background: 'var(--mantine-color-green-0)' }}
+              >
+                <Text size='xs' c='dimmed'>
+                  <strong>Redirect URI (configuralo en Meta):</strong>
+                  <br />
+                  <code>
+                    {typeof window !== 'undefined'
+                      ? window.location.origin
+                      : ''}
+                    /api/auth/callback/instagram
+                  </code>
                 </Text>
               </Paper>
 
               <Divider />
 
-              <Group justify="space-between">
-                <Text size="xs" c="dimmed">
+              <Group justify='space-between'>
+                <Text size='xs' c='dimmed'>
                   Guardar configuración
                 </Text>
                 <Group>
-                  <Button variant="subtle" onClick={() => setModalOpen(false)}>
+                  <Button variant='subtle' onClick={() => setModalOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button leftSection={<IoSave size={16} />} onClick={handleInstagramSaveConfig}>
+                  <Button
+                    leftSection={<IoSave size={16} />}
+                    onClick={handleInstagramSaveConfig}
+                  >
                     Guardar
                   </Button>
                 </Group>
@@ -480,71 +620,104 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             </>
           ) : isFacebook ? (
             <>
-              <Text size="sm" c="dimmed">
-                Configura tu app de Facebook Messenger y conecta tu página para recibir mensajes.
+              <Text size='sm' c='dimmed'>
+                Configura tu app de Facebook Messenger y conecta tu página para
+                recibir mensajes.
               </Text>
 
               <Divider />
 
               <PasswordInput
-                label="Page Access Token"
-                placeholder="EAAC..."
+                label='Page Access Token'
+                placeholder='EAAC...'
                 value={tempConfig.token}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, token: e.target.value }))}
-                description="Token de tu página de Facebook (obtenelo en Meta for Developers > Messenger > Token Generation)"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({ ...prev, token: e.target.value }))
+                }
+                description='Token de tu página de Facebook (obtenelo en Meta for Developers > Messenger > Token Generation)'
               />
 
               <TextInput
-                label="App ID"
-                placeholder="1591223445959501"
+                label='App ID'
+                placeholder='1591223445959501'
                 value={tempConfig.apiKey}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                description="Tu Facebook App ID de Meta for Developers"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({ ...prev, apiKey: e.target.value }))
+                }
+                description='Tu Facebook App ID de Meta for Developers'
               />
 
               <PasswordInput
-                label="App Secret"
-                placeholder="91b5c75fd740e36fa2405fdf3b2c3fe9"
+                label='App Secret'
+                placeholder='91b5c75fd740e36fa2405fdf3b2c3fe9'
                 value={tempConfig.apiSecret}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, apiSecret: e.target.value }))}
-                description="Tu Facebook App Secret de Meta for Developers"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({
+                    ...prev,
+                    apiSecret: e.target.value
+                  }))
+                }
+                description='Tu Facebook App Secret de Meta for Developers'
               />
 
               <TextInput
-                label="Verify Token"
-                placeholder="mi_token_secreto_123"
+                label='Verify Token'
+                placeholder='mi_token_secreto_123'
                 value={tempConfig.webhookUrl}
                 rightSection={
-                  <ActionIcon 
-                    variant="subtle" 
-                    onClick={() => setTempConfig(prev => ({ ...prev, webhookUrl: generateRandomToken(32) }))}
-                    title="Generar token aleatorio"
+                  <ActionIcon
+                    variant='subtle'
+                    onClick={() =>
+                      setTempConfig((prev) => ({
+                        ...prev,
+                        webhookUrl: generateRandomToken(32)
+                      }))
+                    }
+                    title='Generar token aleatorio'
                   >
                     <IoRefresh size={16} />
                   </ActionIcon>
                 }
-                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                description="Token que usarás en Meta for Developers"
+                onChange={(e) =>
+                  setTempConfig((prev) => ({
+                    ...prev,
+                    webhookUrl: e.target.value
+                  }))
+                }
+                description='Token que usarás en Meta for Developers'
               />
 
-              <Paper p="sm" radius="md" style={{ background: 'var(--mantine-color-blue-0)' }}>
-                <Text size="xs" c="dimmed">
-                  <strong>Tu Webhook URL:</strong><br />
-                  <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/facebook</code>
+              <Paper
+                p='sm'
+                radius='md'
+                style={{ background: 'var(--mantine-color-blue-0)' }}
+              >
+                <Text size='xs' c='dimmed'>
+                  <strong>Tu Webhook URL:</strong>
+                  <br />
+                  <code>
+                    {typeof window !== 'undefined'
+                      ? window.location.origin
+                      : ''}
+                    /api/webhooks/facebook
+                  </code>
                 </Text>
               </Paper>
 
               <Divider />
 
-              <Group justify="space-between">
-                <Text size="xs" c="dimmed">
+              <Group justify='space-between'>
+                <Text size='xs' c='dimmed'>
                   Guardar configuración
                 </Text>
                 <Group>
-                  <Button variant="subtle" onClick={() => setModalOpen(false)}>
+                  <Button variant='subtle' onClick={() => setModalOpen(false)}>
                     Cancelar
                   </Button>
-<Button leftSection={<IoSave size={16} />} onClick={handleFacebookSaveConfig}>
+                  <Button
+                    leftSection={<IoSave size={16} />}
+                    onClick={handleFacebookSaveConfig}
+                  >
                     Guardar
                   </Button>
                 </Group>
@@ -552,39 +725,57 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             </>
           ) : (
             <>
-              <Text size="sm" c="dimmed">
-                Ingresa las credenciales de tu cuenta de {integration.name} para habilitar la integración.
+              <Text size='sm' c='dimmed'>
+                Ingresa las credenciales de tu cuenta de {integration.name} para
+                habilitar la integración.
               </Text>
 
               <Divider />
 
               <TextInput
-                label="Token de acceso"
-                placeholder="Ingresa tu token de acceso"
+                label='Token de acceso'
+                placeholder='Ingresa tu token de acceso'
                 value={tempConfig.token}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, token: e.target.value }))}
+                onChange={(e) =>
+                  setTempConfig((prev) => ({ ...prev, token: e.target.value }))
+                }
               />
 
               <SimpleGrid cols={2}>
                 <TextInput
-                  label="API Key"
-                  placeholder="API Key"
+                  label='API Key'
+                  placeholder='API Key'
                   value={tempConfig.apiKey}
-                  onChange={(e) => setTempConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                  onChange={(e) =>
+                    setTempConfig((prev) => ({
+                      ...prev,
+                      apiKey: e.target.value
+                    }))
+                  }
                 />
                 <PasswordInput
-                  label="API Secret"
-                  placeholder="API Secret"
+                  label='API Secret'
+                  placeholder='API Secret'
                   value={tempConfig.apiSecret}
-                  onChange={(e) => setTempConfig(prev => ({ ...prev, apiSecret: e.target.value }))}
+                  onChange={(e) =>
+                    setTempConfig((prev) => ({
+                      ...prev,
+                      apiSecret: e.target.value
+                    }))
+                  }
                 />
               </SimpleGrid>
 
               <TextInput
-                label="Webhook URL (opcional)"
-                placeholder="https://tu-servidor.com/webhook"
+                label='Webhook URL (opcional)'
+                placeholder='https://tu-servidor.com/webhook'
                 value={tempConfig.webhookUrl}
-                onChange={(e) => setTempConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
+                onChange={(e) =>
+                  setTempConfig((prev) => ({
+                    ...prev,
+                    webhookUrl: e.target.value
+                  }))
+                }
               />
             </>
           )}
@@ -592,12 +783,12 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           {!isInstagram && !isFacebook && <Divider />}
 
           {!isInstagram && !isFacebook && (
-            <Group justify="space-between">
-              <Anchor size="sm" href="#" onClick={(e) => e.preventDefault()}>
+            <Group justify='space-between'>
+              <Anchor size='sm' href='#' onClick={(e) => e.preventDefault()}>
                 ¿Cómo obtener las credenciales?
               </Anchor>
               <Group>
-                <Button variant="subtle" onClick={() => setModalOpen(false)}>
+                <Button variant='subtle' onClick={() => setModalOpen(false)}>
                   Cancelar
                 </Button>
                 <Button leftSection={<IoSave size={16} />} onClick={handleSave}>
@@ -624,50 +815,65 @@ export default function IntegrationsPage() {
     return null
   }
 
-  const enabledCount = settings.integrations.filter(i => i.enabled).length
-  const configuredCount = settings.integrations.filter(i => i.enabled && (i.token || i.apiKey)).length
+  const enabledCount = settings.integrations.filter((i) => i.enabled).length
+  const configuredCount = settings.integrations.filter(
+    (i) => i.enabled && (i.token || i.apiKey)
+  ).length
 
   return (
-    <Container size="lg" py="xl">
-      <Stack gap="xl">
-        <Group justify="space-between">
+    <Container size='lg' py='xl'>
+      <Stack gap='xl'>
+        <Group justify='space-between'>
           <div>
-            <Group gap="xs" mb="sm">
+            <Group gap='xs' mb='sm'>
               <IoPulse size={28} />
               <Title order={2}>Integraciones</Title>
             </Group>
-            <Text size="sm" c="dimmed">
-              Conecta tus redes sociales y plataformas para gestionarlas desde un solo lugar
+            <Text size='sm' c='dimmed'>
+              Conecta tus redes sociales y plataformas para gestionarlas desde
+              un solo lugar
             </Text>
           </div>
-          <Group gap="sm">
-            <Badge color="blue" size="lg">{enabledCount} habilitadas</Badge>
-            <Badge color="teal" size="lg">{configuredCount} conectadas</Badge>
+          <Group gap='sm'>
+            <Badge color='blue' size='lg'>
+              {enabledCount} habilitadas
+            </Badge>
+            <Badge color='teal' size='lg'>
+              {configuredCount} conectadas
+            </Badge>
           </Group>
         </Group>
 
         <Divider />
 
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing='md'>
           {settings.integrations.map((integration) => (
             <IntegrationCard key={integration.id} integration={integration} />
           ))}
         </SimpleGrid>
 
-        <Divider my="md" />
+        <Divider my='md' />
 
-        <Paper p="md" radius="md" style={{ background: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))' }}>
-          <Group gap="sm">
-            <ThemeIcon color="blue" variant="light" size="lg" radius="md">
+        <Paper
+          p='md'
+          radius='md'
+          style={{
+            background:
+              'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))'
+          }}
+        >
+          <Group gap='sm'>
+            <ThemeIcon color='blue' variant='light' size='lg' radius='md'>
               <IoSettings size={20} />
             </ThemeIcon>
             <div style={{ flex: 1 }}>
               <Text fw={500}>¿Necesitas otra integración?</Text>
-              <Text size="sm" c="dimmed">
-                Solicita una nueva plataforma y la agregaremos a nuestra hoja de ruta.
+              <Text size='sm' c='dimmed'>
+                Solicita una nueva plataforma y la agregaremos a nuestra hoja de
+                ruta.
               </Text>
             </div>
-            <Button variant="light" size="sm">
+            <Button variant='light' size='sm'>
               Solicitar
             </Button>
           </Group>
