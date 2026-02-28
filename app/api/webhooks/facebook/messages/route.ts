@@ -38,6 +38,8 @@ export async function POST(request: Request) {
       attachments
     })
 
+    console.log('[Facebook Messages API] Message saved:', { id, conversationId, hasAttachments: !!attachments, attachments })
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error saving message:', error)
