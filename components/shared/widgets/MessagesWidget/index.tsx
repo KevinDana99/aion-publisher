@@ -571,114 +571,126 @@ export default function MessagesWidget() {
                   .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
                   .map((msg) => {
                     if (msg.attachments && msg.attachments.length > 0) {
-                      console.log('[MessagesWidget] attachments:', JSON.stringify(msg.attachments))
+                      console.log(
+                        '[MessagesWidget] attachments:',
+                        JSON.stringify(msg.attachments)
+                      )
                     }
                     return (
-                    <Box
-                      key={msg.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: msg.isFromUser
-                          ? 'flex-end'
-                          : 'flex-start'
-                      }}
-                    >
-                      <Paper
-                        p='sm'
-                        radius='lg'
+                      <Box
+                        key={msg.id}
                         style={{
-                          maxWidth: '70%',
-                          backgroundColor: msg.isFromUser
-                            ? chatBubbleUser
-                            : chatBubbleContact,
-                          color: msg.isFromUser ? chatTextUser : chatTextContact
+                          display: 'flex',
+                          justifyContent: msg.isFromUser
+                            ? 'flex-end'
+                            : 'flex-start'
                         }}
                       >
-                        {msg.attachments && msg.attachments.length > 0 && (
-                          <Box mb='xs'>
-                            {msg.attachments.map((attachment, idx) => (
-                              <Box key={idx} mb='xs'>
+                        <Paper
+                          p='sm'
+                          radius='lg'
+                          style={{
+                            maxWidth: '70%',
+                            backgroundColor: msg.isFromUser
+                              ? chatBubbleUser
+                              : chatBubbleContact,
+                            color: msg.isFromUser
+                              ? chatTextUser
+                              : chatTextContact
+                          }}
+                        >
+                          {msg.attachments && msg.attachments.length > 0 && (
+                            <Box mb='xs'>
+                              {msg.attachments.map((attachment, idx) => (
+                                <Box key={idx} mb='xs'>
                                 {attachment.type === 'image' && (
                                   <Box
                                     style={{
                                       borderRadius: 8,
-                                      overflow: 'hidden'
+                                      overflow: 'hidden',
+                                      width: '100%',
+                                      maxWidth: 250,
+                                      height: 'auto',
+                                      position: 'relative'
                                     }}
                                   >
                                     <Image
                                       src={attachment.payload.url}
                                       alt='imagen'
-                                      fill
+                                      width={250}
+                                      height={250}
+                                      style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
                                     />
                                   </Box>
                                 )}
-                                {attachment.type === 'audio' && (
-                                  <Box
-                                    style={{
-                                      background: 'rgba(0,0,0,0.2)',
-                                      borderRadius: 8,
-                                      padding: '8px 12px'
-                                    }}
-                                  >
-                                    <Group gap='xs'>
-                                      <IoMusicalNotes size={20} />
-                                      <audio
-                                        controls
-                                        src={attachment.payload.url}
-                                        style={{ height: 32, maxWidth: 200 }}
-                                      />
-                                    </Group>
-                                  </Box>
-                                )}
-                                {attachment.type === 'video' && (
-                                  <video
-                                    controls
-                                    src={attachment.payload.url}
-                                    style={{
-                                      maxWidth: '100%',
-                                      maxHeight: 300,
-                                      borderRadius: 8
-                                    }}
-                                  />
-                                )}
-                                {attachment.type === 'file' && (
-                                  <a
-                                    href={attachment.payload.url}
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                    style={{
-                                      color: 'inherit',
-                                      textDecoration: 'underline'
-                                    }}
-                                  >
-                                    <Group gap='xs'>
-                                      <IoImage size={16} />
-                                      <Text size='sm'>Archivo</Text>
-                                    </Group>
-                                  </a>
-                                )}
-                              </Box>
-                            ))}
-                          </Box>
-                        )}
-                        {msg.text && <Text size='sm'>{msg.text}</Text>}
-                        <Text
-                          size='xs'
-                          c={
-                            msg.isFromUser
-                              ? isDark
-                                ? 'gray-4'
-                                : 'gray-3'
-                              : 'dimmed'
-                          }
-                          ta='right'
-                          mt={4}
-                        >
-                          {formatTime(msg.timestamp)}
-                        </Text>
-                      </Paper>
-                    </Box>
-                  )})}
+                                  {attachment.type === 'audio' && (
+                                    <Box
+                                      style={{
+                                        background: 'rgba(0,0,0,0.2)',
+                                        borderRadius: 8,
+                                        padding: '8px 12px'
+                                      }}
+                                    >
+                                      <Group gap='xs'>
+                                        <IoMusicalNotes size={20} />
+                                        <audio
+                                          controls
+                                          src={attachment.payload.url}
+                                          style={{ height: 32, maxWidth: 200 }}
+                                        />
+                                      </Group>
+                                    </Box>
+                                  )}
+                                  {attachment.type === 'video' && (
+                                    <video
+                                      controls
+                                      src={attachment.payload.url}
+                                      style={{
+                                        maxWidth: '100%',
+                                        maxHeight: 300,
+                                        borderRadius: 8
+                                      }}
+                                    />
+                                  )}
+                                  {attachment.type === 'file' && (
+                                    <a
+                                      href={attachment.payload.url}
+                                      target='_blank'
+                                      rel='noopener noreferrer'
+                                      style={{
+                                        color: 'inherit',
+                                        textDecoration: 'underline'
+                                      }}
+                                    >
+                                      <Group gap='xs'>
+                                        <IoImage size={16} />
+                                        <Text size='sm'>Archivo</Text>
+                                      </Group>
+                                    </a>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                          {msg.text && <Text size='sm'>{msg.text}</Text>}
+                          <Text
+                            size='xs'
+                            c={
+                              msg.isFromUser
+                                ? isDark
+                                  ? 'gray-4'
+                                  : 'gray-3'
+                                : 'dimmed'
+                            }
+                            ta='right'
+                            mt={4}
+                          >
+                            {formatTime(msg.timestamp)}
+                          </Text>
+                        </Paper>
+                      </Box>
+                    )
+                  })}
               </Stack>
             </ScrollArea>
             <Box p='md' style={{ borderTop: `1px solid ${borderColor}` }}>
