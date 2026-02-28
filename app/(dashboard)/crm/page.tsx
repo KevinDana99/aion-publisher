@@ -1,10 +1,25 @@
-'use client'
-
 import { SimpleGrid, Box, Title } from '@mantine/core'
-import LeadsOverview from '@/components/shared/widgets/LeadsOverview'
-import RecentContacts from '@/components/shared/widgets/RecentContacts'
-import PipelineDeals from '@/components/shared/widgets/PipelineDeals'
-import CRMActivities from '@/components/shared/widgets/CRMActivities'
+import dynamic from 'next/dynamic'
+
+const LeadsOverview = dynamic(
+  () => import('@/components/shared/widgets/LeadsOverview'),
+  { ssr: false }
+)
+
+const RecentContacts = dynamic(
+  () => import('@/components/shared/widgets/RecentContacts'),
+  { ssr: false }
+)
+
+const PipelineDeals = dynamic(
+  () => import('@/components/shared/widgets/PipelineDeals'),
+  { ssr: false }
+)
+
+const CRMActivities = dynamic(
+  () => import('@/components/shared/widgets/CRMActivities'),
+  { ssr: false }
+)
 
 export default function CRMPage() {
   return (
