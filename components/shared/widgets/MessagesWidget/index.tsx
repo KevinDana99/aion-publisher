@@ -398,14 +398,18 @@ export default function MessagesWidget() {
     useEffect(() => {
       const callFn = async () => {
         const tempFile = await handleGetFile(url)
+        console.log({ file: tempFile, fileState: file })
         if (tempFile) setFile(tempFile)
       }
       callFn()
-    }, [url])
+    }, [])
+
     return (
       <Link
-        href={(file?.url && file.url) ?? ''}
-        download={`${file?.name}.${file?.type}`}
+        href={url}
+        download
+        rel='noopener noreferrer'
+        target='_blank'
         style={{
           color: 'inherit',
           textDecoration: 'underline'
@@ -413,7 +417,7 @@ export default function MessagesWidget() {
       >
         <Group gap='xs'>
           <IoDocument size={16} />
-          <Text size='sm'>{`${file?.name}.${file?.type}`}</Text>
+          <Text size='sm'>Archivo adjunto</Text>
         </Group>
       </Link>
     )
