@@ -36,6 +36,7 @@ import {
 import { useSettings } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
 import { useFacebook } from '@/lib/facebook/context'
+import useMounted from '@/hooks/useMounted'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -85,11 +86,7 @@ export default function MessagesWidget() {
   const isDark = colorScheme === 'dark'
   const instagram = useInstagram()
   const facebook = useFacebook()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useMounted()
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null

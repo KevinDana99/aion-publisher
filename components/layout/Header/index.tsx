@@ -1,7 +1,6 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
 import {
   ActionIcon,
   Group,
@@ -12,18 +11,15 @@ import {
   Tooltip
 } from '@mantine/core'
 import { IoSunnyOutline, IoMoonOutline, IoLogOutOutline } from 'react-icons/io5'
+import useMounted from '@/hooks/useMounted'
 
 export default function Header() {
   const { setColorScheme } = useMantineColorScheme()
   const computedColorScheme = useComputedColorScheme('light', {
     getInitialValueInEffect: true
   })
-  const [mounted, setMounted] = useState(false)
+  const mounted = useMounted()
   const router = useRouter()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const toggleColorScheme = () => {
     setColorScheme(computedColorScheme === 'light' ? 'dark' : 'light')
