@@ -359,7 +359,24 @@ export default function MessagesWidget() {
   }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) return
+    if (!selectedConversation) return
+
+    // Handle audio recording
+    if (audioBlob) {
+      alert('Envío de audio: requiere integración con servidor de archivos')
+      setAudioBlob(null)
+      return
+    }
+
+    // Handle file attachment
+    if (attachmentFile) {
+      alert('Envío de archivos: requiere integración con servidor de archivos')
+      setAttachmentFile(null)
+      return
+    }
+
+    // Handle text message
+    if (!newMessage.trim()) return
 
     let success = false
     if (selectedConversation.platform === 'instagram') {
@@ -850,19 +867,22 @@ export default function MessagesWidget() {
                   </Group>
                 )}
 
-                <TextInput
-                  placeholder='Escribe un mensaje...'
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  style={{ flex: 1 }}
-                  disabled={isRecording || !!audioBlob}
-                />
+                {!isRecording && (
+                  <TextInput
+                    placeholder='Escribe un mensaje...'
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    style={{ flex: 1 }}
+                    disabled={!!audioBlob}
+                  />
+                )}
+                
                 <ActionIcon
                   size='lg'
                   variant='filled'
                   onClick={handleSendMessage}
-                  disabled={isRecording || !!audioBlob}
+                  disabled={isRecording}
                 >
                   <IoSend size={18} />
                 </ActionIcon>
