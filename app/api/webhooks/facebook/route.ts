@@ -7,12 +7,12 @@ import type { FacebookWebhookPayload } from '@/lib/facebook/types'
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
+    console.log({ searchParams })
     const mode = searchParams.get('hub.mode')
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
-
     const storedToken = await getVerifyToken()
-    
+
     console.log('========================================')
     console.log('🔵 FACEBOOK WEBHOOK GET - VERIFICATION')
     console.log('========================================')
@@ -20,16 +20,18 @@ export async function GET(request: NextRequest) {
     console.log('Token from Meta (RECEIVED):', token)
     console.log('Mode:', mode, '| Challenge:', challenge)
     console.log('========================================')
-    
+
     if (!storedToken) {
-      console.log('[Facebook Webhook] No verify token configured - returning 403')
+      console.log(
+        '[Facebook Webhook] No verify token configured - returning 403'
+      )
       console.log('[Facebook Webhook] No verify token configured')
       return NextResponse.json(
         { error: 'Verify token not configured' },
         { status: 403 }
       )
     }
-    
+
     facebookWebhookService.setVerifyToken(storedToken)
 
     if (!facebookWebhookService.verifyWebhookMode(mode || '', token || '')) {
@@ -49,17 +51,14 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Facebook webhook verification error:', error)
-    return NextResponse.json(
-      { error: 'Verification failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-
+    console.log({ body })
     console.log('========================================')
     console.log('📘 FACEBOOK WEBHOOK - PAYLOAD COMPLETO')
     console.log('========================================')
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
     const events = facebookWebhookService.processWebhookPayload(payload)
 
     console.log('[Facebook Webhook] Events processed:', events.length)
-    
+
     const messages = []
     for (const event of events) {
       console.log('[Facebook Webhook] Event:', JSON.stringify(event))
@@ -94,13 +93,15 @@ export async function POST(request: NextRequest) {
           text: event.data.message || '',
           timestamp: event.timestamp,
           isFromMe: false,
-          attachments: event.data.attachments?.map(a => ({
+          attachments: event.data.attachments?.map((a) => ({
             type: a.type,
             payload: { url: a.url }
           }))
         })
 
-        console.log(`[Facebook Webhook] Message: ${event.data.messageId} from ${event.userId}`)
+        console.log(
+          `[Facebook Webhook] Message: ${event.data.messageId} from ${event.userId}`
+        )
       }
     }
 
@@ -125,7 +126,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[Facebook Webhook] ✅ Processed ${events.length} event(s), saved ${messages.length} message(s)`)
+    console.log(
+      `[Facebook Webhook] ✅ Processed ${events.length} event(s), saved ${messages.length} message(s)`
+    )
 
     return NextResponse.json({ success: true, messages }, { status: 200 })
   } catch (error) {
