@@ -124,7 +124,7 @@ export default function MessagesWidget() {
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
         setAudioBlob(blob)
-        stream.getTracks().forEach(track => track.stop())
+        stream.getTracks().forEach((track) => track.stop())
       }
 
       mediaRecorder.start()
@@ -132,7 +132,7 @@ export default function MessagesWidget() {
       setRecordingTime(0)
 
       timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1)
+        setRecordingTime((prev) => prev + 1)
       }, 1000)
     } catch (err) {
       console.error('Error al grabar:', err)
@@ -713,44 +713,54 @@ export default function MessagesWidget() {
                             <Box mb='xs'>
                               {msg.attachments.map((attachment, idx) => (
                                 <Box key={idx} mb='xs'>
-                                {attachment.type === 'image' && (
-                                  <Box
-                                    style={{
-                                      borderRadius: 8,
-                                      overflow: 'hidden',
-                                      width: 200,
-                                      position: 'relative',
-                                      cursor: 'pointer'
-                                    }}
-                                    onClick={() => setImagePreview(attachment.payload.url)}
-                                  >
-                                    <Image
-                                      src={attachment.payload.url}
-                                      alt='imagen'
-                                      width={200}
-                                      style={{ objectFit: 'contain', width: '100%', height: 'auto' }}
-                                    />
-                                  </Box>
-                                )}
-                                {attachment.type === 'audio' && (
-                                  <Box
-                                    style={{
-                                      background: isDark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-gray-1)',
-                                      borderRadius: 8,
-                                      padding: '8px 12px'
-                                    }}
-                                  >
-                                    <audio
-                                      controls
-                                      src={attachment.payload.url}
-                                      style={{ 
-                                        height: 32, 
-                                        maxWidth: 200,
-                                        filter: isDark ? 'brightness(0) invert(1)' : 'none'
+                                  {attachment.type === 'image' && (
+                                    <Box
+                                      style={{
+                                        borderRadius: 8,
+                                        overflow: 'hidden',
+                                        width: 200,
+                                        position: 'relative',
+                                        cursor: 'pointer'
                                       }}
-                                    />
-                                  </Box>
-                                )}
+                                      onClick={() =>
+                                        setImagePreview(attachment.payload.url)
+                                      }
+                                    >
+                                      <Image
+                                        src={attachment.payload.url}
+                                        alt='imagen'
+                                        width={200}
+                                        style={{
+                                          objectFit: 'contain',
+                                          width: '100%',
+                                          height: 'auto'
+                                        }}
+                                      />
+                                    </Box>
+                                  )}
+                                  {attachment.type === 'audio' && (
+                                    <Box
+                                      style={{
+                                        background: isDark
+                                          ? 'var(--mantine-color-dark-5)'
+                                          : 'var(--mantine-color-gray-1)',
+                                        borderRadius: 8,
+                                        padding: '8px 12px'
+                                      }}
+                                    >
+                                      <audio
+                                        controls
+                                        src={attachment.payload.url}
+                                        style={{
+                                          height: 32,
+                                          maxWidth: 200,
+                                          filter: isDark
+                                            ? 'brightness(0) invert(1)'
+                                            : 'none'
+                                        }}
+                                      />
+                                    </Box>
+                                  )}
                                   {attachment.type === 'video' && (
                                     <video
                                       controls
@@ -808,19 +818,15 @@ export default function MessagesWidget() {
                 {!isRecording && !audioBlob && (
                   <>
                     <Tooltip label='Próximamente' position='top' withArrow>
-                      <Box>
-                        <ActionIcon variant='subtle' disabled style={{ pointerEvents: 'none' }}>
-                          <IoAttach size={20} />
-                        </ActionIcon>
-                      </Box>
+                      <ActionIcon variant='subtle' disabled style={{ pointerEvents: 'none', opacity: 0.5 }}>
+                        <IoAttach size={20} />
+                      </ActionIcon>
                     </Tooltip>
                     
                     <Tooltip label='Próximamente' position='top' withArrow>
-                      <Box>
-                        <ActionIcon variant='subtle' color='red' disabled style={{ pointerEvents: 'none' }}>
-                          <IoMic size={20} />
-                        </ActionIcon>
-                      </Box>
+                      <ActionIcon variant='subtle' color='red' disabled style={{ pointerEvents: 'none', opacity: 0.5 }}>
+                        <IoMic size={20} />
+                      </ActionIcon>
                     </Tooltip>
                   </>
                 )}
@@ -836,8 +842,14 @@ export default function MessagesWidget() {
                         animation: 'pulse 1s infinite'
                       }}
                     />
-                    <Text size='sm' fw={500}>{formatRecordingTime(recordingTime)}</Text>
-                    <ActionIcon variant='filled' color='red' onClick={stopRecording}>
+                    <Text size='sm' fw={500}>
+                      {formatRecordingTime(recordingTime)}
+                    </Text>
+                    <ActionIcon
+                      variant='filled'
+                      color='red'
+                      onClick={stopRecording}
+                    >
                       <IoStop size={18} />
                     </ActionIcon>
                     <ActionIcon variant='subtle' onClick={cancelRecording}>
@@ -848,8 +860,15 @@ export default function MessagesWidget() {
 
                 {audioBlob && !isRecording && (
                   <Group gap='xs'>
-                    <audio src={URL.createObjectURL(audioBlob)} controls style={{ height: 32, maxWidth: 200 }} />
-                    <ActionIcon variant='subtle' onClick={() => setAudioBlob(null)}>
+                    <audio
+                      src={URL.createObjectURL(audioBlob)}
+                      controls
+                      style={{ height: 32, maxWidth: 200 }}
+                    />
+                    <ActionIcon
+                      variant='subtle'
+                      onClick={() => setAudioBlob(null)}
+                    >
                       <IoClose size={20} />
                     </ActionIcon>
                   </Group>
@@ -874,7 +893,7 @@ export default function MessagesWidget() {
                     disabled={!!audioBlob}
                   />
                 )}
-                
+
                 <ActionIcon
                   size='lg'
                   variant='filled'
@@ -905,13 +924,30 @@ export default function MessagesWidget() {
           centered
           withCloseButton
           size={700}
-          styles={{ 
-            body: { background: 'transparent', padding: 0, width: 700, height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+          styles={{
+            body: {
+              background: 'transparent',
+              padding: 0,
+              width: 700,
+              height: 500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            },
             content: { background: 'transparent', boxShadow: 'none' }
           }}
         >
           {imagePreview && (
-            <Box style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
               <Image
                 src={imagePreview}
                 alt='imagen preview'
