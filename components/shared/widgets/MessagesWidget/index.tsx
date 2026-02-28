@@ -569,7 +569,11 @@ export default function MessagesWidget() {
               <Stack gap='sm'>
                 {selectedConversation.messages
                   .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
-                  .map((msg) => (
+                  .map((msg) => {
+                    if (msg.attachments && msg.attachments.length > 0) {
+                      console.log('[MessagesWidget] attachments:', JSON.stringify(msg.attachments))
+                    }
+                    return (
                     <Box
                       key={msg.id}
                       style={{
@@ -674,7 +678,7 @@ export default function MessagesWidget() {
                         </Text>
                       </Paper>
                     </Box>
-                  ))}
+                  )})}
               </Stack>
             </ScrollArea>
             <Box p='md' style={{ borderTop: `1px solid ${borderColor}` }}>
