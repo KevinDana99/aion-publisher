@@ -36,7 +36,6 @@ import {
 import { useSettings } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
 import { useFacebook } from '@/lib/facebook/context'
-import useMounted from '@/hooks/useMounted'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -86,7 +85,6 @@ export default function MessagesWidget() {
   const isDark = colorScheme === 'dark'
   const instagram = useInstagram()
   const facebook = useFacebook()
-  const mounted = useMounted()
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -466,22 +464,23 @@ export default function MessagesWidget() {
     })
   }
 
-  const sidebarBg = !mounted || isDark
+  const sidebarBg = isDark
     ? 'var(--mantine-color-dark-7)'
     : 'var(--mantine-color-gray-0)'
-  const borderColor = !mounted || isDark
+  const borderColor = isDark
     ? 'var(--mantine-color-dark-4)'
     : 'var(--mantine-color-gray-3)'
-  const selectedBg = !mounted || isDark
+
+  const selectedBg = isDark
     ? 'var(--mantine-color-dark-5)'
     : 'var(--mantine-color-blue-light)'
   const chatBubbleUser = 'var(--mantine-color-blue-6) !important'
-  const chatBubbleContact = !mounted || isDark ? theme.colors.dark[5] : theme.colors.gray[1]
-  const filterPanelBg = !mounted || isDark
+  const chatBubbleContact = isDark ? theme.colors.dark[5] : theme.colors.gray[1]
+  const filterPanelBg = isDark
     ? 'var(--mantine-color-dark-6)'
     : 'var(--mantine-color-gray-0)'
   const chatTextUser = 'white !important'
-  const chatTextContact = !mounted || isDark ? theme.colors.dark[0] : 'inherit'
+  const chatTextContact = isDark ? theme.colors.dark[0] : 'inherit'
 
   const enabledIntegrations = settings.integrations
     .filter((i) => i.enabled)
@@ -553,7 +552,7 @@ export default function MessagesWidget() {
                         <Text
                           size='sm'
                           tt='capitalize'
-                          c={isEnabled ? (!mounted || isDark ? 'gray' : 'dark') : 'dimmed'}
+                          c={isEnabled ? (isDark ? 'gray' : 'dark') : 'dimmed'}
                         >
                           {platform}
                         </Text>
@@ -698,7 +697,7 @@ export default function MessagesWidget() {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          background: !mounted || isDark ? 'var(--mantine-color-dark-7)' : 'white'
+          background: isDark ? 'var(--mantine-color-dark-7)' : 'white'
         }}
       >
         {selectedConversation ? (

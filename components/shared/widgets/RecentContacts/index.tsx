@@ -1,7 +1,6 @@
 'use client'
 
 import { Box, Avatar, Group, Text, Paper, Badge, Stack, useMantineColorScheme } from '@mantine/core'
-import useMounted from '@/hooks/useMounted'
 
 interface Contact {
   id: string
@@ -35,10 +34,9 @@ const statusColors: Record<string, string> = {
 export default function RecentContacts() {
   const { colorScheme } = useMantineColorScheme()
   const isDark = colorScheme === 'dark'
-  const mounted = useMounted()
   
   return (
-    <Paper p="md" radius="lg" shadow="sm" style={{ background: !mounted || isDark ? 'var(--mantine-color-dark-6)' : 'white' }}>
+    <Paper p="md" radius="lg" shadow="sm" style={{ background: isDark ? 'var(--mantine-color-dark-6)' : 'white' }}>
       <Text fw={700} size="lg" mb="md">Contactos Recientes</Text>
       <Stack gap="sm">
         {contacts.map((contact) => (

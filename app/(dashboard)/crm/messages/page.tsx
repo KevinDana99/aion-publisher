@@ -1,7 +1,10 @@
-'use client'
-
 import { Box } from '@mantine/core'
-import MessagesWidget from '@/components/shared/widgets/MessagesWidget'
+import dynamic from 'next/dynamic'
+
+const MessagesWidget = dynamic(
+  () => import('@/components/shared/widgets/MessagesWidget'),
+  { ssr: false }
+)
 
 export default function CRMMessagesPage() {
   return (

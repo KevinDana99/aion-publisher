@@ -11,14 +11,12 @@ import {
   Tooltip
 } from '@mantine/core'
 import { IoSunnyOutline, IoMoonOutline, IoLogOutOutline } from 'react-icons/io5'
-import useMounted from '@/hooks/useMounted'
 
 export default function Header() {
   const { setColorScheme } = useMantineColorScheme()
   const computedColorScheme = useComputedColorScheme('light', {
     getInitialValueInEffect: true
   })
-  const mounted = useMounted()
   const router = useRouter()
 
   const toggleColorScheme = () => {
@@ -41,16 +39,12 @@ export default function Header() {
         height: 60,
         padding: '0 1rem',
         backdropFilter: 'blur(12px)',
-        background: !mounted 
-          ? 'rgba(255, 255, 255, 0.8)'
-          : computedColorScheme === 'dark'
-            ? 'rgba(26, 27, 30, 0.8)'
-            : 'rgba(255, 255, 255, 0.8)',
-        borderBottom: !mounted
-          ? '1px solid rgba(0, 0, 0, 0.1)'
-          : computedColorScheme === 'dark'
-            ? '1px solid rgba(255, 255, 255, 0.1)'
-            : '1px solid rgba(0, 0, 0, 0.1)'
+        background: computedColorScheme === 'dark'
+          ? 'rgba(26, 27, 30, 0.8)'
+          : 'rgba(255, 255, 255, 0.8)',
+        borderBottom: computedColorScheme === 'dark'
+          ? '1px solid rgba(255, 255, 255, 0.1)'
+          : '1px solid rgba(0, 0, 0, 0.1)'
       }}
     >
       <Group justify='space-between' h='100%'>
@@ -65,9 +59,8 @@ export default function Header() {
             size='lg'
             radius='md'
             aria-label='Toggle color scheme'
-            style={{ visibility: mounted ? 'visible' : 'hidden' }}
           >
-            {mounted && computedColorScheme === 'dark' ? (
+            {computedColorScheme === 'dark' ? (
               <IoSunnyOutline size={20} />
             ) : (
               <IoMoonOutline size={20} />

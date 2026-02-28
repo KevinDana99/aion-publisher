@@ -2,7 +2,6 @@
 
 import { Box, Paper, Text, Group, Avatar, Stack, ThemeIcon, useMantineColorScheme } from '@mantine/core'
 import { IoCall, IoMail, IoCheckmarkCircle, IoChatbubble, IoPersonAdd, IoCash } from 'react-icons/io5'
-import useMounted from '@/hooks/useMounted'
 
 interface Activity {
   id: string
@@ -47,10 +46,9 @@ const formatTimestamp = (date: Date) => {
 export default function CRMActivities() {
   const { colorScheme } = useMantineColorScheme()
   const isDark = colorScheme === 'dark'
-  const mounted = useMounted()
 
   return (
-    <Paper p="md" radius="lg" shadow="sm" style={{ height: '100%', background: !mounted || isDark ? 'var(--mantine-color-dark-6)' : 'white' }}>
+    <Paper p="md" radius="lg" shadow="sm" style={{ height: '100%', background: isDark ? 'var(--mantine-color-dark-6)' : 'white' }}>
       <Text fw={700} size="lg" mb="md">Actividad Reciente</Text>
       <Stack gap="sm">
         {activities.map((activity) => {

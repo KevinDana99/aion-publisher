@@ -1,7 +1,6 @@
 'use client'
 
 import { Box, Paper, Text, Group, Badge, Progress, Stack, useMantineColorScheme } from '@mantine/core'
-import useMounted from '@/hooks/useMounted'
 
 interface Deal {
   id: string
@@ -65,18 +64,17 @@ const pipelineData: PipelineStage[] = [
 export default function PipelineDeals() {
   const { colorScheme } = useMantineColorScheme()
   const isDark = colorScheme === 'dark'
-  const mounted = useMounted()
 
   const totalValue = pipelineData.reduce((acc, stage) => 
     acc + stage.deals.reduce((sum, deal) => sum + deal.value, 0), 0
   )
 
-  const stageBg = !mounted || isDark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-gray-0)'
-  const dealCardBg = !mounted || isDark ? 'var(--mantine-color-dark-6)' : 'white'
-  const totalBg = !mounted || isDark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-blue-light)'
+  const stageBg = isDark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-gray-0)'
+  const dealCardBg = isDark ? 'var(--mantine-color-dark-6)' : 'white'
+  const totalBg = isDark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-blue-light)'
 
   return (
-    <Paper p="md" radius="lg" shadow="sm" style={{ background: !mounted || isDark ? 'var(--mantine-color-dark-6)' : 'white' }}>
+    <Paper p="md" radius="lg" shadow="sm" style={{ background: isDark ? 'var(--mantine-color-dark-6)' : 'white' }}>
       <Text fw={700} size="lg" mb="md">Pipeline de Ventas</Text>
       <Group align="flex-start" gap="md" wrap="nowrap" style={{ overflowX: 'auto' }}>
         {pipelineData.map((stage) => {

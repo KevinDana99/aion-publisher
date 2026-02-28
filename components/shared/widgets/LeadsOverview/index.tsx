@@ -2,7 +2,6 @@
 
 import { IoPeople, IoCall, IoCheckmarkCircle, IoTrendingUp } from 'react-icons/io5'
 import { Box, Group, Paper, SimpleGrid, Text, ThemeIcon, useMantineColorScheme } from '@mantine/core'
-import useMounted from '@/hooks/useMounted'
 
 const data = [
   { title: 'Total Leads', value: '1,284', diff: 24, icon: IoPeople },
@@ -14,10 +13,9 @@ const data = [
 export default function LeadsOverview() {
   const { colorScheme } = useMantineColorScheme()
   const isDark = colorScheme === 'dark'
-  const mounted = useMounted()
   
   const stats = data.map((stat) => (
-    <Paper p="md" radius="lg" shadow="sm" key={stat.title} style={{ background: !mounted || isDark ? 'var(--mantine-color-dark-6)' : 'white' }}>
+    <Paper p="md" radius="lg" shadow="sm" key={stat.title} style={{ background: isDark ? 'var(--mantine-color-dark-6)' : 'white' }}>
       <Group justify="apart" mb="xs">
         <Text c="dimmed" tt="uppercase" fw={700} fz="xs">
           {stat.title}
@@ -27,7 +25,7 @@ export default function LeadsOverview() {
           variant="light"
           style={{
             color: stat.diff > 0 ? 'var(--mantine-color-teal-6)' : 'var(--mantine-color-red-6)',
-            background: stat.diff > 0 ? (!mounted || isDark ? 'rgba(64, 192, 87, 0.15)' : 'rgba(64, 192, 87, 0.1)') : (!mounted || isDark ? 'rgba(250, 82, 82, 0.15)' : 'rgba(250, 82, 82, 0.1)')
+            background: stat.diff > 0 ? (isDark ? 'rgba(64, 192, 87, 0.15)' : 'rgba(64, 192, 87, 0.1)') : (isDark ? 'rgba(250, 82, 82, 0.15)' : 'rgba(250, 82, 82, 0.1)')
           }}
           size={38}
           radius="md"
