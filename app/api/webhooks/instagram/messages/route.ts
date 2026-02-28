@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { id, conversationId, senderId, text, timestamp, isFromMe, attachments } = body
 
-    if (!id || !conversationId || !text) {
+    if (!id || !conversationId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       id,
       conversationId,
       senderId,
-      text,
+      text: text || '',
       timestamp: timestamp || Date.now(),
       isFromMe: isFromMe || false,
       attachments
