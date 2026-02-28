@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   Box,
   Paper,
@@ -25,7 +25,11 @@ import {
   IoLogoWhatsapp,
   IoFilter,
   IoMusicalNotes,
-  IoImage
+  IoImage,
+  IoAttach,
+  IoMic,
+  IoStop,
+  IoClose
 } from 'react-icons/io5'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useInstagram } from '@/lib/instagram/context'
@@ -93,6 +97,91 @@ export default function MessagesWidget() {
   })
 
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      chunksRef.current = []
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        setAudioBlob(blob)
+        stream.getTracks().forEach(track => track.stop())
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      setRecordingTime(0)
+
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1)
+      }, 1000)
+    } catch (err) {
+      console.error('Error al grabar:', err)
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+    }
+  }
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+      setRecordingTime(0)
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`El archivo es muy grande. Máximo 25MB.`)
+        return
+      }
+      setAttachmentFile(file)
+    }
+    e.target.value = ''
+  }
+
+  const removeAttachment = () => {
+    setAttachmentFile(null)
+  }
+
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   const conversations: Conversation[] = useMemo(() => {
     const allConvs: Conversation[] = []
@@ -697,17 +786,83 @@ export default function MessagesWidget() {
             </ScrollArea>
             <Box p='md' style={{ borderTop: `1px solid ${borderColor}` }}>
               <Group gap='sm'>
+                {!isRecording && !audioBlob && (
+                  <>
+                    <input
+                      type='file'
+                      id='file-attachment'
+                      onChange={handleFileSelect}
+                      style={{ display: 'none' }}
+                      accept='image/*,.pdf,.doc,.docx,.txt'
+                    />
+                    <label htmlFor='file-attachment' style={{ cursor: 'pointer' }}>
+                      <ActionIcon variant='subtle' component='span'>
+                        <IoAttach size={20} />
+                      </ActionIcon>
+                    </label>
+                    
+                    <ActionIcon
+                      variant='subtle'
+                      onClick={startRecording}
+                      color='red'
+                    >
+                      <IoMic size={20} />
+                    </ActionIcon>
+                  </>
+                )}
+
+                {isRecording && (
+                  <Group gap='xs'>
+                    <Box
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%',
+                        backgroundColor: 'red',
+                        animation: 'pulse 1s infinite'
+                      }}
+                    />
+                    <Text size='sm' fw={500}>{formatRecordingTime(recordingTime)}</Text>
+                    <ActionIcon variant='filled' color='red' onClick={stopRecording}>
+                      <IoStop size={18} />
+                    </ActionIcon>
+                    <ActionIcon variant='subtle' onClick={cancelRecording}>
+                      <IoClose size={20} />
+                    </ActionIcon>
+                  </Group>
+                )}
+
+                {audioBlob && !isRecording && (
+                  <Group gap='xs'>
+                    <audio src={URL.createObjectURL(audioBlob)} controls style={{ height: 32, maxWidth: 200 }} />
+                    <ActionIcon variant='subtle' onClick={() => setAudioBlob(null)}>
+                      <IoClose size={20} />
+                    </ActionIcon>
+                  </Group>
+                )}
+
+                {attachmentFile && !isRecording && !audioBlob && (
+                  <Group gap='xs'>
+                    <Text size='sm'>{attachmentFile.name}</Text>
+                    <ActionIcon variant='subtle' onClick={removeAttachment}>
+                      <IoClose size={20} />
+                    </ActionIcon>
+                  </Group>
+                )}
+
                 <TextInput
                   placeholder='Escribe un mensaje...'
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   style={{ flex: 1 }}
+                  disabled={isRecording || !!audioBlob}
                 />
                 <ActionIcon
                   size='lg'
                   variant='filled'
                   onClick={handleSendMessage}
+                  disabled={isRecording || !!audioBlob}
                 >
                   <IoSend size={18} />
                 </ActionIcon>
