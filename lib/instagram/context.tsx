@@ -214,6 +214,8 @@ export function InstagramProvider({ children }: { children: ReactNode }) {
         const messagesArray = data.messages || []
         
         if (messagesArray.length > 0) {
+          console.log('[Instagram Context] Raw messages from API:', JSON.stringify(messagesArray.slice(0, 2)))
+          
           const grouped: Record<string, InstagramStoredMessage[]> = {}
           const convIds = new Set<string>()
 

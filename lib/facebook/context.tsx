@@ -261,6 +261,8 @@ export function FacebookProvider({ children }: { children: ReactNode }) {
         const data = await res.json()
         
         if (data.messages && Array.isArray(data.messages)) {
+          console.log('[Facebook Context] Raw messages from API:', JSON.stringify(data.messages.slice(0, 2)))
+          
           const grouped: Record<string, FacebookStoredMessage[]> = {}
           const convIds = new Set<string>()
 
