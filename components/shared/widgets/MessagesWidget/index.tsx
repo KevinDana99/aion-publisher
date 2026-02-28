@@ -735,23 +735,20 @@ export default function MessagesWidget() {
                                 {attachment.type === 'audio' && (
                                   <Box
                                     style={{
-                                      background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                      background: isDark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-gray-1)',
                                       borderRadius: 8,
                                       padding: '8px 12px'
                                     }}
                                   >
-                                    <Group gap='xs'>
-                                      <IoMusicalNotes size={20} />
-                                      <audio
-                                        controls
-                                        src={attachment.payload.url}
-                                        style={{ 
-                                          height: 32, 
-                                          maxWidth: 200,
-                                          filter: isDark ? 'invert(0.8)' : 'none'
-                                        }}
-                                      />
-                                    </Group>
+                                    <audio
+                                      controls
+                                      src={attachment.payload.url}
+                                      style={{ 
+                                        height: 32, 
+                                        maxWidth: 200,
+                                        filter: isDark ? 'brightness(0) invert(1)' : 'none'
+                                      }}
+                                    />
                                   </Box>
                                 )}
                                   {attachment.type === 'video' && (
@@ -810,16 +807,20 @@ export default function MessagesWidget() {
               <Group gap='sm'>
                 {!isRecording && !audioBlob && (
                   <>
-                    <Tooltip label='Próximamente' position='top'>
-                      <ActionIcon variant='subtle' disabled>
-                        <IoAttach size={20} />
-                      </ActionIcon>
+                    <Tooltip label='Próximamente' position='top' withArrow>
+                      <Box>
+                        <ActionIcon variant='subtle' disabled style={{ pointerEvents: 'none' }}>
+                          <IoAttach size={20} />
+                        </ActionIcon>
+                      </Box>
                     </Tooltip>
                     
-                    <Tooltip label='Próximamente' position='top'>
-                      <ActionIcon variant='subtle' color='red' disabled>
-                        <IoMic size={20} />
-                      </ActionIcon>
+                    <Tooltip label='Próximamente' position='top' withArrow>
+                      <Box>
+                        <ActionIcon variant='subtle' color='red' disabled style={{ pointerEvents: 'none' }}>
+                          <IoMic size={20} />
+                        </ActionIcon>
+                      </Box>
                     </Tooltip>
                   </>
                 )}
