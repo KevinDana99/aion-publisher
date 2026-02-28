@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const storedToken = await getFacebookVerifyToken()
     
     console.log('[Facebook Webhook] Verifying. Token from Redis:', storedToken ? 'yes' : 'no', 'Token from Meta:', token ? 'yes' : 'no')
+    console.log('[Facebook Webhook] Token comparison - Redis:', storedToken, '| Meta:', token)
     
     if (!storedToken) {
       console.log('[Facebook Webhook] No verify token configured')
