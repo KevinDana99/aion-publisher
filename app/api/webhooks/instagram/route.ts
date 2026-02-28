@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { instagramWebhookService } from '@/lib/instagram/service'
-import { getInstagramVerifyToken } from '@/lib/credentials/tokens'
+import { getInstagramAppConfig } from '@/lib/instagram/app-config'
 import { addMessage } from '@/lib/instagram/storage'
 import type { InstagramWebhookPayload } from '@/lib/instagram/types'
 
@@ -15,8 +15,9 @@ export async function GET(request: NextRequest) {
     
     let storedToken = ''
     try {
-      storedToken = await getInstagramVerifyToken()
-      console.log('[Instagram Webhook] Token from Redis:', storedToken ? 'FOUND' : 'NOT FOUND')
+      const config = await getInstagramAppConfig()
+      storedToken = config.verifyToken
+      console.log('[Instagram Webhook] Token from Redis (app_config):', storedToken ? 'FOUND: ' + storedToken : 'NOT FOUND')
     } catch (e) {
       console.error('[Instagram Webhook] Error getting token from Redis:', e)
     }
