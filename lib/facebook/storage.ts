@@ -5,6 +5,10 @@ interface StoredMessage {
   text: string
   timestamp: number
   isFromMe: boolean
+  attachments?: {
+    type: 'image' | 'audio' | 'video' | 'file'
+    url: string
+  }[]
 }
 
 interface StoredData {

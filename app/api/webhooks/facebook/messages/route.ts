@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { id, conversationId, senderId, text, timestamp, isFromMe } = body
+    const { id, conversationId, senderId, text, timestamp, isFromMe, attachments } = body
 
     if (!id || !conversationId || !text) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -34,7 +34,8 @@ export async function POST(request: Request) {
       senderId,
       text,
       timestamp: timestamp || Date.now(),
-      isFromMe: isFromMe || false
+      isFromMe: isFromMe || false,
+      attachments
     })
 
     return NextResponse.json({ success: true })
