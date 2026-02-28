@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { facebookWebhookService } from '@/lib/facebook/service'
-import { getFacebookVerifyToken } from '@/lib/credentials/tokens'
+import { getVerifyToken } from '@/lib/facebook/app-config'
 import { addMessage } from '@/lib/facebook/storage'
 import type { FacebookWebhookPayload } from '@/lib/facebook/types'
 
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('hub.verify_token')
     const challenge = searchParams.get('hub.challenge')
 
-    const storedToken = await getFacebookVerifyToken()
+    const storedToken = await getVerifyToken()
     
     console.log('[Facebook Webhook] Verifying. Token from Redis:', storedToken ? 'yes' : 'no', 'Token from Meta:', token ? 'yes' : 'no')
     console.log('[Facebook Webhook] Token comparison - Redis:', storedToken, '| Meta:', token)
