@@ -16,7 +16,9 @@ export interface StoredMessage {
   isFromMe: boolean
   attachments?: {
     type: 'image' | 'audio' | 'video' | 'file'
-    url: string
+    payload: {
+      url: string
+    }
   }[]
 }
 

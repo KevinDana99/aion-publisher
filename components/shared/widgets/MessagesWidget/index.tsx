@@ -620,7 +620,7 @@ export default function MessagesWidget() {
                                       <IoMusicalNotes size={20} />
                                       <audio
                                         controls
-                                        src={attachment.url}
+                                        src={attachment.payload.url}
                                         style={{ height: 32, maxWidth: 200 }}
                                       />
                                     </Group>
@@ -629,7 +629,7 @@ export default function MessagesWidget() {
                                 {attachment.type === 'video' && (
                                   <video
                                     controls
-                                    src={attachment.url}
+                                    src={attachment.payload.url}
                                     style={{
                                       maxWidth: '100%',
                                       maxHeight: 300,
@@ -639,7 +639,7 @@ export default function MessagesWidget() {
                                 )}
                                 {attachment.type === 'file' && (
                                   <a
-                                    href={attachment.url}
+                                    href={attachment.payload.url}
                                     target='_blank'
                                     rel='noopener noreferrer'
                                     style={{
