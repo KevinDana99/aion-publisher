@@ -85,6 +85,11 @@ export default function MessagesWidget() {
   const isDark = colorScheme === 'dark'
   const instagram = useInstagram()
   const facebook = useFacebook()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -464,22 +469,22 @@ export default function MessagesWidget() {
     })
   }
 
-  const sidebarBg = isDark
+  const sidebarBg = !mounted || isDark
     ? 'var(--mantine-color-dark-7)'
     : 'var(--mantine-color-gray-0)'
-  const borderColor = isDark
+  const borderColor = !mounted || isDark
     ? 'var(--mantine-color-dark-4)'
     : 'var(--mantine-color-gray-3)'
-  const selectedBg = isDark
+  const selectedBg = !mounted || isDark
     ? 'var(--mantine-color-dark-5)'
     : 'var(--mantine-color-blue-light)'
   const chatBubbleUser = 'var(--mantine-color-blue-6) !important'
-  const chatBubbleContact = isDark ? theme.colors.dark[5] : theme.colors.gray[1]
-  const filterPanelBg = isDark
+  const chatBubbleContact = !mounted || isDark ? theme.colors.dark[5] : theme.colors.gray[1]
+  const filterPanelBg = !mounted || isDark
     ? 'var(--mantine-color-dark-6)'
     : 'var(--mantine-color-gray-0)'
   const chatTextUser = 'white !important'
-  const chatTextContact = isDark ? theme.colors.dark[0] : 'inherit'
+  const chatTextContact = !mounted || isDark ? theme.colors.dark[0] : 'inherit'
 
   const enabledIntegrations = settings.integrations
     .filter((i) => i.enabled)
