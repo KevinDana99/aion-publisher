@@ -811,17 +811,18 @@ export default function MessagesWidget() {
                       onChange={handleFileSelect}
                       style={{ display: 'none' }}
                       accept='image/*,.pdf,.doc,.docx,.txt'
+                      disabled
                     />
-                    <label htmlFor='file-attachment' style={{ cursor: 'pointer' }}>
-                      <ActionIcon variant='subtle' component='span'>
+                    <label htmlFor='file-attachment' style={{ cursor: 'not-allowed', opacity: 0.5 }}>
+                      <ActionIcon variant='subtle' component='span' disabled>
                         <IoAttach size={20} />
                       </ActionIcon>
                     </label>
                     
                     <ActionIcon
                       variant='subtle'
-                      onClick={startRecording}
                       color='red'
+                      disabled
                     >
                       <IoMic size={20} />
                     </ActionIcon>
