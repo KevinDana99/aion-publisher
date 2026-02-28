@@ -89,15 +89,16 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      if (event.type === 'message_echoes' && event.data.messageId && event.data.message) {
+      if (event.type === 'message_echoes' && event.data.messageId) {
         const recipientId = event.data.recipientId || event.userId
         messages.push({
           id: event.data.messageId,
           conversationId: recipientId,
           senderId: 'business',
-          text: event.data.message,
+          text: event.data.message || '',
           timestamp: event.timestamp,
-          isFromMe: true
+          isFromMe: true,
+          attachments: event.data.attachments
         })
       }
     }

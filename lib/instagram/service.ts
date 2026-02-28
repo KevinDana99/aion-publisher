@@ -76,7 +76,11 @@ export class InstagramWebhookService {
         data: {
           messageId: msgData.mid,
           message: msgData.text,
-          recipientId: recipient?.id
+          recipientId: recipient?.id,
+          attachments: msgData.attachments?.map(a => ({
+            type: a.type as 'image' | 'audio' | 'video' | 'file',
+            payload: { url: a.payload?.url || '' }
+          })).filter(a => a.payload.url)
         }
       }
     }
@@ -90,8 +94,8 @@ export class InstagramWebhookService {
         message: msgData.text,
         attachments: msgData.attachments?.map(a => ({
           type: a.type as 'image' | 'audio' | 'video' | 'file',
-          url: a.payload?.url || ''
-        })).filter(a => a.url)
+          payload: { url: a.payload?.url || '' }
+        })).filter(a => a.payload.url)
       }
     }
   }

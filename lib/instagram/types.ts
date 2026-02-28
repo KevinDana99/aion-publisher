@@ -89,7 +89,9 @@ export interface InstagramProcessedEvent {
     recipientId?: string
     attachments?: {
       type: 'image' | 'audio' | 'video' | 'file'
-      url: string
+      payload: {
+        url: string
+      }
     }[]
   }
 }
