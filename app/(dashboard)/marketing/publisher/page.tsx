@@ -1145,13 +1145,37 @@ export default function PublisherPage() {
 
                     setIsPublishingReel(true)
                     try {
+                      let videoUrl = reelVideo.preview
+
+                      if (reelVideo.preview.startsWith('blob:')) {
+                        alert('Subiendo video a Cloudinary...')
+                        
+                        const uploadFormData = new FormData()
+                        uploadFormData.append('file', reelVideo.file)
+
+                        const uploadResponse = await fetch('/api/upload/video', {
+                          method: 'POST',
+                          body: uploadFormData
+                        })
+
+                        const uploadResult = await uploadResponse.json()
+
+                        if (!uploadResult.success) {
+                          alert(`Error al subir video: ${uploadResult.error}`)
+                          setIsPublishingReel(false)
+                          return
+                        }
+
+                        videoUrl = uploadResult.url
+                      }
+
                       const response = await fetch('/api/reels/publish', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                           caption: reelCaption,
                           platforms: reelPlatforms,
-                          videoUrl: reelVideo.preview
+                          videoUrl
                         })
                       })
 
