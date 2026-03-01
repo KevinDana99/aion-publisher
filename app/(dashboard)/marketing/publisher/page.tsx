@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Stack,
@@ -53,6 +53,12 @@ import CalendarWidget, {
   type DisabledSlot
 } from '@/components/shared/calendars/CalendarWidget'
 import dayjs from 'dayjs'
+import {
+  useInstagramPosts,
+  useInstagramComments,
+  useFacebookPosts,
+  useFacebookComments
+} from './hooks/useSocialPosts'
 
 interface MediaFile {
   id: string
@@ -302,7 +308,20 @@ export default function PublisherPage() {
   const [historyPage, setHistoryPage] = useState(1)
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const [previewPlatform, setPreviewPlatform] = useState<string>('instagram')
+  const [selectedFeedPost, setSelectedFeedPost] = useState<{id: string, platform: 'instagram' | 'facebook'} | null>(null)
   const postsPerPage = 5
+
+  const { posts: instagramPosts, loading: loadingInstagram, fetchPosts: fetchInstagramPosts } = useInstagramPosts()
+  const { posts: facebookPosts, loading: loadingFacebook, fetchPosts: fetchFacebookPosts } = useFacebookPosts()
+  const { comments: instagramComments, loading: loadingInstagramComments, replyToComment, deleteComment: deleteInstagramComment, hideComment: hideInstagramComment } = useInstagramComments(selectedFeedPost?.platform === 'instagram' ? selectedFeedPost.id : null)
+  const { comments: facebookComments, loading: loadingFacebookComments, replyToComment: replyToFacebookComment, deleteComment: deleteFacebookComment, hideComment: hideFacebookComment, likeComment: likeFacebookComment } = useFacebookComments(selectedFeedPost?.platform === 'facebook' ? selectedFeedPost.id : null)
+
+  useEffect(() => {
+    if (activeTab === 'feed') {
+      fetchInstagramPosts()
+      fetchFacebookPosts()
+    }
+  }, [activeTab, fetchInstagramPosts, fetchFacebookPosts])
 
   const selectedPost = scheduledPosts.find((p) => p.id === selectedPostId)
 
@@ -535,6 +554,9 @@ export default function PublisherPage() {
           <Tabs.List>
             <Tabs.Tab value='create' leftSection={<IoAdd size={16} />}>
               Crear Publicación
+            </Tabs.Tab>
+            <Tabs.Tab value='feed' leftSection={<IoLogoInstagram size={16} />}>
+              Feed
             </Tabs.Tab>
             <Tabs.Tab value='drafts' leftSection={<IoDocument size={16} />}>
               Borradores ({draftPosts.length})
@@ -830,6 +852,178 @@ export default function PublisherPage() {
                 </Group>
               </Stack>
             </SimpleGrid>
+          </Tabs.Panel>
+
+          <Tabs.Panel value='feed' pt='md'>
+            <Stack gap='lg'>
+              <Group justify='space-between'>
+                <Text fw={600} size='lg'>Publicaciones Recientes</Text>
+                <Group>
+                  <Button
+                    size='xs'
+                    variant='light'
+                    leftSection={<IoLogoInstagram size={14} />}
+                    onClick={fetchInstagramPosts}
+                    loading={loadingInstagram}
+                  >
+                    Instagram
+                  </Button>
+                  <Button
+                    size='xs'
+                    variant='light'
+                    leftSection={<IoLogoFacebook size={14} />}
+                    onClick={fetchFacebookPosts}
+                    loading={loadingFacebook}
+                  >
+                    Facebook
+                  </Button>
+                </Group>
+              </Group>
+
+              <Paper p='lg' radius='lg' shadow='sm'>
+                <Text fw={500} mb='md'>Instagram</Text>
+                {loadingInstagram ? (
+                  <Text c='dimmed'>Cargando...</Text>
+                ) : instagramPosts.length === 0 ? (
+                  <Text c='dimmed'>No hay publicaciones de Instagram</Text>
+                ) : (
+                  <Stack gap='sm'>
+                    {instagramPosts.slice(0, 5).map((post) => (
+                      <Paper
+                        key={post.id}
+                        p='sm'
+                        radius='md'
+                        style={{
+                          border: selectedFeedPost?.id === post.id && selectedFeedPost?.platform === 'instagram'
+                            ? '2px solid var(--mantine-color-violet-5)'
+                            : '1px solid var(--mantine-color-gray-3)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setSelectedFeedPost({ id: post.id, platform: 'instagram' })}
+                      >
+                        <Group justify='space-between'>
+                          <Box style={{ flex: 1 }}>
+                            <Text size='sm' lineClamp={2}>{post.content || 'Sin caption'}</Text>
+                            <Group gap='xs'>
+                              <Text size='xs' c='dimmed'>{dayjs(post.createdAt).format('DD/MM/YYYY')}</Text>
+                              {post.likes !== undefined && <Text size='xs' c='dimmed'>❤️ {post.likes}</Text>}
+                              {post.comments !== undefined && <Text size='xs' c='dimmed'>💬 {post.comments}</Text>}
+                            </Group>
+                          </Box>
+                          <IoLogoInstagram size={20} color='#E1306C' />
+                        </Group>
+                      </Paper>
+                    ))}
+                  </Stack>
+                )}
+              </Paper>
+
+              <Paper p='lg' radius='lg' shadow='sm'>
+                <Text fw={500} mb='md'>Facebook</Text>
+                {loadingFacebook ? (
+                  <Text c='dimmed'>Cargando...</Text>
+                ) : facebookPosts.length === 0 ? (
+                  <Text c='dimmed'>No hay publicaciones de Facebook</Text>
+                ) : (
+                  <Stack gap='sm'>
+                    {facebookPosts.slice(0, 5).map((post) => (
+                      <Paper
+                        key={post.id}
+                        p='sm'
+                        radius='md'
+                        style={{
+                          border: selectedFeedPost?.id === post.id && selectedFeedPost?.platform === 'facebook'
+                            ? '2px solid var(--mantine-color-blue-5)'
+                            : '1px solid var(--mantine-color-gray-3)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setSelectedFeedPost({ id: post.id, platform: 'facebook' })}
+                      >
+                        <Group justify='space-between'>
+                          <Box style={{ flex: 1 }}>
+                            <Text size='sm' lineClamp={2}>{post.content || 'Sin mensaje'}</Text>
+                            <Text size='xs' c='dimmed'>{dayjs(post.createdAt).format('DD/MM/YYYY')}</Text>
+                          </Box>
+                          <IoLogoFacebook size={20} color='#1877F2' />
+                        </Group>
+                      </Paper>
+                    ))}
+                  </Stack>
+                )}
+              </Paper>
+
+              {selectedFeedPost && (
+                <Paper p='lg' radius='lg' shadow='sm'>
+                  <Group justify='space-between' mb='md'>
+                    <Text fw={600}>Comentarios</Text>
+                    <ActionIcon variant='subtle' onClick={() => setSelectedFeedPost(null)}>
+                      <IoClose size={18} />
+                    </ActionIcon>
+                  </Group>
+                  
+                  {selectedFeedPost.platform === 'instagram' ? (
+                    loadingInstagramComments ? (
+                      <Text c='dimmed'>Cargando comentarios...</Text>
+                    ) : instagramComments.length === 0 ? (
+                      <Text c='dimmed'>No hay comentarios</Text>
+                    ) : (
+                      <Stack gap='sm'>
+                        {instagramComments.map((comment) => (
+                          <Paper key={comment.id} p='sm' radius='md'>
+                            <Group gap='sm' mb='xs'>
+                              <Avatar size='sm' radius='xl'>
+                                {comment.username.charAt(0).toUpperCase()}
+                              </Avatar>
+                              <Box>
+                                <Text size='sm' fw={500}>@{comment.username}</Text>
+                                <Text size='xs' c='dimmed'>{dayjs(comment.createdAt).format('DD/MM/YYYY HH:mm')}</Text>
+                              </Box>
+                            </Group>
+                            <Text size='sm'>{comment.text}</Text>
+                            <Group gap='xs' mt='xs'>
+                              <Button size='xs' variant='subtle'>Responder</Button>
+                              {comment.likes !== undefined && comment.likes > 0 && (
+                                <Text size='xs' c='dimmed'>❤️ {comment.likes}</Text>
+                              )}
+                            </Group>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    )
+                  ) : (
+                    loadingFacebookComments ? (
+                      <Text c='dimmed'>Cargando comentarios...</Text>
+                    ) : facebookComments.length === 0 ? (
+                      <Text c='dimmed'>No hay comentarios</Text>
+                    ) : (
+                      <Stack gap='sm'>
+                        {facebookComments.map((comment) => (
+                          <Paper key={comment.id} p='sm' radius='md'>
+                            <Group gap='sm' mb='xs'>
+                              <Avatar size='sm' radius='xl'>
+                                {comment.username.charAt(0).toUpperCase()}
+                              </Avatar>
+                              <Box>
+                                <Text size='sm' fw={500}>{comment.username}</Text>
+                                <Text size='xs' c='dimmed'>{dayjs(comment.createdAt).format('DD/MM/YYYY HH:mm')}</Text>
+                              </Box>
+                            </Group>
+                            <Text size='sm'>{comment.text}</Text>
+                            <Group gap='xs' mt='xs'>
+                              <Button size='xs' variant='subtle'>Responder</Button>
+                              <Button size='xs' variant='subtle'>Like</Button>
+                              {comment.likes !== undefined && comment.likes > 0 && (
+                                <Text size='xs' c='dimmed'>👍 {comment.likes}</Text>
+                              )}
+                            </Group>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    )
+                  )}
+                </Paper>
+              )}
+            </Stack>
           </Tabs.Panel>
 
           <Tabs.Panel value='drafts' pt='md'>
