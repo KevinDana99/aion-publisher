@@ -7,48 +7,69 @@ import { InstagramMediaService } from '@/lib/services/instagram'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { content, platforms, mediaFiles, scheduledDateTime } = body
+    const { content, platforms, mediaUrls, scheduledDateTime, type = 'post' } = body
 
-    if (!content || !platforms || platforms.length === 0) {
-      return NextResponse.json({ error: 'Content and platforms are required' }, { status: 400 })
+    if (!platforms || platforms.length === 0) {
+      return NextResponse.json({ error: 'At least one platform is required' }, { status: 400 })
+    }
+
+    if (scheduledDateTime) {
+      return NextResponse.json({
+        success: false,
+        error: 'Scheduled posts are saved but not yet auto-published. This feature is coming soon.'
+      }, { status: 200 })
     }
 
     const results: Record<string, { success: boolean; postId?: string; error?: string }> = {}
 
+    const instagramCreds = await getInstagramCredentials()
+    const instagramToken = instagramCreds?.accessToken
+    
+    const facebookConfig = await getFacebookAppConfig()
+    const facebookToken = facebookConfig?.pageAccessToken
+
     for (const platform of platforms) {
       try {
         if (platform === 'facebook') {
-          const config = await getFacebookAppConfig()
-          const accessToken = config.pageAccessToken
-
-          if (!accessToken) {
+          if (!facebookToken) {
             results[platform] = { success: false, error: 'Facebook not connected' }
             continue
           }
 
-          const postService = new FacebookPostService(accessToken)
-          const result = await postService.createPost('me', content)
-          results[platform] = { success: true, postId: result.id }
+          const postService = new FacebookPostService(facebookToken)
+          
+          if (mediaUrls && mediaUrls.length > 0) {
+            const mediaId = await postService.createMedia(mediaUrls[0])
+            const result = await postService.createPost('me', content, mediaId)
+            results[platform] = { success: true, postId: result.id }
+          } else {
+            const result = await postService.createPost('me', content)
+            results[platform] = { success: true, postId: result.id }
+          }
         } 
         else if (platform === 'instagram') {
-          const credentials = await getInstagramCredentials()
-          const accessToken = credentials?.accessToken
-
-          if (!accessToken) {
+          if (!instagramToken) {
             results[platform] = { success: false, error: 'Instagram not connected' }
             continue
           }
 
-          const mediaService = new InstagramMediaService(accessToken)
+          const mediaService = new InstagramMediaService(instagramToken)
           
-          if (mediaFiles && mediaFiles.length > 0) {
-            const mediaId = await mediaService.createMediaContainer(
-              mediaFiles[0].url,
-              mediaFiles[0].type || 'IMAGE',
-              content
-            )
-            const publishedResult = await mediaService.publishMediaContainer(mediaId.containerId)
-            results[platform] = { success: true, postId: publishedResult.id }
+          if (type === 'reel' || (mediaUrls && mediaUrls.length > 0)) {
+            const mediaUrl = mediaUrls?.[0]
+            if (!mediaUrl) {
+              results[platform] = { success: false, error: 'Video URL is required for Reels' }
+              continue
+            }
+
+            if (type === 'reel' || mediaUrl.includes('video') || mediaUrl.endsWith('.mp4')) {
+              const result = await mediaService.createReel(mediaUrl, content)
+              results[platform] = { success: true, postId: result.id }
+            } else {
+              const container = await mediaService.createMediaContainer(mediaUrl, 'IMAGE', content)
+              const published = await mediaService.publishMediaContainer(container.containerId)
+              results[platform] = { success: true, postId: published.id }
+            }
           } else {
             results[platform] = { success: false, error: 'Instagram requires media for posts' }
           }

@@ -24,7 +24,8 @@ import {
   ScrollArea,
   Grid,
   Modal,
-  Avatar
+  Avatar,
+  SegmentedControl
 } from '@mantine/core'
 import {
   IoMegaphone,
@@ -318,7 +319,9 @@ export default function PublisherPage() {
   const [reelVideo, setReelVideo] = useState<MediaFile | null>(null)
   const [reelCoverImage, setReelCoverImage] = useState<string | null>(null)
   const [reelPlatforms, setReelPlatforms] = useState<string[]>(['instagram'])
+  const [reelScheduledDateTime, setReelScheduledDateTime] = useState<string | null>(null)
   const [isPublishingReel, setIsPublishingReel] = useState(false)
+  const [contentType, setContentType] = useState<'post' | 'reel'>('post')
   
   const postsPerPage = 5
 
@@ -516,13 +519,40 @@ export default function PublisherPage() {
   }
 
   const handlePublish = async () => {
-    if (!content.trim() || selectedPlatforms.length === 0) return
+    if (!content.trim() && mediaFiles.length === 0) {
+      alert('Agrega contenido o media para publicar')
+      return
+    }
+    if (selectedPlatforms.length === 0) {
+      alert('Selecciona al menos una plataforma')
+      return
+    }
 
     try {
-      const mediaData = mediaFiles.map(m => ({
-        url: m.preview,
-        type: m.type
-      }))
+      let mediaUrls: string[] = []
+
+      for (const media of mediaFiles) {
+        if (media.preview.startsWith('blob:')) {
+          const uploadFormData = new FormData()
+          uploadFormData.append('file', media.file)
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData
+          })
+          
+          const uploadResult = await uploadResponse.json()
+          
+          if (!uploadResult.success) {
+            alert(`Error al subir media: ${uploadResult.error}`)
+            return
+          }
+          
+          mediaUrls.push(uploadResult.url)
+        } else {
+          mediaUrls.push(media.preview)
+        }
+      }
 
       const response = await fetch('/api/publish', {
         method: 'POST',
@@ -530,8 +560,8 @@ export default function PublisherPage() {
         body: JSON.stringify({
           content,
           platforms: selectedPlatforms,
-          mediaFiles: mediaData,
-          scheduledDateTime
+          mediaUrls,
+          type: contentType
         })
       })
 
@@ -555,16 +585,53 @@ export default function PublisherPage() {
   }
 
   const handleSchedule = async () => {
-    if (!content.trim() || selectedPlatforms.length === 0 || !scheduledDateTime) return
+    if (!content.trim() && mediaFiles.length === 0) {
+      alert('Agrega contenido o media para programar')
+      return
+    }
+    if (selectedPlatforms.length === 0) {
+      alert('Selecciona al menos una plataforma')
+      return
+    }
+    if (!scheduledDateTime) {
+      alert('Selecciona fecha y hora')
+      return
+    }
     
     try {
+      let mediaUrls: string[] = []
+
+      for (const media of mediaFiles) {
+        if (media.preview.startsWith('blob:')) {
+          const uploadFormData = new FormData()
+          uploadFormData.append('file', media.file)
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData
+          })
+          
+          const uploadResult = await uploadResponse.json()
+          
+          if (!uploadResult.success) {
+            alert(`Error al subir media: ${uploadResult.error}`)
+            return
+          }
+          
+          mediaUrls.push(uploadResult.url)
+        } else {
+          mediaUrls.push(media.preview)
+        }
+      }
+
       const response = await fetch('/api/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content,
           platforms: selectedPlatforms,
-          mediaFiles: mediaFiles.map(m => ({ url: m.preview, type: m.type })),
+          mediaUrls,
+          type: contentType,
           scheduledDateTime
         })
       })
@@ -625,9 +692,6 @@ export default function PublisherPage() {
             <Tabs.Tab value='create' leftSection={<IoAdd size={16} />}>
               Crear Publicación
             </Tabs.Tab>
-            <Tabs.Tab value='reels' leftSection={<IoVideocam size={16} />}>
-              Reels
-            </Tabs.Tab>
             <Tabs.Tab value='feed' leftSection={<IoLogoInstagram size={16} />}>
               Feed
             </Tabs.Tab>
@@ -647,9 +711,27 @@ export default function PublisherPage() {
               <Stack gap='lg'>
                 <Paper p='lg' radius='lg' shadow='sm'>
                   <Stack gap='md'>
-                    <Text fw={600} size='lg'>
-                      Contenido
-                    </Text>
+                    <Group justify='space-between'>
+                      <Text fw={600} size='lg'>
+                        Contenido
+                      </Text>
+                      <SegmentedControl
+                        value={contentType}
+                        onChange={(value) => setContentType(value as 'post' | 'reel')}
+                        data={[
+                          { label: 'Publicación', value: 'post' },
+                          { label: 'Reel', value: 'reel' }
+                        ]}
+                      />
+                    </Group>
+
+                    {contentType === 'reel' && (
+                      <Paper p='sm' radius='md' withBorder>
+                        <Text size='sm' c='dimmed'>
+                          Los Reels se publican como videos en formato 9:16
+                        </Text>
+                      </Paper>
+                    )}
 
                     <Textarea
                       placeholder='¿Qué quieres publicar?'
@@ -671,70 +753,114 @@ export default function PublisherPage() {
 
                     <Divider label='Medios' labelPosition='left' />
 
-                    <Group gap='md'>
-                      <FileButton
-                        onChange={handleMediaAdd}
-                        accept='image/*,video/*'
-                        multiple
-                      >
-                        {(props) => (
-                          <Button
-                            {...props}
-                            variant='light'
-                            leftSection={<IoImageOutline size={18} />}
-                            disabled={mediaFiles.length >= 4}
+                    {contentType === 'reel' ? (
+                      <>
+                        <TextInput
+                          label='URL del Video'
+                          placeholder='https://... o selecciona un archivo'
+                          value={mediaFiles[0]?.preview || ''}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              setMediaFiles([{
+                                id: 'url-video',
+                                file: new File([], 'video.mp4'),
+                                preview: e.target.value,
+                                type: 'video'
+                              }])
+                            } else {
+                              setMediaFiles([])
+                            }
+                          }}
+                        />
+                        <Text size='sm' c='dimmed' ta='center'>O</Text>
+                        <FileButton
+                          onChange={(file) => {
+                            if (file) {
+                              setMediaFiles([{
+                                id: Math.random().toString(36).substring(7),
+                                file,
+                                preview: URL.createObjectURL(file),
+                                type: 'video'
+                              }])
+                            }
+                          }}
+                          accept='video/mp4,video/webm'
+                        >
+                          {(props) => (
+                            <Button {...props} variant='light' leftSection={<IoVideocam size={18} />}>
+                              Subir Video
+                            </Button>
+                          )}
+                        </FileButton>
+                      </>
+                    ) : (
+                      <>
+                        <Group gap='md'>
+                          <FileButton
+                            onChange={handleMediaAdd}
+                            accept='image/*,video/*'
+                            multiple
                           >
-                            Añadir Imagen/Video
-                          </Button>
-                        )}
-                      </FileButton>
-                      <Text size='sm' c='dimmed'>
-                        Máx 4 archivos
-                      </Text>
-                    </Group>
-
-                    {mediaFiles.length > 0 && (
-                      <SimpleGrid cols={4} spacing='sm'>
-                        {mediaFiles.map((media) => (
-                          <Box key={media.id} pos='relative'>
-                            {media.type === 'image' ? (
-                              <Image
-                                src={media.preview}
-                                alt='Preview'
-                                h={80}
-                                fit='cover'
-                                radius='md'
-                              />
-                            ) : (
-                              <Box
-                                h={80}
-                                style={{
-                                  background: 'var(--mantine-color-dark-5)',
-                                  borderRadius: 'var(--mantine-radius-md)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
+                            {(props) => (
+                              <Button
+                                {...props}
+                                variant='light'
+                                leftSection={<IoImageOutline size={18} />}
+                                disabled={mediaFiles.length >= 4}
                               >
-                                <Text size='xs' c='dimmed'>
-                                  Video
-                                </Text>
-                              </Box>
+                                Añadir Imagen/Video
+                              </Button>
                             )}
-                            <ActionIcon
-                              size='sm'
-                              color='red'
-                              variant='filled'
-                              pos='absolute'
-                              top={4}
-                              right={4}
-                              onClick={() => handleMediaRemove(media.id)}
-                            >
-                              <IoClose size={12} />
-                            </ActionIcon>
-                          </Box>
-                        ))}
-                      </SimpleGrid>
+                          </FileButton>
+                          <Text size='sm' c='dimmed'>
+                            Máx 4 archivos
+                          </Text>
+                        </Group>
+
+                        {mediaFiles.length > 0 && (
+                          <SimpleGrid cols={4} spacing='sm'>
+                            {mediaFiles.map((media) => (
+                              <Box key={media.id} pos='relative'>
+                                {media.type === 'image' ? (
+                                  <Image
+                                    src={media.preview}
+                                    alt='Preview'
+                                    h={80}
+                                    fit='cover'
+                                    radius='md'
+                                  />
+                                ) : (
+                                  <Box
+                                    h={80}
+                                    style={{
+                                      background: 'var(--mantine-color-dark-5)',
+                                      borderRadius: 'var(--mantine-radius-md)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}
+                                  >
+                                    <Text size='xs' c='dimmed'>
+                                      Video
+                                    </Text>
+                                  </Box>
+                                )}
+                                <ActionIcon
+                                  size='sm'
+                                  color='red'
+                                  variant='filled'
+                                  pos='absolute'
+                                  top={4}
+                                  right={4}
+                                  onClick={() => handleMediaRemove(media.id)}
+                                >
+                                  <IoClose size={12} />
+                                </ActionIcon>
+                              </Box>
+                            ))}
+                          </SimpleGrid>
+                        )}
+                      </>
                     )}
 
                     <Button
@@ -1186,6 +1312,7 @@ export default function PublisherPage() {
                         setReelCaption('')
                         setReelVideo(null)
                         setReelCoverImage(null)
+                        setReelScheduledDateTime(null)
                       } else {
                         alert(`Error: ${result.error}`)
                       }
@@ -1200,7 +1327,84 @@ export default function PublisherPage() {
                   loading={isPublishingReel}
                   fullWidth
                 >
-                  Publicar Reel
+                  {reelScheduledDateTime ? 'Programar Reel' : 'Publicar Ahora'}
+                </Button>
+
+                {reelVideo && (
+                  <Button
+                    variant='light'
+                    leftSection={<IoEye size={18} />}
+                    onClick={() => setPreviewModalOpen(true)}
+                    fullWidth
+                  >
+                    Ver Preview
+                  </Button>
+                )}
+
+                <Paper p='lg' radius='lg' shadow='sm'>
+                  <Stack gap='md'>
+                    <Text fw={600} size='lg'>
+                      Programar
+                    </Text>
+                    <Text size='sm' c='dimmed'>
+                      Publicar ahora o programar para después
+                    </Text>
+
+                    <Group grow>
+                      <Button
+                        variant={!reelScheduledDateTime ? 'filled' : 'light'}
+                        onClick={() => setReelScheduledDateTime(null)}
+                      >
+                        Publicar Ahora
+                      </Button>
+                      <Button
+                        variant={reelScheduledDateTime ? 'filled' : 'light'}
+                        leftSection={<IoCalendar size={18} />}
+                        onClick={() => {
+                          const tomorrow = new Date()
+                          tomorrow.setDate(tomorrow.getDate() + 1)
+                          tomorrow.setHours(12, 0, 0, 0)
+                          setReelScheduledDateTime(tomorrow.toISOString().slice(0, 16))
+                        }}
+                      >
+                        Programar
+                      </Button>
+                    </Group>
+
+                    {reelScheduledDateTime && (
+                      <TextInput
+                        type='datetime-local'
+                        label='Fecha y hora de publicación'
+                        value={reelScheduledDateTime}
+                        onChange={(e) => setReelScheduledDateTime(e.target.value)}
+                      />
+                    )}
+                  </Stack>
+                </Paper>
+
+                <Button
+                  variant='light'
+                  leftSection={<IoDocument size={18} />}
+                  onClick={() => {
+                    const newDraft: ScheduledPost = {
+                      id: `reel-draft-${Date.now()}`,
+                      content: reelCaption,
+                      platforms: reelPlatforms,
+                      date: '',
+                      time: '',
+                      status: 'draft'
+                    }
+                    setDraftPosts((prev) => [...prev, newDraft])
+                    setReelCaption('')
+                    setReelVideo(null)
+                    setReelCoverImage(null)
+                    setReelScheduledDateTime(null)
+                    alert('¡Reel guardado como borrador!')
+                  }}
+                  disabled={!reelCaption.trim() && !reelVideo}
+                  fullWidth
+                >
+                  Guardar Borrador
                 </Button>
               </Stack>
             </SimpleGrid>

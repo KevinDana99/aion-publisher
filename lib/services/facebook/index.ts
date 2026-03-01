@@ -132,6 +132,25 @@ export class FacebookPostService {
     return { id: data.id }
   }
 
+  async createMedia(imageUrl: string): Promise<string> {
+    const searchParams = new URLSearchParams({
+      url: imageUrl,
+      access_token: this.accessToken
+    })
+
+    const response = await fetch(`${FACEBOOK_API_BASE}/me/photos?${searchParams}`, {
+      method: 'POST'
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(`Failed to create media: ${JSON.stringify(error)}`)
+    }
+
+    const data = await response.json()
+    return data.id
+  }
+
   async deletePost(postId: string): Promise<void> {
     await this.request<any>(`/${postId}`, { method: 'DELETE' })
   }
