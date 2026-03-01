@@ -100,7 +100,8 @@ const linksMockdata: Record<string, { label: string; href: string }[]> = {
     { label: 'Dashboard', href: '/marketing' },
     { label: 'Campañas', href: '/marketing/campaigns' },
     { label: 'Calendario', href: '/marketing/calendar' },
-    { label: 'Redes', href: '/marketing/social' }
+    { label: 'Redes', href: '/marketing/social' },
+    { label: 'Publicador', href: '/marketing/publisher' }
   ],
   Analíticas: [
     { label: 'Dashboard', href: '/analytics' },
