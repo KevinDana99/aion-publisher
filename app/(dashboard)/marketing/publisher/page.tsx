@@ -2179,13 +2179,27 @@ export default function PublisherPage() {
                     </Text>
                   </Box>
                 </Group>
-                <Text size='sm'>{content}</Text>
-                {mediaFiles.length > 0 && (
-                  <Image
-                    src={mediaFiles[0].preview}
-                    alt='Preview'
-                    radius='md'
+                <Text size='sm'>{contentType === 'reel' ? reelCaption : content}</Text>
+                {(contentType === 'reel' && reelVideo) ? (
+                  <video
+                    src={reelVideo.preview}
+                    controls
+                    style={{ width: '100%', borderRadius: 'var(--mantine-radius-md)' }}
                   />
+                ) : mediaFiles.length > 0 && (
+                  mediaFiles[0].type === 'video' ? (
+                    <video
+                      src={mediaFiles[0].preview}
+                      controls
+                      style={{ width: '100%', borderRadius: 'var(--mantine-radius-md)' }}
+                    />
+                  ) : (
+                    <Image
+                      src={mediaFiles[0].preview}
+                      alt='Preview'
+                      radius='md'
+                    />
+                  )
                 )}
                 <Group gap='lg' pt='xs'>
                   <Text size='sm' c='dimmed'>
@@ -2225,13 +2239,27 @@ export default function PublisherPage() {
                     </Text>
                   </Box>
                 </Group>
-                <Text size='sm'>{content}</Text>
-                {mediaFiles.length > 0 && (
-                  <Image
-                    src={mediaFiles[0].preview}
-                    alt='Preview'
-                    radius='md'
+                <Text size='sm'>{contentType === 'reel' ? reelCaption : content}</Text>
+                {(contentType === 'reel' && reelVideo) ? (
+                  <video
+                    src={reelVideo.preview}
+                    controls
+                    style={{ width: '100%', borderRadius: 'var(--mantine-radius-md)' }}
                   />
+                ) : mediaFiles.length > 0 && (
+                  mediaFiles[0].type === 'video' ? (
+                    <video
+                      src={mediaFiles[0].preview}
+                      controls
+                      style={{ width: '100%', borderRadius: 'var(--mantine-radius-md)' }}
+                    />
+                  ) : (
+                    <Image
+                      src={mediaFiles[0].preview}
+                      alt='Preview'
+                      radius='md'
+                    />
+                  )
                 )}
                 <Divider />
                 <Group justify='center' gap='xl' pt='xs'>
@@ -2275,16 +2303,30 @@ export default function PublisherPage() {
                   </Box>
                 </Group>
                 <Text size='sm'>
-                  {content.length > 280
-                    ? content.slice(0, 280) + '...'
-                    : content}
+                  {contentType === 'reel' 
+                    ? (reelCaption.length > 280 ? reelCaption.slice(0, 280) + '...' : reelCaption)
+                    : (content.length > 280 ? content.slice(0, 280) + '...' : content)}
                 </Text>
-                {mediaFiles.length > 0 && (
-                  <Image
-                    src={mediaFiles[0].preview}
-                    alt='Preview'
-                    radius='md'
+                {(contentType === 'reel' && reelVideo) ? (
+                  <video
+                    src={reelVideo.preview}
+                    controls
+                    style={{ width: '100%', borderRadius: 'var(--mantine-radius-md)' }}
                   />
+                ) : mediaFiles.length > 0 && (
+                  mediaFiles[0].type === 'video' ? (
+                    <video
+                      src={mediaFiles[0].preview}
+                      controls
+                      style={{ width: '100%', borderRadius: 'var(--mantine-radius-md)' }}
+                    />
+                  ) : (
+                    <Image
+                      src={mediaFiles[0].preview}
+                      alt='Preview'
+                      radius='md'
+                    />
+                  )
                 )}
                 <Group gap='xl' pt='xs'>
                   <Text size='sm' c='dimmed'>
@@ -2333,13 +2375,27 @@ export default function PublisherPage() {
                     </Text>
                   </Box>
                 </Group>
-                <Text size='sm'>{content}</Text>
-                {mediaFiles.length > 0 && (
-                  <Image
-                    src={mediaFiles[0].preview}
-                    alt='Preview'
-                    radius='md'
+                <Text size='sm'>{contentType === 'reel' ? reelCaption : content}</Text>
+                {(contentType === 'reel' && reelVideo) ? (
+                  <video
+                    src={reelVideo.preview}
+                    controls
+                    style={{ width: '100%', borderRadius: 'var(--mantine-radius-md)' }}
                   />
+                ) : mediaFiles.length > 0 && (
+                  mediaFiles[0].type === 'video' ? (
+                    <video
+                      src={mediaFiles[0].preview}
+                      controls
+                      style={{ width: '100%', borderRadius: 'var(--mantine-radius-md)' }}
+                    />
+                  ) : (
+                    <Image
+                      src={mediaFiles[0].preview}
+                      alt='Preview'
+                      radius='md'
+                    />
+                  )
                 )}
                 <Divider />
                 <Group justify='center' gap='xl' pt='xs'>
