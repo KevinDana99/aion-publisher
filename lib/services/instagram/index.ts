@@ -1,5 +1,33 @@
 import { InstagramAPI } from '../../instagram/api'
 
+export class InstagramMediaService {
+  private api: InstagramAPI
+
+  constructor(accessToken?: string) {
+    this.api = new InstagramAPI(accessToken)
+  }
+
+  setAccessToken(token: string) {
+    this.api.setAccessToken(token)
+  }
+
+  async createMediaContainer(
+    imageUrl: string,
+    mediaType: 'IMAGE' | 'VIDEO' = 'IMAGE',
+    caption?: string
+  ) {
+    return this.api.createMediaContainer(imageUrl, mediaType, caption)
+  }
+
+  async publishMediaContainer(containerId: string) {
+    return this.api.publishMediaContainer(containerId)
+  }
+
+  async createReel(videoUrl: string, caption?: string) {
+    return this.api.createReel(videoUrl, caption)
+  }
+}
+
 export class InstagramMessageService {
   private api: InstagramAPI
 

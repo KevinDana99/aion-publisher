@@ -35,6 +35,8 @@ import {
   IoLogoFacebook,
   IoLogoTwitter,
   IoLogoLinkedin,
+  IoLogoYoutube,
+  IoLogoTiktok,
   IoClose,
   IoAdd,
   IoCloudUpload,
@@ -46,7 +48,9 @@ import {
   IoAlertCircle,
   IoDocument,
   IoOpen,
-  IoEye
+  IoEye,
+  IoVideocam,
+  IoPlay
 } from 'react-icons/io5'
 import CalendarWidget, {
   type CalendarEvent,
@@ -309,6 +313,13 @@ export default function PublisherPage() {
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const [previewPlatform, setPreviewPlatform] = useState<string>('instagram')
   const [selectedFeedPost, setSelectedFeedPost] = useState<{id: string, platform: 'instagram' | 'facebook'} | null>(null)
+  
+  const [reelCaption, setReelCaption] = useState('')
+  const [reelVideo, setReelVideo] = useState<MediaFile | null>(null)
+  const [reelCoverImage, setReelCoverImage] = useState<string | null>(null)
+  const [reelPlatforms, setReelPlatforms] = useState<string[]>(['instagram'])
+  const [isPublishingReel, setIsPublishingReel] = useState(false)
+  
   const postsPerPage = 5
 
   const { posts: instagramPosts, loading: loadingInstagram, fetchPosts: fetchInstagramPosts } = useInstagramPosts()
@@ -504,15 +515,74 @@ export default function PublisherPage() {
     })
   }
 
-  const handlePublish = () => {
-    console.log('Publishing to:', selectedPlatforms)
-    console.log('Content:', content)
-    console.log('Media:', mediaFiles)
-    console.log('Scheduled:', scheduledDateTime)
+  const handlePublish = async () => {
+    if (!content.trim() || selectedPlatforms.length === 0) return
+
+    try {
+      const mediaData = mediaFiles.map(m => ({
+        url: m.preview,
+        type: m.type
+      }))
+
+      const response = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          platforms: selectedPlatforms,
+          mediaFiles: mediaData,
+          scheduledDateTime
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        alert('¡Publicación exitosa!')
+        setContent('')
+        setMediaFiles([])
+      } else {
+        const errors = Object.entries(result.results)
+          .filter(([, r]: [string, any]) => !r.success)
+          .map(([platform, r]: [string, any]) => `${platform}: ${r.error}`)
+          .join('\n')
+        alert(`Error al publicar:\n${errors}`)
+      }
+    } catch (error) {
+      console.error('Publish error:', error)
+      alert('Error al publicar')
+    }
   }
 
-  const handleSchedule = () => {
-    console.log('Scheduling for:', scheduledDateTime)
+  const handleSchedule = async () => {
+    if (!content.trim() || selectedPlatforms.length === 0 || !scheduledDateTime) return
+    
+    try {
+      const response = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          platforms: selectedPlatforms,
+          mediaFiles: mediaFiles.map(m => ({ url: m.preview, type: m.type })),
+          scheduledDateTime
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success || result.scheduled) {
+        alert('¡Publicación programada!')
+        setContent('')
+        setMediaFiles([])
+        setScheduledDateTime(null)
+      } else {
+        alert('Error al programar')
+      }
+    } catch (error) {
+      console.error('Schedule error:', error)
+      alert('Error al programar')
+    }
   }
 
   const handleAiGenerate = async () => {
@@ -554,6 +624,9 @@ export default function PublisherPage() {
           <Tabs.List>
             <Tabs.Tab value='create' leftSection={<IoAdd size={16} />}>
               Crear Publicación
+            </Tabs.Tab>
+            <Tabs.Tab value='reels' leftSection={<IoVideocam size={16} />}>
+              Reels
             </Tabs.Tab>
             <Tabs.Tab value='feed' leftSection={<IoLogoInstagram size={16} />}>
               Feed
@@ -850,6 +923,261 @@ export default function PublisherPage() {
                       : 'Publicar Ahora'}
                   </Button>
                 </Group>
+              </Stack>
+            </SimpleGrid>
+          </Tabs.Panel>
+
+          <Tabs.Panel value='reels' pt='md'>
+            <SimpleGrid cols={{ base: 1, lg: 2 }} spacing='lg'>
+              <Stack gap='lg'>
+                <Paper p='lg' radius='lg' shadow='sm'>
+                  <Stack gap='md'>
+                    <Group gap='xs'>
+                      <IoVideocam size={20} color='var(--mantine-color-pink-6)' />
+                      <Text fw={600} size='lg'>
+                        Publicar Reel
+                      </Text>
+                    </Group>
+                    <Text size='sm' c='dimmed'>
+                      Sube un video o ingresa una URL pública para publicar como Reel
+                    </Text>
+
+                    <TextInput
+                      label='URL del Video (requerido)'
+                      placeholder='https://tu-servidor.com/video.mp4'
+                      value={reelVideo?.preview || ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setReelVideo({
+                            id: Math.random().toString(36).substring(7),
+                            file: new File([], 'video.mp4'),
+                            preview: e.target.value,
+                            type: 'video'
+                          })
+                        } else {
+                          setReelVideo(null)
+                        }
+                      }}
+                    />
+
+                    <Text size='sm' c='dimmed' ta='center'>
+                      O
+                    </Text>
+
+                    <FileButton
+                      onChange={(file) => {
+                        if (file) {
+                          setReelVideo({
+                            id: Math.random().toString(36).substring(7),
+                            file,
+                            preview: URL.createObjectURL(file),
+                            type: 'video'
+                          })
+                        }
+                      }}
+                      accept='video/mp4,video/webm'
+                    >
+                      {(props) => (
+                        <Button
+                          {...props}
+                          variant='light'
+                          leftSection={<IoCloudUpload size={18} />}
+                          fullWidth
+                        >
+                          {reelVideo ? 'Cambiar Video' : 'Subir Video (para previsualizar)'}
+                        </Button>
+                      )}
+                    </FileButton>
+
+                    {reelVideo && reelVideo.preview.startsWith('blob:') && (
+                      <Box pos='relative'>
+                        <video
+                          src={reelVideo.preview}
+                          controls
+                          style={{
+                            width: '100%',
+                            maxHeight: 300,
+                            borderRadius: 'var(--mantine-radius-md)',
+                            backgroundColor: 'var(--mantine-color-dark-6)'
+                          }}
+                        />
+                        <ActionIcon
+                          size='sm'
+                          color='red'
+                          variant='filled'
+                          pos='absolute'
+                          top={8}
+                          right={8}
+                          onClick={() => {
+                            setReelVideo(null)
+                            setReelCoverImage(null)
+                          }}
+                        >
+                          <IoClose size={12} />
+                        </ActionIcon>
+                      </Box>
+                    )}
+
+                    <TextInput
+                      label='Cover Image URL (opcional)'
+                      placeholder='https://...'
+                      value={reelCoverImage || ''}
+                      onChange={(e) => setReelCoverImage(e.target.value || null)}
+                    />
+
+                    <Textarea
+                      label='Caption'
+                      placeholder='Escribe el caption para tu reel...'
+                      minRows={4}
+                      maxRows={8}
+                      value={reelCaption}
+                      onChange={(e) => setReelCaption(e.target.value)}
+                      autosize
+                    />
+
+                    <Group justify='space-between'>
+                      <Text size='sm' c='dimmed'>
+                        {reelCaption.length} / 2200 caracteres
+                      </Text>
+                    </Group>
+                  </Stack>
+                </Paper>
+              </Stack>
+
+              <Stack gap='lg'>
+                <Paper p='lg' radius='lg' shadow='sm'>
+                  <Stack gap='md'>
+                    <Text fw={600} size='lg'>
+                      Plataformas
+                    </Text>
+                    <Text size='sm' c='dimmed'>
+                      Selecciona dónde publicar el reel
+                    </Text>
+
+                    <Stack gap='sm'>
+                      {[
+                        { id: 'instagram', name: 'Instagram', icon: <IoLogoInstagram size={18} />, color: 'violet' },
+                        { id: 'facebook', name: 'Facebook', icon: <IoLogoFacebook size={18} />, color: 'blue' },
+                        { id: 'tiktok', name: 'TikTok', icon: <IoLogoTiktok size={18} />, color: 'dark' },
+                      ].map((platform) => (
+                        <Paper
+                          key={platform.id}
+                          p='sm'
+                          radius='md'
+                          style={{
+                            border: reelPlatforms.includes(platform.id)
+                              ? '2px solid var(--mantine-color-pink-5)'
+                              : '1px solid var(--mantine-color-gray-4)',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => {
+                            setReelPlatforms(prev =>
+                              prev.includes(platform.id)
+                                ? prev.filter(p => p !== platform.id)
+                                : [...prev, platform.id]
+                            )
+                          }}
+                        >
+                          <Group justify='space-between'>
+                            <Group gap='sm'>
+                              <Checkbox
+                                checked={reelPlatforms.includes(platform.id)}
+                                onChange={() => {}}
+                              />
+                              <ThemeIcon
+                                color={platform.color}
+                                variant='light'
+                                size='md'
+                                radius='md'
+                              >
+                                {platform.icon}
+                              </ThemeIcon>
+                              <Text fw={500}>{platform.name}</Text>
+                            </Group>
+                            {platform.id === 'tiktok' && (
+                              <Badge color='yellow' variant='light' size='xs'>
+                                Próximamente
+                              </Badge>
+                            )}
+                          </Group>
+                        </Paper>
+                      ))}
+                    </Stack>
+                  </Stack>
+                </Paper>
+
+                <Paper
+                  p='lg'
+                  radius='lg'
+                  shadow='sm'
+                  style={{
+                    background: 'linear-gradient(135deg, var(--mantine-color-pink-0) 0%, var(--mantine-color-violet-0) 100%)'
+                  }}
+                >
+                  <Stack gap='md'>
+                    <Group gap='xs'>
+                      <IoSparkles size={20} color='var(--mantine-color-pink-6)' />
+                      <Text fw={600} size='lg'>
+                        Tips para Reels
+                      </Text>
+                    </Group>
+                    <Stack gap='xs'>
+                      <Text size='sm'>• Duration: 15-60 segundos recomendado</Text>
+                      <Text size='sm'>• Resolution: 1080x1920 (9:16)</Text>
+                      <Text size='sm'>• Formato: MP4 o WebVTT</Text>
+                      <Text size='sm'>• Audio: Incluir música o voz</Text>
+                    </Stack>
+                  </Stack>
+                </Paper>
+
+                <Button
+                  size='lg'
+                  leftSection={<IoSend size={20} />}
+                  onClick={async () => {
+                    if (!reelVideo) {
+                      alert('Por favor selecciona un video')
+                      return
+                    }
+                    if (reelPlatforms.length === 0) {
+                      alert('Por favor selecciona al menos una plataforma')
+                      return
+                    }
+
+                    setIsPublishingReel(true)
+                    try {
+                      const response = await fetch('/api/reels/publish', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          caption: reelCaption,
+                          platforms: reelPlatforms,
+                          videoUrl: reelVideo.preview
+                        })
+                      })
+
+                      const result = await response.json()
+
+                      if (result.success) {
+                        alert('¡Reel publicado exitosamente!')
+                        setReelCaption('')
+                        setReelVideo(null)
+                        setReelCoverImage(null)
+                      } else {
+                        alert(`Error: ${result.error}`)
+                      }
+                    } catch (error) {
+                      console.error('Error publishing reel:', error)
+                      alert('Error al publicar el reel')
+                    } finally {
+                      setIsPublishingReel(false)
+                    }
+                  }}
+                  disabled={!reelVideo || reelPlatforms.length === 0}
+                  loading={isPublishingReel}
+                  fullWidth
+                >
+                  Publicar Reel
+                </Button>
               </Stack>
             </SimpleGrid>
           </Tabs.Panel>

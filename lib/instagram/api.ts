@@ -1,6 +1,6 @@
 import type { InstagramMessage, InstagramUser, InstagramConversation } from './types'
 
-const INSTAGRAM_API_BASE = 'https://graph.instagram.com'
+const INSTAGRAM_API_BASE = 'https://graph.facebook.com'
 
 export interface InstagramMedia {
   id: string
@@ -50,7 +50,7 @@ export class InstagramAPI {
       ...params
     })
 
-    const response = await fetch(`${INSTAGRAM_API_BASE}${endpoint}?${searchParams}`)
+    const response = await fetch(`${INSTAGRAM_API_BASE}/v18.0${endpoint}?${searchParams}`)
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
@@ -144,7 +144,7 @@ export class InstagramAPI {
   }
 
   async replyToComment(commentId: string, message: string): Promise<{ id: string }> {
-    const response = await fetch(`${INSTAGRAM_API_BASE}/${commentId}/replies`, {
+    const response = await fetch(`${INSTAGRAM_API_BASE}/v18.0/${commentId}/replies`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ export class InstagramAPI {
   }
 
   async hideComment(commentId: string, hide: boolean = true): Promise<void> {
-    const response = await fetch(`${INSTAGRAM_API_BASE}/${commentId}`, {
+    const response = await fetch(`${INSTAGRAM_API_BASE}/v18.0/${commentId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -182,7 +182,7 @@ export class InstagramAPI {
   }
 
   async deleteComment(commentId: string): Promise<void> {
-    const response = await fetch(`${INSTAGRAM_API_BASE}/${commentId}`, {
+    const response = await fetch(`${INSTAGRAM_API_BASE}/v18.0/${commentId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -269,6 +269,69 @@ export class InstagramAPI {
     }
 
     return response.json()
+  }
+
+  async createMediaContainer(
+    imageUrl: string,
+    mediaType: 'IMAGE' | 'VIDEO' = 'IMAGE',
+    caption?: string,
+    userId: string = 'me'
+  ): Promise<{ containerId: string }> {
+    const params: Record<string, string> = {
+      media_type: mediaType,
+      image_url: imageUrl,
+      access_token: this.accessToken
+    }
+
+    if (caption) {
+      params.caption = caption
+    }
+
+    if (mediaType === 'VIDEO') {
+      params.media_type = 'VIDEO'
+      params.video_url = imageUrl
+    }
+
+    const searchParams = new URLSearchParams(params)
+    const response = await fetch(`${INSTAGRAM_API_BASE}/v18.0/${userId}/media?${searchParams}`, {
+      method: 'POST'
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(`Failed to create media container: ${JSON.stringify(error)}`)
+    }
+
+    const data = await response.json()
+    return { containerId: data.id }
+  }
+
+  async publishMediaContainer(containerId: string, userId: string = 'me'): Promise<{ id: string }> {
+    const searchParams = new URLSearchParams({
+      creation_id: containerId,
+      access_token: this.accessToken
+    })
+
+    const response = await fetch(`${INSTAGRAM_API_BASE}/v18.0/${userId}/media_publish?${searchParams}`, {
+      method: 'POST'
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(`Failed to publish media: ${JSON.stringify(error)}`)
+    }
+
+    const data = await response.json()
+    return { id: data.id }
+  }
+
+  async createReel(
+    videoUrl: string,
+    caption?: string,
+    userId: string = 'me'
+  ): Promise<{ id: string }> {
+    const container = await this.createMediaContainer(videoUrl, 'VIDEO', caption, userId)
+    return this.publishMediaContainer(container.containerId, userId)
   }
 }
 
